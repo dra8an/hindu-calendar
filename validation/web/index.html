@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hindu Calendar Validation</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+
+header {
+    background: #8b1a1a; color: #fff; padding: 16px 24px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+header h1 { font-size: 18px; font-weight: 600; white-space: nowrap; }
+.nav { display: flex; align-items: center; gap: 8px; }
+.nav select, .nav button {
+    padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px;
+    font-size: 14px; cursor: pointer; background: #fff; color: #333;
+}
+.nav button { background: #d4a017; color: #fff; border-color: #b8860b; font-weight: 600; }
+.nav button:hover { background: #b8860b; }
+
+.container { max-width: 1200px; margin: 20px auto; padding: 0 16px; }
+
+.month-label {
+    text-align: center; font-size: 20px; font-weight: 600; margin-bottom: 12px; color: #8b1a1a;
+}
+
+/* Grid: 7 rows (Sun-Sat) x N week columns, with a DOW header column on the left */
+table.panchang {
+    width: 100%; border-collapse: collapse; background: #fff;
+    border: 1px solid #ccc; border-radius: 4px; overflow: hidden;
+}
+table.panchang th.dow-hdr {
+    background: #8b1a1a; color: #fff; padding: 10px 8px;
+    font-weight: 600; font-size: 13px; text-align: center;
+    width: 50px; border-right: 2px solid #6b1010;
+}
+table.panchang th.dow-hdr.sunday { color: #ffaaaa; }
+
+table.panchang td {
+    border: 1px solid #e0e0e0; padding: 6px 8px;
+    vertical-align: top; min-width: 140px;
+}
+table.panchang td.empty { background: #fafafa; }
+
+/* Cell contents */
+.cell-day { font-size: 18px; font-weight: 700; color: #333; }
+.cell-tithi { font-size: 12px; margin-top: 2px; }
+.cell-masa { font-size: 11px; color: #777; margin-top: 1px; }
+.cell-saka { font-size: 10px; color: #999; }
+.cell-flag { font-size: 9px; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+
+/* Sunday row */
+tr.row-sunday .cell-day { color: #c62828; }
+
+/* Paksha colors */
+.tithi-shukla { color: #1a6b1a; }
+.tithi-krishna { color: #6b1a1a; }
+
+/* Purnima / Amavasya */
+td.purnima { background: #fffff0; }
+td.amavasya { background: #f5f0ff; }
+
+/* Adhika masa tint */
+td.adhika-masa { background: #f0f8ff; }
+td.adhika-masa.purnima { background: #f0f8e8; }
+td.adhika-masa.amavasya { background: #eef0ff; }
+
+/* Adhika tithi */
+td.adhika-tithi { border-left: 4px solid #2196F3 !important; }
+.flag-adhika { color: #2196F3; }
+
+/* Kshaya tithi */
+td.kshaya-tithi { border-left: 4px solid #e53935 !important; }
+.flag-kshaya { color: #e53935; }
+
+/* Adhika masa text */
+.masa-adhika { color: #1565c0; font-weight: 600; }
+
+.legend {
+    margin-top: 16px; display: flex; gap: 20px; flex-wrap: wrap;
+    font-size: 12px; color: #555; justify-content: center;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-swatch {
+    width: 16px; height: 16px; border-radius: 2px; border: 1px solid #ccc;
+}
+
+.loading { text-align: center; padding: 60px; font-size: 16px; color: #888; }
+.error { text-align: center; padding: 60px; font-size: 16px; color: #c62828; }
+
+.drik-link {
+    text-align: center; margin-top: 12px; font-size: 13px;
+}
+.drik-link a { color: #8b1a1a; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Hindu Calendar Validation</h1>
+    <div class="nav">
+        <button id="btn-prev">&larr; Prev</button>
+        <select id="sel-month"></select>
+        <select id="sel-year"></select>
+        <button id="btn-next">Next &rarr;</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="month-label" id="month-label"></div>
+    <div id="table-container"></div>
+    <div class="drik-link" id="drik-link"></div>
+    <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="border-left:4px solid #2196F3"></div> Adhika (repeated) tithi</div>
+        <div class="legend-item"><div class="legend-swatch" style="border-left:4px solid #e53935"></div> Kshaya (skipped) tithi</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#fffff0"></div> Purnima</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f5f0ff"></div> Amavasya</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f0f8ff"></div> Adhika masa</div>
+    </div>
+</div>
+
+<script>
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+const DOW_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MIN_YEAR = 1900, MAX_YEAR = 2050;
+
+let curYear, curMonth;
+
+function init() {
+    const selMonth = document.getElementById('sel-month');
+    const selYear = document.getElementById('sel-year');
+
+    MONTHS.forEach((m, i) => {
+        const opt = document.createElement('option');
+        opt.value = i + 1; opt.textContent = m;
+        selMonth.appendChild(opt);
+    });
+    for (let y = MIN_YEAR; y <= MAX_YEAR; y++) {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y;
+        selYear.appendChild(opt);
+    }
+
+    const now = new Date();
+    const ny = now.getFullYear(), nm = now.getMonth() + 1;
+    if (ny >= MIN_YEAR && ny <= MAX_YEAR) {
+        curYear = ny; curMonth = nm;
+    } else {
+        curYear = 2025; curMonth = 1;
+    }
+
+    const hash = window.location.hash.replace('#', '');
+    if (/^\d{4}-\d{2}$/.test(hash)) {
+        const [hy, hm] = hash.split('-').map(Number);
+        if (hy >= MIN_YEAR && hy <= MAX_YEAR && hm >= 1 && hm <= 12) {
+            curYear = hy; curMonth = hm;
+        }
+    }
+
+    selMonth.value = curMonth;
+    selYear.value = curYear;
+
+    selMonth.addEventListener('change', () => { curMonth = +selMonth.value; loadMonth(); });
+    selYear.addEventListener('change', () => { curYear = +selYear.value; loadMonth(); });
+    document.getElementById('btn-prev').addEventListener('click', prevMonth);
+    document.getElementById('btn-next').addEventListener('click', nextMonth);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') prevMonth();
+        else if (e.key === 'ArrowRight') nextMonth();
+    });
+
+    loadMonth();
+}
+
+function prevMonth() {
+    curMonth--;
+    if (curMonth < 1) { curMonth = 12; curYear--; }
+    if (curYear < MIN_YEAR) { curYear = MIN_YEAR; curMonth = 1; }
+    syncSelectors(); loadMonth();
+}
+
+function nextMonth() {
+    curMonth++;
+    if (curMonth > 12) { curMonth = 1; curYear++; }
+    if (curYear > MAX_YEAR) { curYear = MAX_YEAR; curMonth = 12; }
+    syncSelectors(); loadMonth();
+}
+
+function syncSelectors() {
+    document.getElementById('sel-month').value = curMonth;
+    document.getElementById('sel-year').value = curYear;
+}
+
+async function loadMonth() {
+    const container = document.getElementById('table-container');
+    const label = document.getElementById('month-label');
+    const file = `data/${String(curYear).padStart(4,'0')}-${String(curMonth).padStart(2,'0')}.json`;
+
+    label.textContent = `${MONTHS[curMonth - 1]} ${curYear}`;
+    window.location.hash = `${String(curYear).padStart(4,'0')}-${String(curMonth).padStart(2,'0')}`;
+
+    const drikLink = document.getElementById('drik-link');
+    drikLink.innerHTML = `Compare: <a href="https://www.drikpanchang.com/panchang/month-panchang.html?gession-year=${curYear}&gession-month=${curMonth}&gession-day=1" target="_blank" rel="noopener">drikpanchang.com &rarr; ${MONTHS[curMonth-1]} ${curYear}</a>`;
+
+    container.innerHTML = '<div class="loading">Loading...</div>';
+
+    try {
+        const resp = await fetch(file);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const days = await resp.json();
+        renderGrid(days);
+    } catch (e) {
+        container.innerHTML = `<div class="error">Failed to load data for ${MONTHS[curMonth-1]} ${curYear}<br><small>${e.message}</small></div>`;
+    }
+}
+
+function renderGrid(days) {
+    const container = document.getElementById('table-container');
+
+    // Build a 7-row (dow) x N-column (weeks) grid
+    // First, organize days into a grid[dow][weekIdx]
+    const firstDow = days[0].dow; // 0=Sun
+    const numWeeks = Math.ceil((days.length + firstDow) / 7);
+    const grid = Array.from({length: 7}, () => Array(numWeeks).fill(null));
+
+    days.forEach(d => {
+        // Which week column does this day fall in?
+        const slot = (d.day - 1) + firstDow; // 0-based slot in the linear sequence
+        const weekIdx = Math.floor(slot / 7);
+        grid[d.dow][weekIdx] = d;
+    });
+
+    let html = '<table class="panchang"><tbody>';
+
+    for (let dow = 0; dow < 7; dow++) {
+        const rowCls = dow === 0 ? ' row-sunday' : '';
+        html += `<tr class="${rowCls.trim()}">`;
+        html += `<th class="dow-hdr${dow === 0 ? ' sunday' : ''}">${DOW_NAMES[dow]}</th>`;
+
+        for (let w = 0; w < numWeeks; w++) {
+            const d = grid[dow][w];
+            if (!d) {
+                html += '<td class="empty"></td>';
+                continue;
+            }
+
+            let cls = '';
+            if (d.tithi === 15) cls += ' purnima';
+            if (d.tithi === 30) cls += ' amavasya';
+            if (d.adhika === 1) cls += ' adhika-masa';
+            if (d.adhika_tithi) cls += ' adhika-tithi';
+            if (d.kshaya_tithi) cls += ' kshaya-tithi';
+
+            // Tithi display
+            let tithiStr;
+            if (d.tithi === 15) tithiStr = 'Purnima';
+            else if (d.tithi === 30) tithiStr = 'Amavasya';
+            else {
+                const prefix = d.paksha === 'Shukla' ? 'S' : 'K';
+                const num = d.tithi <= 15 ? d.tithi : d.tithi - 15;
+                tithiStr = `${prefix}-${num} ${d.tithi_name}`;
+            }
+            const tithiCls = d.paksha === 'Shukla' ? 'tithi-shukla' : 'tithi-krishna';
+
+            let masaStr, masaCls = '';
+            if (d.adhika) {
+                masaStr = `Adhika ${d.masa_name}`;
+                masaCls = ' masa-adhika';
+            } else {
+                masaStr = d.masa_name;
+            }
+
+            let flag = '';
+            if (d.adhika_tithi) flag = '<div class="cell-flag flag-adhika">Adhika</div>';
+            if (d.kshaya_tithi) flag = '<div class="cell-flag flag-kshaya">Kshaya</div>';
+
+            html += `<td class="${cls.trim()}">`;
+            html += `<div class="cell-day">${d.day}</div>`;
+            html += `<div class="cell-tithi ${tithiCls}">${tithiStr}</div>`;
+            html += `<div class="cell-masa${masaCls}">${masaStr}</div>`;
+            html += `<div class="cell-saka">Saka ${d.saka}</div>`;
+            html += flag;
+            html += '</td>';
+        }
+
+        html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>
