@@ -113,7 +113,7 @@ static const SolarCalendarConfig *get_config(SolarCalendarType type)
  * civil day a sankranti belongs to:
  *   Tamil:     sunset of the current day
  *   Bengali:   midnight (start of the civil day, i.e. 0h local)
- *   Odia:      sunrise of the next morning
+ *   Odia:      end of civil day (midnight)
  *   Malayalam:  apparent noon (midpoint of sunrise and sunset)
  */
 
