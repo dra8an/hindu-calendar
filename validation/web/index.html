@@ -80,6 +80,17 @@ td.kshaya-tithi { border-left: 4px solid #e53935 !important; }
 /* Adhika masa text */
 .masa-adhika { color: #1565c0; font-weight: 600; }
 
+/* Reingold diff overlay */
+td.reingold-diff { background: #fff3e0; }
+td.reingold-diff.purnima { background: #fff3d8; }
+td.reingold-diff.amavasya { background: #f8f0e8; }
+.cell-reingold { font-size: 9px; color: #d84315; margin-top: 1px; }
+body.hide-reingold .cell-reingold { display: none; }
+body.hide-reingold td.reingold-diff { background: inherit; }
+body.hide-reingold td.reingold-diff.purnima { background: #fffff0; }
+body.hide-reingold td.reingold-diff.amavasya { background: #f5f0ff; }
+body.hide-reingold td.reingold-diff.adhika-masa { background: #f0f8ff; }
+
 .legend {
     margin-top: 16px; display: flex; gap: 20px; flex-wrap: wrap;
     font-size: 12px; color: #555; justify-content: center;
@@ -108,6 +119,9 @@ td.kshaya-tithi { border-left: 4px solid #e53935 !important; }
         <select id="sel-year"></select>
         <button id="btn-next">Next &rarr;</button>
     </div>
+    <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;margin-left:auto">
+        <input type="checkbox" id="chk-reingold" checked> R/D overlay
+    </label>
 </header>
 
 <div class="container">
@@ -120,6 +134,7 @@ td.kshaya-tithi { border-left: 4px solid #e53935 !important; }
         <div class="legend-item"><div class="legend-swatch" style="background:#fffff0"></div> Purnima</div>
         <div class="legend-item"><div class="legend-swatch" style="background:#f5f0ff"></div> Amavasya</div>
         <div class="legend-item"><div class="legend-swatch" style="background:#f0f8ff"></div> Adhika masa</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#fff3e0"></div> R/D: Reingold differs</div>
     </div>
 </div>
 
@@ -128,6 +143,20 @@ const MONTHS = ['January','February','March','April','May','June',
                 'July','August','September','October','November','December'];
 const DOW_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MIN_YEAR = 1900, MAX_YEAR = 2050;
+const TITHI_NAMES = ['','Pratipada','Dwitiya','Tritiya','Chaturthi','Panchami',
+    'Shashthi','Saptami','Ashtami','Navami','Dashami','Ekadashi','Dwadashi',
+    'Trayodashi','Chaturdashi','Purnima'];
+const MASA_NAMES = ['','Chaitra','Vaishakha','Jyeshtha','Ashadha','Shravana',
+    'Bhadrapada','Ashvina','Kartika','Margashirsha','Pausha','Magha','Phalguna'];
+
+function fmtTithi(t) {
+    if (t === 15) return 'Purnima';
+    if (t === 30) return 'Amavasya';
+    const p = t <= 15 ? 'S' : 'K';
+    const n = t <= 15 ? t : t - 15;
+    const name = TITHI_NAMES[t <= 15 ? t : t - 15];
+    return `${p}-${n} ${name}`;
+}
 
 let curYear, curMonth;
 
@@ -172,6 +201,10 @@ function init() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft') prevMonth();
         else if (e.key === 'ArrowRight') nextMonth();
+    });
+
+    document.getElementById('chk-reingold').addEventListener('change', (e) => {
+        document.body.classList.toggle('hide-reingold', !e.target.checked);
     });
 
     loadMonth();
@@ -255,6 +288,7 @@ function renderGrid(days) {
             if (d.adhika === 1) cls += ' adhika-masa';
             if (d.adhika_tithi) cls += ' adhika-tithi';
             if (d.kshaya_tithi) cls += ' kshaya-tithi';
+            if (d.hl_diff) cls += ' reingold-diff';
 
             // Tithi display
             let tithiStr;
@@ -288,12 +322,27 @@ function renderGrid(days) {
                 hinduDay = (d.tithi <= 15 ? d.tithi : d.tithi - 15) + 15; // S-1=16 .. Purnima(15)=30
             }
 
+            // Reingold diff lines
+            let rlLines = '';
+            if (d.hl_diff) {
+                if (d.hl_tithi != null) {
+                    rlLines += `<div class="cell-reingold">R/D: ${fmtTithi(d.hl_tithi)}</div>`;
+                }
+                if (d.hl_masa != null || d.hl_adhika != null) {
+                    const rm = d.hl_masa != null ? d.hl_masa : d.masa;
+                    const ra = d.hl_adhika != null ? d.hl_adhika : d.adhika;
+                    const rname = (ra ? 'Adhika ' : '') + MASA_NAMES[rm];
+                    rlLines += `<div class="cell-reingold">R/D: ${rname}</div>`;
+                }
+            }
+
             html += `<td class="${cls.trim()}">`;
             html += `<div class="cell-day">${d.day} <span class="cell-hindu-day">${hinduDay}</span></div>`;
             html += `<div class="cell-tithi ${tithiCls}">${tithiStr}</div>`;
             html += `<div class="cell-masa${masaCls}">${masaStr}</div>`;
             html += `<div class="cell-saka">Saka ${d.saka}</div>`;
             html += flag;
+            html += rlLines;
             html += '</td>';
         }
 

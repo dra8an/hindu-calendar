@@ -8,6 +8,8 @@ from datetime import date
 
 CSV_PATH = os.path.join(os.path.dirname(__file__),
                         '..', 'validation', 'drikpanchang_data', 'ref_1900_2050.csv')
+REINGOLD_CSV_PATH = os.path.join(os.path.dirname(__file__),
+                        '..', 'validation', 'reingold', 'reingold_1900_2050.csv')
 OUT_DIR = os.path.join(os.path.dirname(__file__), '..', 'validation', 'web', 'data')
 
 TITHI_NAMES = [
@@ -63,8 +65,29 @@ def paksha_str(t):
     return 'Krishna'
 
 
+def load_reingold():
+    """Load Reingold CSV keyed by (year, month, day). Returns empty dict if file missing."""
+    if not os.path.exists(REINGOLD_CSV_PATH):
+        print(f'Warning: Reingold CSV not found at {REINGOLD_CSV_PATH}, skipping diffs')
+        return {}
+    data = {}
+    with open(REINGOLD_CSV_PATH, newline='') as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            key = (int(r['year']), int(r['month']), int(r['day']))
+            data[key] = {
+                'hl_tithi': int(r['hl_tithi']),
+                'hl_masa': int(r['hl_masa']),
+                'hl_adhika': int(r['hl_adhika']),
+            }
+    print(f'Loaded {len(data)} Reingold entries')
+    return data
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
+
+    reingold = load_reingold()
 
     # Read all rows
     rows = []
@@ -126,6 +149,23 @@ def main():
             'adhika_tithi': row['adhika_tithi'],
             'kshaya_tithi': row['kshaya_tithi'],
         }
+
+        # Add Reingold diffs (only fields that differ, to keep JSON small)
+        rkey = (row['year'], row['month'], row['day'])
+        if rkey in reingold:
+            rl = reingold[rkey]
+            differs = False
+            if rl['hl_tithi'] != row['tithi']:
+                day_obj['hl_tithi'] = rl['hl_tithi']
+                differs = True
+            if rl['hl_masa'] != row['masa']:
+                day_obj['hl_masa'] = rl['hl_masa']
+                differs = True
+            if rl['hl_adhika'] != row['adhika']:
+                day_obj['hl_adhika'] = rl['hl_adhika']
+                differs = True
+            if differs:
+                day_obj['hl_diff'] = True
 
         if key != current_key:
             if current_key is not None:
