@@ -86,6 +86,22 @@ static const char *TITHI_NAMES[] = {
     "Purnima",      /* 15 - full moon (end of Shukla) */
 };
 
+/* Solar calendar types */
+typedef enum {
+    SOLAR_CAL_TAMIL = 0,
+    SOLAR_CAL_BENGALI,
+    SOLAR_CAL_ODIA,
+    SOLAR_CAL_MALAYALAM,
+} SolarCalendarType;
+
+typedef struct {
+    int year;              /* Regional era year */
+    int month;             /* 1-12 (regional month number) */
+    int day;               /* Day within solar month (1-32) */
+    int rashi;             /* Sidereal zodiac sign 1-12 at critical time */
+    double jd_sankranti;   /* JD of the sankranti that started this month */
+} SolarDate;
+
 /* Month names */
 static const char *MASA_NAMES[] = {
     "",              /* 0 - unused */
