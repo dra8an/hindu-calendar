@@ -247,8 +247,48 @@ Date       | Day | Solar Date
 6. Spot-check 10+ dates per calendar against drikpanchang.com regional pages
 7. Verify sankranti dates match drikpanchang.com's listed sankranti times
 
-## Open Questions
+## Implementation Status: Complete
 
-1. **Bengali midnight edge case**: The book describes special rules when sankranti falls between 11:36 PM and 12:24 AM. We need to verify what drikpanchang.com actually does — it may use a simpler rule (plain midnight).
-2. **Malayalam critical time**: The book says "1:12 PM seasonal time" (temporal hours, varies by season). PyJHora and some sources suggest apparent noon or a fixed time. Need to verify against drikpanchang.com.
-3. **Era details**: Some Bengali calendars use the reformed (Bangladesh government) calendar with fixed month lengths. drikpanchang.com uses the astronomical/traditional version — we should match that.
+Implemented in v0.3.0. All 143 test assertions pass. Total: 22,432 assertions across 7 suites.
+
+## Resolved Open Questions
+
+1. **Bengali midnight edge case**: Confirmed that drikpanchang.com uses the Reingold/Dershowitz 24-minute buffer rule. Vrishabha Sankranti 2025 at 00:11 IST (11 minutes past midnight) is treated as belonging to the same day (May 15), making Joishtho start on May 15 and giving Jun 15 = Joishtho 32. The critical time is midnight + 24 minutes: `jd_midnight + 24min/(24*60)`.
+
+2. **Malayalam critical time**: Apparent noon (midpoint of sunrise and sunset) matches drikpanchang.com. Computed as `(sunrise_jd + sunset_jd) / 2.0`. This varies seasonally (~12:00-12:30 PM IST in New Delhi) rather than the fixed "1:12 PM" mentioned in some sources.
+
+3. **Era details**: drikpanchang.com uses the astronomical/traditional Bengali calendar (not the reformed Bangladesh government version). Our implementation matches.
+
+## Implementation Findings (Deviations from Plan)
+
+### Critical Time Rules
+
+The plan had some incorrect critical time rules. The actual rules verified against drikpanchang.com:
+
+| Calendar | Plan | Actual | Notes |
+|----------|------|--------|-------|
+| **Tamil** | Sunset | **Sunset** | Correct as planned |
+| **Bengali** | Midnight | **Midnight + 24min buffer** | Edge-case zone 11:36 PM - 12:24 AM from R/D book confirmed |
+| **Odia** | Sunrise (next morning) | **End of civil day** | Sankranti assigned to whichever local date it falls on |
+| **Malayalam** | Apparent noon | **Apparent noon** | Correct as planned; `(sunrise + sunset) / 2` |
+
+### Era Calculations
+
+The plan said to derive eras from Saka year with an offset. This was wrong — eras are computed directly from the Gregorian year:
+
+| Calendar | Plan | Actual |
+|----------|------|--------|
+| Tamil (Saka) | Saka (no offset) | `gy - 78` on/after Mesha, `gy - 79` before |
+| Bengali (Bangabda) | Saka - 515 | `gy - 593` on/after Mesha, `gy - 594` before |
+| Odia (Saka) | Saka (no offset) | `gy - 78` on/after Mesha, `gy - 79` before |
+| Malayalam (Kollam) | Saka + 823 | `gy - 824` on/after Simha, `gy - 825` before |
+
+The plan's "Saka + 823" formula would give Kollam ~2769 for year 2025, when the correct value is ~1200. Kollam era is not derived from Saka at all.
+
+### Sankranti Finding
+
+Used bisection with a 20-day bracket (not 5-day as planned), 50 iterations. Precision is ~3 nanoseconds (`40 days / 2^50`), far exceeding the ~0.1 second estimate in the plan.
+
+### Code Size
+
+Actual code was ~620 lines (solar.c ~387, test_solar.c ~239), slightly larger than the ~500 line estimate due to the more complex era/year logic.

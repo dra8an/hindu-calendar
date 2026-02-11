@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0 — 2026-02-11
+
+### Added
+
+- **Hindu solar calendars** (`solar.h`, `solar.c`): Four regional solar calendar variants — Tamil, Bengali, Odia, and Malayalam — all verified against drikpanchang.com
+- **Sankranti finding**: Bisection-based algorithm (50 iterations, ~3ns precision) finds the exact moment the sun crosses a sidereal zodiac sign boundary
+- **Regional critical time rules**: Each calendar uses a different rule for which civil day "owns" a sankranti — Tamil (sunset), Bengali (midnight + 24min buffer), Odia (end of civil day), Malayalam (apparent noon)
+- **Regional eras**: Tamil/Odia (Saka), Bengali (Bangabda), Malayalam (Kollam) — each with correct year-start boundaries
+- **Solar calendar CLI** (`-s TYPE`): `./hindu-calendar -s tamil|bengali|odia|malayalam` for month and single-day views
+- **Solar test suite** (`test_solar.c`): 143 assertions across all four calendar variants, including month boundaries, year transitions, and roundtrip conversion tests
+- Total test count: 22,432 assertions across 7 suites (up from 22,289 across 6)
+
 ## 0.2.0 — 2026-02-11
 
 ### Added

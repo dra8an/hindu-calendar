@@ -306,6 +306,20 @@ typedef struct {
    - Legend entry: peach swatch "R/D: Reingold differs"
 3. **Stats**: 5,943 of 55,152 days differ (89.2% match rate between HL and our Drik calculations)
 
+### Phase 8: Hindu Solar Calendars
+
+**Goal**: Four regional solar calendar variants — Tamil, Bengali, Odia, Malayalam — all verified against drikpanchang.com.
+
+See [SOLAR_PLAN.md](SOLAR_PLAN.md) for the full design document. Summary:
+
+1. **`src/solar.h` + `src/solar.c`**: Sankranti finding (bisection, 50 iterations), critical time rules per calendar, `gregorian_to_solar()` and `solar_to_gregorian()` conversions, regional month names and era names
+2. **`src/types.h`**: Added `SolarCalendarType` enum and `SolarDate` struct
+3. **`src/main.c`**: Added `-s TYPE` flag for solar calendar output (month and single-day views)
+4. **`tests/test_solar.c`**: 143 assertions — 33 dates across 4 calendars, roundtrip tests, sankranti precision, month/era names
+5. **`Makefile`**: Added `solar.c` to `APP_SRCS`
+
+**Verification**: All 143 solar assertions pass. Total: 22,432 assertions across 7 suites.
+
 ---
 
 ## Implementation Order

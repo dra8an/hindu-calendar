@@ -19,7 +19,8 @@ hindu-calendar/
 │   ├── astro.h/.c          # Swiss Ephemeris wrapper
 │   ├── date_utils.h/.c     # Julian Day / Gregorian helpers
 │   ├── tithi.h/.c          # Tithi (lunar day) calculation
-│   ├── masa.h/.c           # Month determination
+│   ├── masa.h/.c           # Month determination (lunisolar)
+│   ├── solar.h/.c          # Solar calendar (Tamil, Bengali, Odia, Malayalam)
 │   ├── panchang.h/.c       # High-level panchang and display
 │   └── main.c              # CLI entry point
 ├── lib/swisseph/           # Vendored Swiss Ephemeris C source
@@ -27,7 +28,10 @@ hindu-calendar/
 │   ├── test_astro.c
 │   ├── test_tithi.c
 │   ├── test_masa.c
-│   └── test_validation.c
+│   ├── test_solar.c
+│   ├── test_validation.c
+│   ├── test_csv_regression.c
+│   └── test_adhika_kshaya.c
 ├── validation/             # Reference data from drikpanchang.com
 ├── ephe/                   # Swiss Ephemeris data files (optional)
 ├── Docs/                   # Documentation
@@ -47,6 +51,10 @@ main.c
   │     └── masa.h  (masa_for_date)
   │           ├── tithi.h
   │           └── astro.h  (solar_longitude_sidereal)
+  ├── solar.h  (gregorian_to_solar, solar_to_gregorian)
+  │     ├── astro.h  (solar_longitude_sidereal, sunrise_jd, sunset_jd)
+  │     ├── masa.h   (solar_rashi)
+  │     └── date_utils.h
   ├── astro.h  (astro_init, astro_close)
   └── date_utils.h  (gregorian_to_jd)
         └── Swiss Ephemeris (swe_julday, swe_revjul)
@@ -135,6 +143,42 @@ swe_rise_trans(search_start, SE_SUN, ..., SE_CALC_RISE | SE_BIT_DISC_CENTER, geo
 ```
 
 The returned Julian Day is in UT. To display local time: add utc_offset/24, then add 0.5 to convert from the noon-based JD epoch to midnight-based.
+
+### Solar Calendar (Regional Variants)
+
+The solar calendar module computes dates for four Indian regional solar traditions: Tamil, Bengali, Odia, and Malayalam. Unlike the lunisolar calendar, solar months are determined purely by the sun's position in the sidereal zodiac — no moon calculations needed.
+
+**Solar month**: When the sun crosses a 30-degree sidereal zodiac sign boundary (sankranti), a new month begins. Days are numbered sequentially from the month start (1, 2, 3...). Solar months range from 29-32 days (the sun moves faster near perihelion in winter). There are always exactly 12 months per year, no leap months.
+
+**Sankranti finding** uses bisection on the sidereal solar longitude, the same pattern as tithi boundary finding:
+
+```
+1. Estimate JD based on mean solar motion
+2. Bracket: [estimate - 20, estimate + 20] days
+3. Bisect 50 iterations on (sidereal_solar_longitude(mid) - target)
+4. Handle 360°/0° wraparound in the angular difference
+5. Precision: ~3 nanoseconds (40 days / 2^50)
+```
+
+**Critical time rules** determine which civil day "owns" a sankranti. This is the only significant difference between the four calendars:
+
+| Calendar | Critical Time | Rule |
+|----------|---------------|------|
+| **Tamil** | Sunset | If sankranti is before sunset, that day starts the new month |
+| **Bengali** | Midnight + 24 min | Midnight IST with a 24-minute buffer into the next day (R/D edge-case zone) |
+| **Odia** | End of civil day | Sankranti is assigned to whichever local date it falls on |
+| **Malayalam** | Apparent noon | Midpoint of sunrise and sunset |
+
+**Regional eras** are computed directly from the Gregorian year:
+
+| Calendar | Era | On/after year start | Before year start | Year starts at |
+|----------|-----|---------------------|-------------------|----------------|
+| Tamil | Saka | gy - 78 | gy - 79 | Mesha (~Apr 14) |
+| Bengali | Bangabda | gy - 593 | gy - 594 | Mesha (~Apr 14) |
+| Odia | Saka | gy - 78 | gy - 79 | Mesha (~Apr 14) |
+| Malayalam | Kollam | gy - 824 | gy - 825 | Simha (~Aug 17) |
+
+**Malayalam** is unique: its year starts at Simha (Leo, rashi 5) instead of Mesha (Aries, rashi 1). Month numbering rotates so that Chingam (Simha) = month 1, Kanni (Kanya) = month 2, ..., Karkadakam (Karka) = month 12.
 
 ## Swiss Ephemeris
 

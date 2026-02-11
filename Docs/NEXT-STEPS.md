@@ -1,13 +1,16 @@
 # Next Steps
 
-## Priority 1: Expanded Validation (Phase 5+6+7 — Largely Complete)
+## Priority 1: Expanded Validation (Phase 5+6+7+8 — Largely Complete)
 
-186 dates verified against drikpanchang.com with 100% match. Validation web page enables manual month-by-month comparison across all 1,812 months (1900-2050). Reingold diff overlay highlights where Surya Siddhanta disagrees (89.2% match).
+186 lunisolar dates verified against drikpanchang.com with 100% match. 143 solar calendar assertions verified across 4 regional variants. Validation web page enables manual month-by-month comparison across all 1,812 months (1900-2050). Reingold diff overlay highlights where Surya Siddhanta disagrees (89.2% match).
 
 - [x] 186 dates verified against drikpanchang.com (tithi, masa, adhika, saka all 100%)
 - [x] Validation web page for visual month-by-month comparison (`bash validation/web/serve.sh`)
 - [x] Reingold/Dershowitz diff overlay on validation web page
-- [ ] Continue manual validation of remaining months via web page against drikpanchang.com
+- [x] Hindu solar calendars: Tamil, Bengali, Odia, Malayalam (143 assertions, all match drikpanchang.com)
+- [ ] Continue manual validation of remaining lunisolar months via web page against drikpanchang.com
+- [ ] Generate bulk regression CSV for solar calendars (like `ref_1900_2050.csv` for lunisolar)
+- [ ] Extend validation web page for solar calendar comparison (or create separate page)
 - [ ] Document any edge-case discrepancies (midnight new moons, polar regions)
 
 ## Priority 2: Sunrise Accuracy

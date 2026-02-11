@@ -1,6 +1,6 @@
 # Project Status
 
-## Current Version: 0.1.0 (Initial Implementation)
+## Current Version: 0.3.0
 
 ## Phase Completion
 
@@ -13,10 +13,11 @@
 | 5 | Validation against drikpanchang.com | Done | 186 dates verified against drikpanchang.com |
 | 6 | Validation web page | Done | Month-by-month visual comparison tool |
 | 7 | Reingold diff overlay | Done | HL diffs shown on web page (89.2% match) |
+| 8 | Hindu solar calendars | Done | Tamil, Bengali, Odia, Malayalam — all verified against drikpanchang.com |
 
 ## Test Results
 
-22,289 assertions passing across 6 test suites:
+22,432 assertions passing across 7 test suites:
 
 | Suite | Assertions | What it tests |
 |-------|------------|---------------|
@@ -26,6 +27,7 @@
 | test_validation | 744 | **External validation**: 186 dates verified against drikpanchang.com x 4 checks |
 | test_csv_regression | 4,416 | **Regression**: 1,104 sampled days from generated CSV (1900-2050) x 4 checks |
 | test_adhika_kshaya | 17,076 | **Regression**: all 4,269 adhika/kshaya tithi edge-case days (1900-2050) x 4 checks |
+| test_solar | 143 | **Solar calendars**: 33 dates across 4 regional variants + roundtrip + sankranti precision + month/era names |
 
 ## Validated Against drikpanchang.com
 
@@ -54,6 +56,18 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
   - Toggle on/off via "R/D overlay" checkbox in header
 - **Data pipeline**: `python3 tools/csv_to_json.py` regenerates all JSON from `ref_1900_2050.csv` + `reingold_1900_2050.csv`
 
+## Solar Calendar Validation
+
+143 assertions across 4 regional solar calendar variants, all verified against drikpanchang.com:
+
+- **Tamil** (10 dates): Sankranti boundaries, mid-month, year transitions (Saka era)
+- **Bengali** (9 dates): Midnight + 24min edge case, Boishakh 1 boundary (Bangabda era)
+- **Odia** (7 dates): End-of-civil-day critical time, Baisakha 1 boundary (Saka era)
+- **Malayalam** (7 dates): Apparent noon critical time, Chingam 1 boundary, Kollam era
+- Roundtrip tests: `gregorian_to_solar()` → `solar_to_gregorian()` for all 33 dates
+- Sankranti precision: Mesha Sankranti 2025 longitude error < 0.0001°
+- Month names and era names verified for all 4 calendars
+
 ## Known Limitations
 
 - Uses Moshier ephemeris (built-in, ~1 arcminute precision) instead of Swiss Ephemeris data files (~0.001 arcsecond)
@@ -62,9 +76,10 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 - No kshaya masa detection (extremely rare edge case)
 - UTC offset is manual (no IANA timezone / DST support)
 - Location defaults to New Delhi; no city database
+- Solar calendars validated with spot-checks (143 assertions); no bulk regression CSV yet
 
 ## Source Statistics
 
-- Application code: ~880 lines across 12 files (6 .c + 6 .h)
-- Test code: ~600 lines across 6 files
+- Application code: ~1,290 lines across 16 files (8 .c + 8 .h)
+- Test code: ~1,250 lines across 7 files
 - Vendored Swiss Ephemeris: ~34,600 lines (11 .c + 12 .h)

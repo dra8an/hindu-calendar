@@ -1,6 +1,6 @@
 # Hindu Calendar (Panchang)
 
-A Hindu lunisolar calendar implementation in C that computes tithi, lunar month, and Hindu date for any Gregorian date. Matches [drikpanchang.com](https://www.drikpanchang.com) output using the Drik Siddhanta approach with Swiss Ephemeris and Lahiri ayanamsa.
+A Hindu lunisolar and solar calendar implementation in C. Computes tithi, lunar month, and Hindu date (lunisolar panchang), plus regional solar calendars for Tamil, Bengali, Odia, and Malayalam traditions. Matches [drikpanchang.com](https://www.drikpanchang.com) output using the Drik Siddhanta approach with Swiss Ephemeris and Lahiri ayanamsa.
 
 ## Build
 
@@ -15,12 +15,14 @@ make
   -y YEAR      Gregorian year (default: current)
   -m MONTH     Gregorian month 1-12 (default: current)
   -d DAY       Specific day (if omitted, shows full month)
+  -s TYPE      Solar calendar: tamil, bengali, odia, malayalam
+               (if omitted, shows lunisolar panchang)
   -l LAT,LON   Location (default: New Delhi 28.6139,77.2090)
   -u OFFSET    UTC offset in hours (default: 5.5)
   -h           Show this help
 ```
 
-### Full month view
+### Lunisolar panchang (full month)
 
 ```
 $ ./hindu-calendar -m 1 -y 2025
@@ -34,6 +36,24 @@ Date         Day   Sunrise    Tithi                        Hindu Date
 ...
 2025-01-29   Wed   07:11:52   Krishna Amavasya      (K-15)   Pausha Krishna 15, Saka 1946
 2025-01-30   Thu   07:11:22   Shukla Pratipada     (S-1)   Magha Shukla 1, Saka 1946
+```
+
+### Solar calendar (Tamil)
+
+```
+$ ./hindu-calendar -s tamil -y 2025 -m 4
+
+Tamil Solar Calendar — Panguni 1946 (Saka)
+Gregorian 2025-04
+
+Date         Day   Solar Date
+----------   ---   --------------------
+2025-04-01   Tue   Panguni 18, 1946
+...
+2025-04-13   Sun   Panguni 30, 1946
+2025-04-14   Mon   Chithirai 1, 1947     <- Puthandu (Tamil New Year)
+2025-04-15   Tue   Chithirai 2, 1947
+...
 ```
 
 ### Single day
@@ -53,7 +73,7 @@ Hindu Date: Adhika Bhadrapada Shukla 1, Saka 1934 (Vikram 2069)
 make test
 ```
 
-Runs 22,289 assertions across 6 test suites: unit tests for astronomical calculations, tithi, and month determination; 186 dates validated against drikpanchang.com (1900-2050, including 132 adhika/kshaya edge cases); and regression tests covering 1,104 sampled days plus all 4,269 adhika/kshaya tithi edge cases (1900-2050).
+Runs 22,432 assertions across 7 test suites: unit tests for astronomical calculations, tithi, month determination, and solar calendars; 186 lunisolar dates validated against drikpanchang.com (1900-2050, including 132 adhika/kshaya edge cases); 143 solar calendar assertions across all four regional variants; and regression tests covering 1,104 sampled days plus all 4,269 adhika/kshaya tithi edge cases (1900-2050).
 
 ## Documentation
 
@@ -62,4 +82,5 @@ See [Docs/MASTER.md](Docs/MASTER.md) for a full index. Key files:
 - [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) — algorithms, tech stack, module structure
 - [Docs/PROJECT-STATUS.md](Docs/PROJECT-STATUS.md) — what works, test coverage, known limitations
 - [Docs/NEXT-STEPS.md](Docs/NEXT-STEPS.md) — roadmap (nakshatra, yoga, Purnimanta, etc.)
+- [Docs/SOLAR_PLAN.md](Docs/SOLAR_PLAN.md) — solar calendar design document
 - [CHANGELOG.md](CHANGELOG.md) — version history

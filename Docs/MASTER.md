@@ -20,7 +20,8 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Original implementation plan. Defines the 5-phase approach, project structure, data structures, algorithms, and key technical decisions. |
 | [PROJECT-STATUS.md](PROJECT-STATUS.md) | Current state of the project. Phase completion status, test results, validation coverage, and known limitations. |
 | [NEXT-STEPS.md](NEXT-STEPS.md) | Prioritized roadmap for future work. Expanded validation, additional panchang elements (nakshatra, yoga, karana), Purnimanta scheme, and usability improvements. |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical deep-dive. Tech stack, module dependency graph, all core algorithms explained (tithi, new moon, masa, sunrise), Swiss Ephemeris usage, data structures, and reference implementations. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical deep-dive. Tech stack, module dependency graph, all core algorithms explained (tithi, new moon, masa, sunrise, solar calendar), Swiss Ephemeris usage, data structures, and reference implementations. |
+| [SOLAR_PLAN.md](SOLAR_PLAN.md) | Design document for the Hindu solar calendar module (Tamil, Bengali, Odia, Malayalam). Includes regional differences, critical time rules, era calculations, and implementation findings. |
 | calendrical-calculations.pdf | Reference book by Reingold & Dershowitz. Chapter 20 covers Hindu calendar mathematics. |
 
 ## Root Directory
