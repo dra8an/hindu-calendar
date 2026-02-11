@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 — 2026-02-11
+
+### Added
+
+- **Validation web page** (`validation/web/index.html`): Browser-based month-by-month comparison tool covering all 1,812 months (1900-2050), with transposed calendar grid matching drikpanchang.com layout
+- **Reingold diff overlay**: Orange-highlighted cells where Reingold/Dershowitz `hindu-lunar-from-fixed` (Surya Siddhanta) disagrees with our Drik Siddhanta values; 5,943 of 55,152 days differ (89.2% match rate)
+- **R/D overlay toggle**: Checkbox in header to show/hide Reingold diffs
+- **JSON data pipeline** (`tools/csv_to_json.py`): Converts `ref_1900_2050.csv` + `reingold_1900_2050.csv` into 1,812 per-month JSON files with embedded diff fields (`hl_diff`, `hl_tithi`, `hl_masa`, `hl_adhika`)
+- **No-cache dev server** (`validation/web/serve.sh`): Python HTTP server on port 8081 with `Cache-Control: no-store` headers
+
 ## 0.1.0 — 2026-02-09
 
 Initial implementation of the Hindu lunisolar calendar (panchang).

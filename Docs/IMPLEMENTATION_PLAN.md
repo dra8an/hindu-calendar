@@ -28,8 +28,15 @@ hindu-calendar/
 │   ├── test_tithi.c          # Test tithi calculation
 │   ├── test_masa.c           # Test month determination + adhika months
 │   └── test_validation.c     # Bulk validation against drikpanchang.com data
+├── tools/
+│   └── csv_to_json.py        # Converts ref CSV + Reingold CSV → per-month JSON
 ├── validation/
-│   └── drikpanchang_data/    # Scraped reference data from drikpanchang.com
+│   ├── drikpanchang_data/    # Scraped reference data from drikpanchang.com
+│   ├── reingold/             # Reingold/Dershowitz calendar output (HL + AL)
+│   └── web/                  # Validation web page
+│       ├── index.html        # Self-contained HTML (inline CSS/JS, no deps)
+│       ├── serve.sh          # No-cache Python HTTP server (port 8081)
+│       └── data/             # 1,812 per-month JSON files (1900-01 to 2050-12)
 ├── Docs/
 │   └── calendrical-calculations.pdf
 ├── Makefile
@@ -273,6 +280,31 @@ typedef struct {
    - Adhika tithis (repeated tithis)
    - New moon exactly at sunrise
    - Year boundaries (Chaitra Shukla 1)
+
+### Phase 6: Validation Web Page
+
+**Goal**: Visual month-by-month comparison tool for manual validation against drikpanchang.com.
+
+1. **`tools/csv_to_json.py`**: Converts `ref_1900_2050.csv` into 1,812 per-month JSON files (`validation/web/data/YYYY-MM.json`)
+2. **`validation/web/index.html`**: Self-contained HTML page with inline CSS/JS, no external dependencies
+3. **`validation/web/serve.sh`**: No-cache Python HTTP server on port 8081
+4. **Layout**: Transposed grid (7 rows = Sun-Sat, columns = weeks), matching drikpanchang.com layout
+5. **Cell contents**: Gregorian day, Hindu day number, tithi (S/K prefix + name), masa, Saka year
+6. **Visual indicators**: Adhika tithi (blue border), kshaya tithi (red border), purnima/amavasya highlights, adhika masa tint
+7. **Navigation**: Year/month dropdowns, prev/next buttons, arrow keys, URL hash (`#YYYY-MM`)
+8. **Direct link**: To drikpanchang.com for the same month for side-by-side comparison
+
+### Phase 7: Reingold Diff Overlay
+
+**Goal**: Visually highlight where Reingold/Dershowitz (Surya Siddhanta) disagrees with our Drik Siddhanta calculations.
+
+1. **`tools/csv_to_json.py`**: Also loads `validation/reingold/reingold_1900_2050.csv` and embeds HL (hindu-lunar-from-fixed) diff fields into each day's JSON when they differ from our values
+   - Fields: `hl_diff`, `hl_tithi`, `hl_masa`, `hl_adhika` — only present when different (keeps JSON small)
+   - Graceful skip if Reingold CSV is missing
+2. **`validation/web/index.html`**: Orange background (`#fff3e0`) for diff cells, red 9px "R/D:" text showing Reingold's values
+   - "R/D overlay" checkbox in header (default on) toggles visibility
+   - Legend entry: peach swatch "R/D: Reingold differs"
+3. **Stats**: 5,943 of 55,152 days differ (89.2% match rate between HL and our Drik calculations)
 
 ---
 
