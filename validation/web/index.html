@@ -47,6 +47,7 @@ table.panchang td.empty { background: #fafafa; }
 
 /* Cell contents */
 .cell-day { font-size: 18px; font-weight: 700; color: #333; }
+.cell-hindu-day { font-size: 11px; font-weight: 600; color: #b08000; }
 .cell-tithi { font-size: 12px; margin-top: 2px; }
 .cell-masa { font-size: 11px; color: #777; margin-top: 1px; }
 .cell-saka { font-size: 10px; color: #999; }
@@ -278,8 +279,17 @@ function renderGrid(days) {
             if (d.adhika_tithi) flag = '<div class="cell-flag flag-adhika">Adhika</div>';
             if (d.kshaya_tithi) flag = '<div class="cell-flag flag-kshaya">Kshaya</div>';
 
+            // Hindu day number: K- tithis +0, S- tithis +15
+            let hinduDay;
+            if (d.paksha === 'Krishna') {
+                hinduDay = d.tithi <= 15 ? d.tithi : d.tithi - 15; // shouldn't happen but safe
+                if (d.tithi >= 16) hinduDay = d.tithi - 15; // K-1=1 .. Amavasya(30)=15
+            } else {
+                hinduDay = (d.tithi <= 15 ? d.tithi : d.tithi - 15) + 15; // S-1=16 .. Purnima(15)=30
+            }
+
             html += `<td class="${cls.trim()}">`;
-            html += `<div class="cell-day">${d.day}</div>`;
+            html += `<div class="cell-day">${d.day} <span class="cell-hindu-day">${hinduDay}</span></div>`;
             html += `<div class="cell-tithi ${tithiCls}">${tithiStr}</div>`;
             html += `<div class="cell-masa${masaCls}">${masaStr}</div>`;
             html += `<div class="cell-saka">Saka ${d.saka}</div>`;
