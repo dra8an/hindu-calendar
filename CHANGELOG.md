@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.1 — 2026-02-11
+
+### Added
+
+- **Malayalam critical time investigation**: Created diagnostic tool (`tools/malayalam_diag.c`) to test noon vs sunset vs midnight rules against all 12 months of 2025. Confirmed apparent noon rule is correct — all 5 edge cases match prokerala.com and drikpanchang.com daily panchangam
+- **Expanded solar validation** (`test_solar_validation.c`): 327 assertions (up from 264), now covering all 12 Malayalam months of 2025 + Chingam 1 across 16 years (1950-2030)
+- **Solar regression tests** (`test_solar_regression.c`): 28,976 assertions checking all 4 solar calendar CSVs (1,811 months each)
+- Total test count: 51,735 assertions across 9 suites (up from 22,432 across 7)
+
+### Fixed
+
+- Corrected inaccurate comment in `src/solar.c`: Odia critical time rule was mislabeled as "sunrise of the next morning" — changed to "end of civil day (midnight)"
+
+### Documentation
+
+- Rewrote `Docs/MALAYALAM_NOON_FIX.md` from a fix plan to an investigation report documenting that the noon rule is correct
+- Updated `Docs/PROJECT-STATUS.md` with current test counts (51,735) and expanded solar calendar validation details
+- Updated `Docs/NEXT-STEPS.md`: marked solar regression CSVs and Malayalam verification as complete
+- Updated `Docs/MASTER.md`: added missing doc entries (SOLAR_TESTING_PLAN, MALAYALAM_NOON_FIX, REINGOLD docs)
+
 ## 0.3.0 — 2026-02-11
 
 ### Added
@@ -10,6 +30,9 @@
 - **Regional eras**: Tamil/Odia (Saka), Bengali (Bangabda), Malayalam (Kollam) — each with correct year-start boundaries
 - **Solar calendar CLI** (`-s TYPE`): `./hindu-calendar -s tamil|bengali|odia|malayalam` for month and single-day views
 - **Solar test suite** (`test_solar.c`): 143 assertions across all four calendar variants, including month boundaries, year transitions, and roundtrip conversion tests
+- **Solar validation suite** (`test_solar_validation.c`): Month-start dates verified against drikpanchang.com for all 4 calendars
+- **Solar regression suite** (`test_solar_regression.c`): Reads generated CSVs (1900-2050) for all 4 calendars
+- **Solar reference data generator** (`tools/gen_solar_ref.c`): Generates 4 CSVs with month boundaries (1,811 months each)
 - Total test count: 22,432 assertions across 7 suites (up from 22,289 across 6)
 
 ## 0.2.0 — 2026-02-11

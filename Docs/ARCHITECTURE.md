@@ -29,9 +29,16 @@ hindu-calendar/
 │   ├── test_tithi.c
 │   ├── test_masa.c
 │   ├── test_solar.c
+│   ├── test_solar_validation.c
+│   ├── test_solar_regression.c
 │   ├── test_validation.c
 │   ├── test_csv_regression.c
 │   └── test_adhika_kshaya.c
+├── tools/                  # Utility programs
+│   ├── generate_ref_data.c # Generate lunisolar reference CSV
+│   ├── gen_solar_ref.c     # Generate solar calendar CSVs
+│   ├── malayalam_diag.c    # Malayalam critical time diagnostic
+│   └── csv_to_json.py      # Convert ref CSV + Reingold CSV → per-month JSON
 ├── validation/             # Reference data from drikpanchang.com
 ├── ephe/                   # Swiss Ephemeris data files (optional)
 ├── Docs/                   # Documentation

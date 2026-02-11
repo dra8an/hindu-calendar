@@ -249,7 +249,9 @@ Date       | Day | Solar Date
 
 ## Implementation Status: Complete
 
-Implemented in v0.3.0. All 143 test assertions pass. Total: 22,432 assertions across 7 suites.
+Implemented in v0.3.0, expanded in v0.3.1. All solar tests pass: 143 unit + 327 validation + 28,976 regression = 29,446 solar assertions. Total: 51,735 assertions across 9 suites.
+
+Malayalam apparent noon rule confirmed correct in v0.3.1 — see `Docs/MALAYALAM_NOON_FIX.md`.
 
 ## Resolved Open Questions
 

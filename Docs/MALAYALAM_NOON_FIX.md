@@ -1,90 +1,66 @@
-# Fix Malayalam Solar Calendar Critical Time Rule
+# Malayalam Solar Calendar Critical Time Investigation
 
 ## Context
 
-~46% of Malayalam solar month starts differ by +1 day from drikpanchang.com. The current implementation uses "apparent noon" (midpoint of sunrise and sunset) as the critical time threshold. When a sankranti falls after noon, the month start is pushed to the next civil day. Since ~half of all sankrantis fall between noon and midnight, this produces a systematic +1 day bias for ~46% of months.
+The original hypothesis was that ~46% of Malayalam solar month starts differ by +1 day from drikpanchang.com, and the apparent noon critical time should be changed to midnight (end-of-day). This was based on misreading drikpanchang.com's festivals calendar page, which shows **sankramam dates** (the astronomical event), not **month start dates** (the civil day the month begins). These differ when a sankranti falls after apparent noon.
 
-The other three calendars (Tamil=sunset, Bengali=midnight+24min, Odia=end-of-day) all match drikpanchang at 100%. The 46% mismatch rate for Malayalam strongly indicates drikpanchang uses a much later critical time — most likely "end of civil day" (midnight), the same as Odia.
+## Investigation
 
-## Step 1: Create diagnostic tool `tools/malayalam_diag.c`
+### Step 1: Diagnostic tool (`tools/malayalam_diag.c`)
 
-Prints, for each 2025 Malayalam sankranti:
-- Exact JD and IST time
-- Civil day under noon rule, sunset rule, and midnight rule
+Created a diagnostic that prints each 2025 Malayalam sankranti with exact JD, IST time, and the civil day under three candidate rules (noon, sunset, midnight).
 
-This definitively confirms which rule matches drikpanchang before we commit to a fix.
+5 of 12 months in 2025 have the sankranti fall between noon and midnight, producing different results under noon vs midnight rules:
 
-Compile like: `cc -Wall -Wextra -O2 -std=c99 -Ilib/swisseph -Isrc -o build/malayalam_diag tools/malayalam_diag.c build/swe/*.o build/astro.o build/date_utils.o build/tithi.o build/masa.o build/panchang.o build/solar.o -lm`
+| Month | Sankranti IST | Noon Rule | Midnight Rule |
+|-------|--------------|-----------|---------------|
+| Kumbham | Feb 12 21:55 | Feb 13 | Feb 12 |
+| Meenam | Mar 14 18:50 | Mar 15 | Mar 14 |
+| Karkadakam | Jul 16 17:30 | Jul 17 | Jul 16 |
+| Thulam | Oct 17 13:45 | Oct 18 | Oct 17 |
+| Vrishchikam | Nov 16 13:36 | Nov 17 | Nov 16 |
 
-## Step 2: Run diagnostic and verify against drikpanchang
+### Step 2: Verification against prokerala.com + drikpanchang.com
 
-Run `./build/malayalam_diag`, then fetch drikpanchang.com Malayalam 2025 month data to verify which rule matches all 12 months.
+Verified all 5 edge cases against prokerala.com daily calendar pages:
 
-## Step 3: Fix `src/solar.c` critical_time_jd()
+| Month | Noon Rule | Midnight Rule | prokerala.com | Winner |
+|-------|-----------|---------------|---------------|--------|
+| Kumbham | **Feb 13** | Feb 12 | Feb 13 | **NOON** |
+| Meenam | **Mar 15** | Mar 14 | Mar 15 | **NOON** |
+| Karkadakam | **Jul 17** | Jul 16 | Jul 17 | **NOON** |
+| Thulam | **Oct 18** | Oct 17 | Oct 18 | **NOON** |
+| Vrishchikam | **Nov 17** | Nov 16 | Nov 17 | **NOON** |
 
-**Current** (lines 141-147):
-```c
-case SOLAR_CAL_MALAYALAM:
-    {
-        /* Apparent noon = midpoint of sunrise and sunset */
-        double sr = sunrise_jd(jd_midnight_ut, loc);
-        double ss = sunset_jd(jd_midnight_ut, loc);
-        return (sr + ss) / 2.0;
-    }
-```
+All 5 edge cases match the **noon rule**. The midnight hypothesis was wrong.
 
-**Fix** (end-of-day rule, same formula as Odia):
-```c
-case SOLAR_CAL_MALAYALAM:
-    /* End of civil day — drikpanchang assigns the sankranti to
-     * whichever local date it falls on. */
-    return jd_midnight_ut + 1.0 - loc->utc_offset / 24.0;
-```
+### Step 3: No code fix needed
 
-Also update the header comment (lines 110-118) to reflect the corrected rule.
+The apparent noon rule in `src/solar.c` is correct. No changes to `critical_time_jd()`.
 
-## Step 4: Rebuild and quick-check
+### Step 4: Expanded test coverage
 
-`make clean && make` then spot-check: `./hindu-calendar -s malayalam -y 2025 -m 8 -d 17`
+Updated `tests/test_solar_validation.c`:
+- Expanded Malayalam from 7 to 28 entries
+- Added Chingam 1 dates across 16 years (1950-2030, every 5 years)
+- Added all 12 months of 2025 (verified against prokerala.com)
+- Removed "~46% differ" disclaimer
 
-The 7 currently-matching dates in `test_solar_validation.c` will still pass (those sankrantis fall before noon, so both rules agree).
+All 51,735 assertions pass across 9 test suites.
 
-## Step 5: Regenerate Malayalam CSV
+## Lesson Learned
 
-```bash
-./build/gen_solar_ref   # regenerates all 4 CSVs; only Malayalam changes
-```
-
-Tamil/Bengali/Odia CSVs will be identical (no code change for them).
-
-## Step 6: Verify against drikpanchang.com
-
-Fetch Malayalam month data for 2025 (all 12 months) + sample years, confirm all match the new output.
-
-## Step 7: Update `tests/test_solar_validation.c`
-
-- Expand Malayalam section from 7 to all 12 months of 2025
-- Add Chingam 1 dates across decades (same pattern as Tamil Chithirai 1)
-- Remove the "~46% differ" disclaimer comment
-
-## Step 8: Check `tests/test_solar.c`
-
-Verify existing Malayalam entries (lines 80-91) still pass. They should — those dates were chosen where both rules agree.
-
-## Step 9: Final `make test`
-
-All suites pass: test_solar, test_solar_validation, test_solar_regression (reads regenerated CSV), plus all lunisolar tests unchanged.
+drikpanchang.com's festivals/calendar overview page shows **sankramam dates** (when the astronomical event occurs), not the first day of the new month. For Malayalam, these differ whenever the sankranti falls after apparent noon. The **daily panchangam** page is the authoritative source for which civil day belongs to which month.
 
 ## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/solar.c` | 2-line fix in `critical_time_jd()` + comment update |
-| `validation/solar/malayalam_months_1900_2050.csv` | Regenerated |
-| `tests/test_solar_validation.c` | Expand Malayalam from 7 to 12+ entries |
+| `tests/test_solar_validation.c` | Expanded Malayalam from 7 to 28 entries |
+| `src/solar.c` | Fixed inaccurate comment (Odia rule description) |
 
 ## Files Created
 
 | File | Purpose |
 |------|---------|
-| `tools/malayalam_diag.c` | Temporary diagnostic (can delete after) |
+| `tools/malayalam_diag.c` | Diagnostic tool (retained for future edge-case debugging) |

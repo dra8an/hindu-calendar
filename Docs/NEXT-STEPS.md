@@ -7,9 +7,10 @@
 - [x] 186 dates verified against drikpanchang.com (tithi, masa, adhika, saka all 100%)
 - [x] Validation web page for visual month-by-month comparison (`bash validation/web/serve.sh`)
 - [x] Reingold/Dershowitz diff overlay on validation web page
-- [x] Hindu solar calendars: Tamil, Bengali, Odia, Malayalam (143 assertions, all match drikpanchang.com)
+- [x] Hindu solar calendars: Tamil, Bengali, Odia, Malayalam (143 unit + 327 validation + 28,976 regression assertions)
+- [x] Generate bulk regression CSV for solar calendars (4 CSVs, 1,811 months each, 1900-2050)
+- [x] Malayalam critical time rule verified: apparent noon confirmed correct (see `Docs/MALAYALAM_NOON_FIX.md`)
 - [ ] Continue manual validation of remaining lunisolar months via web page against drikpanchang.com
-- [ ] Generate bulk regression CSV for solar calendars (like `ref_1900_2050.csv` for lunisolar)
 - [ ] Extend validation web page for solar calendar comparison (or create separate page)
 - [ ] Document any edge-case discrepancies (midnight new moons, polar regions)
 

@@ -318,7 +318,7 @@ See [SOLAR_PLAN.md](SOLAR_PLAN.md) for the full design document. Summary:
 4. **`tests/test_solar.c`**: 143 assertions — 33 dates across 4 calendars, roundtrip tests, sankranti precision, month/era names
 5. **`Makefile`**: Added `solar.c` to `APP_SRCS`
 
-**Verification**: All 143 solar assertions pass. Total: 22,432 assertions across 7 suites.
+**Verification**: All solar tests pass (143 unit + 327 validation + 28,976 regression). Total: 51,735 assertions across 9 suites.
 
 ---
 

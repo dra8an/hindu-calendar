@@ -104,3 +104,14 @@ Wait — re-reading the user's request: "we can check against drik panchang only
 6. Fetch drikpanchang.com data for ~100-300 month-start dates per calendar
 7. Create `tests/test_solar_validation.c` with verified dates
 8. Final `make test` — everything passes
+
+## Status: Complete
+
+All steps completed. Results:
+- 4 CSVs generated (1,811 months each)
+- `test_solar_regression.c`: 28,976 assertions, all pass
+- `test_solar_validation.c`: 327 assertions (109 entries x 3 checks each), all verified against drikpanchang.com/prokerala.com
+  - Tamil: 33 entries (Chithirai 1 x 21 years + all 12 months of 2025)
+  - Bengali: 24 entries (Boishakh 1 x 12 years + all 12 months of 2025)
+  - Odia: 24 entries (all 12 months of 2025 + 2030)
+  - Malayalam: 28 entries (Chingam 1 x 16 years + all 12 months of 2025)

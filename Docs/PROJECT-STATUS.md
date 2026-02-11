@@ -17,7 +17,7 @@
 
 ## Test Results
 
-22,432 assertions passing across 7 test suites:
+51,735 assertions passing across 9 test suites:
 
 | Suite | Assertions | What it tests |
 |-------|------------|---------------|
@@ -28,6 +28,8 @@
 | test_csv_regression | 4,416 | **Regression**: 1,104 sampled days from generated CSV (1900-2050) x 4 checks |
 | test_adhika_kshaya | 17,076 | **Regression**: all 4,269 adhika/kshaya tithi edge-case days (1900-2050) x 4 checks |
 | test_solar | 143 | **Solar calendars**: 33 dates across 4 regional variants + roundtrip + sankranti precision + month/era names |
+| test_solar_validation | 327 | **External validation**: month-start dates verified against drikpanchang.com/prokerala.com for all 4 solar calendars |
+| test_solar_regression | 28,976 | **Regression**: 1,811 months x 4 calendars checked against generated CSVs (1900-2050) |
 
 ## Validated Against drikpanchang.com
 
@@ -58,15 +60,17 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 
 ## Solar Calendar Validation
 
-143 assertions across 4 regional solar calendar variants, all verified against drikpanchang.com:
+143 unit test assertions + 327 external validation assertions + 28,976 regression assertions across 4 regional solar calendar variants:
 
-- **Tamil** (10 dates): Sankranti boundaries, mid-month, year transitions (Saka era)
-- **Bengali** (9 dates): Midnight + 24min edge case, Boishakh 1 boundary (Bangabda era)
-- **Odia** (7 dates): End-of-civil-day critical time, Baisakha 1 boundary (Saka era)
-- **Malayalam** (7 dates): Apparent noon critical time, Chingam 1 boundary, Kollam era
-- Roundtrip tests: `gregorian_to_solar()` → `solar_to_gregorian()` for all 33 dates
+- **Tamil** (10 unit + 33 validation dates): Sankranti boundaries, mid-month, year transitions, all 12 months of 2025, Chithirai 1 across 21 years (Saka era)
+- **Bengali** (9 unit + 24 validation dates): Midnight + 24min edge case, Boishakh 1 across 12 years, all 12 months of 2025 (Bangabda era)
+- **Odia** (7 unit + 24 validation dates): End-of-civil-day critical time, all 12 months of 2025 + 2030 (Saka era)
+- **Malayalam** (7 unit + 28 validation dates): Apparent noon critical time, Chingam 1 across 16 years, all 12 months of 2025 (Kollam era)
+- Roundtrip tests: `gregorian_to_solar()` → `solar_to_gregorian()` for all 33 unit test dates
 - Sankranti precision: Mesha Sankranti 2025 longitude error < 0.0001°
 - Month names and era names verified for all 4 calendars
+- Malayalam noon rule verified correct against prokerala.com for all 5 edge cases in 2025 where noon and midnight rules disagree
+- Regression CSVs: 1,811 months per calendar (1900-2050), checked for month/year/day consistency
 
 ## Known Limitations
 
@@ -76,7 +80,7 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 - No kshaya masa detection (extremely rare edge case)
 - UTC offset is manual (no IANA timezone / DST support)
 - Location defaults to New Delhi; no city database
-- Solar calendars validated with spot-checks (143 assertions); no bulk regression CSV yet
+- Solar calendars validated with 143 unit + 327 external + 28,976 regression assertions; Malayalam has a few unresolved edge cases near apparent noon in years 1980 and 2019 where prokerala.com disagrees
 
 ## Source Statistics
 
