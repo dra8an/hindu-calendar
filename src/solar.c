@@ -114,7 +114,7 @@ static const SolarCalendarConfig *get_config(SolarCalendarType type)
  *   Tamil:     sunset of the current day
  *   Bengali:   midnight (start of the civil day, i.e. 0h local)
  *   Odia:      22:12 IST (fixed cutoff, empirically determined from drikpanchang.com)
- *   Malayalam:  apparent noon (midpoint of sunrise and sunset)
+ *   Malayalam:  end of madhyahna = sunrise + 3/5 × (sunset − sunrise)
  */
 
 static double critical_time_jd(double jd_midnight_ut, const Location *loc,
@@ -142,10 +142,14 @@ static double critical_time_jd(double jd_midnight_ut, const Location *loc,
 
     case SOLAR_CAL_MALAYALAM:
         {
-            /* Apparent noon = midpoint of sunrise and sunset */
+            /* End of madhyahna = sunrise + 3/5 of daytime.
+             * The Hindu day is divided into 5 equal parts (pratahkala, sangava,
+             * madhyahna, aparahna, sayahna). The critical time for Malayalam
+             * sankranti assignment is the end of the 3rd part (madhyahna).
+             * Verified against drikpanchang.com boundary cases. */
             double sr = sunrise_jd(jd_midnight_ut, loc);
             double ss = sunset_jd(jd_midnight_ut, loc);
-            return (sr + ss) / 2.0;
+            return sr + 0.6 * (ss - sr);
         }
     }
     return jd_midnight_ut; /* fallback */

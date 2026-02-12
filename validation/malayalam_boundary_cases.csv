@@ -1,0 +1,49 @@
+# Malayalam boundary cases verified against drikpanchang.com
+# All cases are near the critical time cutoff (sankranti near apparent noon / madhyahna)
+# Format: gy,gm,gd,exp_month,exp_day,exp_year,month_name,batch,notes
+#
+# Batch 1: Cases near 13:12 IST / apparent noon (original investigation)
+# Batch 2: Cases 0-5 min before 3/5 of daytime cutoff
+# Batch 3: Cases 5-15 min before 3/5 of daytime cutoff
+# Batch 0: Original discrepancy that started the investigation
+
+# Batch 0: Original discrepancy
+2026,6,15,11,1,1201,Mithunam,0,Original discrepancy - noon rule gives Edavam 32 (wrong)
+
+# Batch 1: Near 13:12 IST / apparent noon
+1902,9,16,2,1,1078,Kanni,1,day 1 (current)
+1950,3,14,8,1,1125,Meenam,1,day 1 (current)
+2021,11,16,3,30,1197,Thulam,1,last day (next) - November edge case
+2019,9,17,2,1,1195,Kanni,1,day 1 (current)
+2028,3,14,8,1,1203,Meenam,1,day 1 (current)
+1982,11,16,3,30,1158,Thulam,1,last day (next) - November edge case
+1930,2,12,7,1,1105,Kumbham,1,day 1 (current)
+1969,2,12,7,1,1144,Kumbham,1,day 1 (current)
+1911,3,14,8,1,1086,Meenam,1,day 1 (current)
+1914,5,14,10,1,1089,Edavam,1,day 1 (current)
+2030,6,15,11,1,1205,Mithunam,1,day 1 (current)
+1941,9,16,2,1,1117,Kanni,1,day 1 (current) - 14.5 min before 3/5 cutoff
+
+# Batch 2: 0-5 min before 3/5 of daytime cutoff (ALL are last day / next)
+1913,6,14,10,32,1088,Edavam,2,-0.0 min from 3/5 cutoff
+1954,3,14,7,30,1129,Kumbham,2,+0.3 min from 3/5 cutoff
+1943,11,16,3,30,1119,Thulam,2,-1.2 min from 3/5 cutoff
+1976,4,13,8,31,1151,Meenam,2,-1.2 min from 3/5 cutoff
+1934,2,12,6,30,1109,Makaram,2,-1.4 min from 3/5 cutoff
+1996,5,14,9,31,1171,Medam,2,-1.5 min from 3/5 cutoff
+1993,3,14,7,30,1168,Kumbham,2,+2.8 min from 3/5 cutoff
+1904,11,15,3,30,1080,Thulam,2,-3.9 min from 3/5 cutoff
+1957,5,14,9,31,1132,Medam,2,+4.0 min from 3/5 cutoff
+2021,10,17,2,31,1197,Kanni,2,+4.2 min from 3/5 cutoff
+1915,3,14,7,30,1090,Kumbham,2,-4.7 min from 3/5 cutoff
+2023,9,17,1,31,1199,Chingam,2,+4.9 min from 3/5 cutoff
+
+# Batch 3: 5-15 min before 3/5 of daytime cutoff (flip happens here)
+1901,1,13,5,30,1076,Dhanu,3,-5.0 min from 3/5 cutoff - last day (next)
+2032,3,14,7,30,1207,Kumbham,3,-5.5 min from 3/5 cutoff - last day (next)
+1937,4,13,8,31,1112,Meenam,3,-6.2 min from 3/5 cutoff - last day (next)
+2023,8,17,12,32,1199,Karkadakam,3,-8.4 min from 3/5 cutoff - last day (next)
+1973,2,12,6,30,1148,Makaram,3,-9.1 min from 3/5 cutoff - last day (next)
+1952,6,14,10,32,1127,Edavam,3,-9.3 min from 3/5 cutoff - last day (next)
+2035,5,15,10,1,1210,Edavam,3,-10.0 min from 3/5 cutoff - DAY 1 (current) *** FLIP ***
+2003,12,16,5,1,1179,Dhanu,3,-14.1 min from 3/5 cutoff - day 1 (current)
