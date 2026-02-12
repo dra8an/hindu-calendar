@@ -91,6 +91,11 @@ body.hide-reingold td.reingold-diff.purnima { background: #fffff0; }
 body.hide-reingold td.reingold-diff.amavasya { background: #f5f0ff; }
 body.hide-reingold td.reingold-diff.adhika-masa { background: #f0f8ff; }
 
+/* Solar calendar cell styles */
+.cell-solar-month { font-size: 12px; color: #1a6b1a; margin-top: 2px; font-weight: 600; }
+.cell-solar-era { font-size: 10px; color: #999; }
+td.solar-month-start { border-left: 4px solid #4caf50 !important; }
+
 .legend {
     margin-top: 16px; display: flex; gap: 20px; flex-wrap: wrap;
     font-size: 12px; color: #555; justify-content: center;
@@ -114,12 +119,19 @@ body.hide-reingold td.reingold-diff.adhika-masa { background: #f0f8ff; }
 <header>
     <h1>Hindu Calendar Validation</h1>
     <div class="nav">
+        <select id="sel-calendar">
+            <option value="lunisolar">Lunisolar</option>
+            <option value="tamil">Tamil</option>
+            <option value="bengali">Bengali</option>
+            <option value="odia">Odia</option>
+            <option value="malayalam">Malayalam</option>
+        </select>
         <button id="btn-prev">&larr; Prev</button>
         <select id="sel-month"></select>
         <select id="sel-year"></select>
         <button id="btn-next">Next &rarr;</button>
     </div>
-    <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;margin-left:auto">
+    <label id="lbl-reingold" style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;margin-left:auto">
         <input type="checkbox" id="chk-reingold" checked> R/D overlay
     </label>
 </header>
@@ -128,14 +140,7 @@ body.hide-reingold td.reingold-diff.adhika-masa { background: #f0f8ff; }
     <div class="month-label" id="month-label"></div>
     <div id="table-container"></div>
     <div class="drik-link" id="drik-link"></div>
-    <div class="legend">
-        <div class="legend-item"><div class="legend-swatch" style="border-left:4px solid #2196F3"></div> Adhika (repeated) tithi</div>
-        <div class="legend-item"><div class="legend-swatch" style="border-left:4px solid #e53935"></div> Kshaya (skipped) tithi</div>
-        <div class="legend-item"><div class="legend-swatch" style="background:#fffff0"></div> Purnima</div>
-        <div class="legend-item"><div class="legend-swatch" style="background:#f5f0ff"></div> Amavasya</div>
-        <div class="legend-item"><div class="legend-swatch" style="background:#f0f8ff"></div> Adhika masa</div>
-        <div class="legend-item"><div class="legend-swatch" style="background:#fff3e0"></div> R/D: Reingold differs</div>
-    </div>
+    <div class="legend" id="legend"></div>
 </div>
 
 <script>
@@ -149,6 +154,22 @@ const TITHI_NAMES = ['','Pratipada','Dwitiya','Tritiya','Chaturthi','Panchami',
 const MASA_NAMES = ['','Chaitra','Vaishakha','Jyeshtha','Ashadha','Shravana',
     'Bhadrapada','Ashvina','Kartika','Margashirsha','Pausha','Magha','Phalguna'];
 
+const DRIK_SOLAR_URLS = {
+    lunisolar: 'https://www.drikpanchang.com/panchang/month-panchang.html',
+    tamil: 'https://www.drikpanchang.com/tamil/panchangam/tamil-month-panchangam.html',
+    bengali: 'https://www.drikpanchang.com/bengali/panjika/bengali-month-panjika.html',
+    odia: 'https://www.drikpanchang.com/odia/panchang/odia-month-panchang.html',
+    malayalam: 'https://www.drikpanchang.com/malayalam/panchangam/malayalam-month-panchangam.html',
+};
+
+const CALENDAR_LABELS = {
+    lunisolar: 'Lunisolar',
+    tamil: 'Tamil Solar',
+    bengali: 'Bengali Solar',
+    odia: 'Odia Solar',
+    malayalam: 'Malayalam Solar',
+};
+
 function fmtTithi(t) {
     if (t === 15) return 'Purnima';
     if (t === 30) return 'Amavasya';
@@ -158,11 +179,12 @@ function fmtTithi(t) {
     return `${p}-${n} ${name}`;
 }
 
-let curYear, curMonth;
+let curYear, curMonth, curCalendar = 'lunisolar';
 
 function init() {
     const selMonth = document.getElementById('sel-month');
     const selYear = document.getElementById('sel-year');
+    const selCalendar = document.getElementById('sel-calendar');
 
     MONTHS.forEach((m, i) => {
         const opt = document.createElement('option');
@@ -183,8 +205,16 @@ function init() {
         curYear = 2025; curMonth = 1;
     }
 
+    // Parse hash: #YYYY-MM or #calendar/YYYY-MM
     const hash = window.location.hash.replace('#', '');
-    if (/^\d{4}-\d{2}$/.test(hash)) {
+    const calMatch = hash.match(/^(tamil|bengali|odia|malayalam)\/(\d{4})-(\d{2})$/);
+    if (calMatch) {
+        curCalendar = calMatch[1];
+        const hy = +calMatch[2], hm = +calMatch[3];
+        if (hy >= MIN_YEAR && hy <= MAX_YEAR && hm >= 1 && hm <= 12) {
+            curYear = hy; curMonth = hm;
+        }
+    } else if (/^\d{4}-\d{2}$/.test(hash)) {
         const [hy, hm] = hash.split('-').map(Number);
         if (hy >= MIN_YEAR && hy <= MAX_YEAR && hm >= 1 && hm <= 12) {
             curYear = hy; curMonth = hm;
@@ -193,9 +223,15 @@ function init() {
 
     selMonth.value = curMonth;
     selYear.value = curYear;
+    selCalendar.value = curCalendar;
 
     selMonth.addEventListener('change', () => { curMonth = +selMonth.value; loadMonth(); });
     selYear.addEventListener('change', () => { curYear = +selYear.value; loadMonth(); });
+    selCalendar.addEventListener('change', () => {
+        curCalendar = selCalendar.value;
+        updateUIForCalendar();
+        loadMonth();
+    });
     document.getElementById('btn-prev').addEventListener('click', prevMonth);
     document.getElementById('btn-next').addEventListener('click', nextMonth);
     document.addEventListener('keydown', (e) => {
@@ -207,7 +243,32 @@ function init() {
         document.body.classList.toggle('hide-reingold', !e.target.checked);
     });
 
+    updateUIForCalendar();
     loadMonth();
+}
+
+function updateUIForCalendar() {
+    const isLunisolar = curCalendar === 'lunisolar';
+    document.getElementById('lbl-reingold').style.display = isLunisolar ? 'flex' : 'none';
+    document.querySelector('header h1').textContent =
+        'Hindu Calendar Validation' + (isLunisolar ? '' : ` \u2014 ${CALENDAR_LABELS[curCalendar]}`);
+    updateLegend();
+}
+
+function updateLegend() {
+    const legend = document.getElementById('legend');
+    if (curCalendar === 'lunisolar') {
+        legend.innerHTML =
+            '<div class="legend-item"><div class="legend-swatch" style="border-left:4px solid #2196F3"></div> Adhika (repeated) tithi</div>' +
+            '<div class="legend-item"><div class="legend-swatch" style="border-left:4px solid #e53935"></div> Kshaya (skipped) tithi</div>' +
+            '<div class="legend-item"><div class="legend-swatch" style="background:#fffff0"></div> Purnima</div>' +
+            '<div class="legend-item"><div class="legend-swatch" style="background:#f5f0ff"></div> Amavasya</div>' +
+            '<div class="legend-item"><div class="legend-swatch" style="background:#f0f8ff"></div> Adhika masa</div>' +
+            '<div class="legend-item"><div class="legend-swatch" style="background:#fff3e0"></div> R/D: Reingold differs</div>';
+    } else {
+        legend.innerHTML =
+            '<div class="legend-item"><div class="legend-swatch" style="border-left:4px solid #4caf50"></div> Solar month start (sankranti)</div>';
+    }
 }
 
 function prevMonth() {
@@ -229,16 +290,34 @@ function syncSelectors() {
     document.getElementById('sel-year').value = curYear;
 }
 
+function updateHash() {
+    const ym = `${String(curYear).padStart(4,'0')}-${String(curMonth).padStart(2,'0')}`;
+    if (curCalendar === 'lunisolar') {
+        window.location.hash = ym;
+    } else {
+        window.location.hash = `${curCalendar}/${ym}`;
+    }
+}
+
 async function loadMonth() {
     const container = document.getElementById('table-container');
     const label = document.getElementById('month-label');
-    const file = `data/${String(curYear).padStart(4,'0')}-${String(curMonth).padStart(2,'0')}.json`;
+    const ym = `${String(curYear).padStart(4,'0')}-${String(curMonth).padStart(2,'0')}`;
+
+    let file;
+    if (curCalendar === 'lunisolar') {
+        file = `data/${ym}.json`;
+    } else {
+        file = `data/${curCalendar}/${ym}.json`;
+    }
 
     label.textContent = `${MONTHS[curMonth - 1]} ${curYear}`;
-    window.location.hash = `${String(curYear).padStart(4,'0')}-${String(curMonth).padStart(2,'0')}`;
+    updateHash();
 
+    // Update drikpanchang link
     const drikLink = document.getElementById('drik-link');
-    drikLink.innerHTML = `Compare: <a href="https://www.drikpanchang.com/panchang/month-panchang.html?gession-year=${curYear}&gession-month=${curMonth}&gession-day=1" target="_blank" rel="noopener">drikpanchang.com &rarr; ${MONTHS[curMonth-1]} ${curYear}</a>`;
+    const baseUrl = DRIK_SOLAR_URLS[curCalendar];
+    drikLink.innerHTML = `Compare: <a href="${baseUrl}?gession-year=${curYear}&gession-month=${curMonth}&gession-day=1" target="_blank" rel="noopener">drikpanchang.com &rarr; ${MONTHS[curMonth-1]} ${curYear}</a>`;
 
     container.innerHTML = '<div class="loading">Loading...</div>';
 
@@ -246,7 +325,11 @@ async function loadMonth() {
         const resp = await fetch(file);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const days = await resp.json();
-        renderGrid(days);
+        if (curCalendar === 'lunisolar') {
+            renderGrid(days);
+        } else {
+            renderSolarGrid(days);
+        }
     } catch (e) {
         container.innerHTML = `<div class="error">Failed to load data for ${MONTHS[curMonth-1]} ${curYear}<br><small>${e.message}</small></div>`;
     }
@@ -343,6 +426,54 @@ function renderGrid(days) {
             html += `<div class="cell-saka">Saka ${d.saka}</div>`;
             html += flag;
             html += rlLines;
+            html += '</td>';
+        }
+
+        html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function renderSolarGrid(days) {
+    const container = document.getElementById('table-container');
+
+    if (days.length === 0) {
+        container.innerHTML = '<div class="error">No solar data available for this month</div>';
+        return;
+    }
+
+    const firstDow = days[0].dow;
+    const numWeeks = Math.ceil((days.length + firstDow) / 7);
+    const grid = Array.from({length: 7}, () => Array(numWeeks).fill(null));
+
+    days.forEach(d => {
+        const slot = (d.day - 1) + firstDow;
+        const weekIdx = Math.floor(slot / 7);
+        grid[d.dow][weekIdx] = d;
+    });
+
+    let html = '<table class="panchang"><tbody>';
+
+    for (let dow = 0; dow < 7; dow++) {
+        const rowCls = dow === 0 ? ' row-sunday' : '';
+        html += `<tr class="${rowCls.trim()}">`;
+        html += `<th class="dow-hdr${dow === 0 ? ' sunday' : ''}">${DOW_NAMES[dow]}</th>`;
+
+        for (let w = 0; w < numWeeks; w++) {
+            const d = grid[dow][w];
+            if (!d) {
+                html += '<td class="empty"></td>';
+                continue;
+            }
+
+            let cls = d.is_month_start ? 'solar-month-start' : '';
+
+            html += `<td class="${cls}">`;
+            html += `<div class="cell-day">${d.day}</div>`;
+            html += `<div class="cell-solar-month">${d.solar_month_name} ${d.solar_day}</div>`;
+            html += `<div class="cell-solar-era">${d.era_name} ${d.solar_year}</div>`;
             html += '</td>';
         }
 

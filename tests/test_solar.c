@@ -77,6 +77,51 @@ static struct {
     {2025,  1,  1, SOLAR_CAL_ODIA,   9, 18, 1946},  /* Pausha 18 */
     {2025,  7, 15, SOLAR_CAL_ODIA,   3, 31, 1947},  /* Ashadha 31 */
 
+    /* Boundary cases: sankranti near the 22:12 IST cutoff.
+     * All verified against drikpanchang.com.
+     * Cutoff: sankranti before 22:12 IST → current day, after → next day. */
+
+    /* Original boundary cases (sank > 22:12, next day) */
+    {2026,  7, 16, SOLAR_CAL_ODIA,   3, 32, 1948},  /* Ashadha 32 (sank 23:35, next day) */
+    {2026,  7, 17, SOLAR_CAL_ODIA,   4,  1, 1948},  /* Shravana 1 */
+    {2022,  7, 16, SOLAR_CAL_ODIA,   3, 32, 1944},  /* Ashadha 32 (sank 23:01, next day) */
+    {2022,  7, 17, SOLAR_CAL_ODIA,   4,  1, 1944},  /* Shravana 1 */
+    {2018,  7, 16, SOLAR_CAL_ODIA,   3, 32, 1940},  /* Ashadha 32 (sank 22:32, next day) */
+    {2018,  7, 17, SOLAR_CAL_ODIA,   4,  1, 1940},  /* Shravana 1 */
+    {2001,  4, 13, SOLAR_CAL_ODIA,  12, 31, 1922},  /* Chaitra 31 (sank 23:49, next day) */
+    {2001,  4, 14, SOLAR_CAL_ODIA,   1,  1, 1923},  /* Baisakha 1 */
+    {2024, 12, 15, SOLAR_CAL_ODIA,   9,  1, 1946},  /* Pausha 1 (sank 22:11, current day) */
+    {2013,  5, 14, SOLAR_CAL_ODIA,   1, 31, 1935},  /* Baisakha 31 (sank 22:16, next day) */
+    {2003, 11, 16, SOLAR_CAL_ODIA,   7, 30, 1925},  /* Kartika 30 (sank 22:25, next day) */
+
+    /* Additional boundary cases near 22:12 IST cutoff */
+    {2001,  9, 16, SOLAR_CAL_ODIA,   5, 31, 1923},  /* Bhadrapada 31 (sank 22:18, next day) */
+    {2035,  1, 14, SOLAR_CAL_ODIA,   9, 30, 1956},  /* Pausha 30 (sank 22:29, next day) */
+    {2001,  8, 16, SOLAR_CAL_ODIA,   4, 32, 1923},  /* Shravana 32 (sank 22:24, next day) */
+    {1935,  5, 14, SOLAR_CAL_ODIA,   1, 31, 1857},  /* Baisakha 31 (sank 22:16, next day) */
+    {2040,  9, 16, SOLAR_CAL_ODIA,   5, 31, 1962},  /* Bhadrapada 31 (sank 22:14, next day) */
+    {1960, 10, 16, SOLAR_CAL_ODIA,   7,  1, 1882},  /* Kartika 1 (sank 22:05, current day) */
+    {1954,  4, 13, SOLAR_CAL_ODIA,  12, 31, 1875},  /* Chaitra 31 (sank 22:19, next day) */
+    {1993,  4, 13, SOLAR_CAL_ODIA,  12, 31, 1914},  /* Chaitra 31 (sank 22:17, next day) */
+    {1969,  6, 14, SOLAR_CAL_ODIA,   2, 32, 1891},  /* Jyeshtha 32 (sank 22:17, next day) */
+    {1907, 12, 15, SOLAR_CAL_ODIA,   8, 30, 1829},  /* Margashirsha 30 (sank 22:12, next day) */
+    {1985, 12, 15, SOLAR_CAL_ODIA,   9,  1, 1907},  /* Pausha 1 (sank 22:11, current day) */
+    {2049,  3, 14, SOLAR_CAL_ODIA,  11, 30, 1970},  /* Phalguna 30 (sank 22:23, next day) */
+
+    /* Tightest boundary cases: closest to 22:12 IST cutoff */
+    {1915,  4, 13, SOLAR_CAL_ODIA,   1,  1, 1837},  /* Baisakha 1 (sank 22:11:18, current, 42s before cutoff) */
+    {1974,  5, 14, SOLAR_CAL_ODIA,   2,  1, 1896},  /* Jyeshtha 1 (sank 22:09:42, current) */
+    {1918,  1, 13, SOLAR_CAL_ODIA,  10,  1, 1839},  /* Magha 1 (sank 22:09:30, current) */
+    {1971,  3, 14, SOLAR_CAL_ODIA,  11, 30, 1892},  /* Phalguna 30 (sank 22:14:36, next) */
+    {1957,  1, 13, SOLAR_CAL_ODIA,  10,  1, 1878},  /* Magha 1 (sank 22:09:03, current) */
+    {1946, 12, 15, SOLAR_CAL_ODIA,   9,  1, 1868},  /* Pausha 1 (sank 22:08:53, current) */
+    {2042, 11, 16, SOLAR_CAL_ODIA,   7, 30, 1964},  /* Kartika 30 (sank 22:15:11, next) */
+    {1912,  2, 12, SOLAR_CAL_ODIA,  10, 30, 1833},  /* Magha 30 (sank 22:16:15, next) */
+    {2032,  4, 13, SOLAR_CAL_ODIA,   1,  1, 1954},  /* Baisakha 1 (sank 22:06:10, current) */
+    {2040,  8, 16, SOLAR_CAL_ODIA,   4, 32, 1962},  /* Shravana 32 (sank 22:18:43, next) */
+    {1936,  7, 15, SOLAR_CAL_ODIA,   4,  1, 1858},  /* Shravana 1 (sank 22:05:19, current) */
+    {1932,  3, 13, SOLAR_CAL_ODIA,  11, 30, 1853},  /* Phalguna 30 (sank 22:19:16, next) */
+
     /* ---- Malayalam Solar Calendar (Kollam era) ---- */
     /* Verified against drikpanchang.com Malayalam Panchangam */
 

@@ -113,7 +113,7 @@ static const SolarCalendarConfig *get_config(SolarCalendarType type)
  * civil day a sankranti belongs to:
  *   Tamil:     sunset of the current day
  *   Bengali:   midnight (start of the civil day, i.e. 0h local)
- *   Odia:      end of civil day (midnight)
+ *   Odia:      22:12 IST (fixed cutoff, empirically determined from drikpanchang.com)
  *   Malayalam:  apparent noon (midpoint of sunrise and sunset)
  */
 
@@ -133,10 +133,12 @@ static double critical_time_jd(double jd_midnight_ut, const Location *loc,
         return jd_midnight_ut - loc->utc_offset / 24.0 + 24.0 / (24.0 * 60.0);
 
     case SOLAR_CAL_ODIA:
-        /* End of civil day (midnight ending this day = start of next day).
-         * drikpanchang assigns the sankranti to whichever local date it
-         * falls on, which is equivalent to critical time = end of day. */
-        return jd_midnight_ut + 1.0 - loc->utc_offset / 24.0;
+        /* Fixed IST cutoff at 22:12 (10:12 PM IST).
+         * Empirically determined from 23 boundary cases on drikpanchang.com:
+         * all sankrantis at <=22:11 IST are assigned to the current day,
+         * all sankrantis at >=22:12 IST are assigned to the next day.
+         * 22:12 IST = 16:42 UTC = 16.7h UTC. */
+        return jd_midnight_ut + 16.7 / 24.0;
 
     case SOLAR_CAL_MALAYALAM:
         {
