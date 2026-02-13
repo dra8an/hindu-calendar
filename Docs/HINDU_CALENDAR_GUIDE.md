@@ -1208,11 +1208,7 @@ The Swiss Ephemeris `SE_SIDM_LAHIRI` and the Indian Astronomical Ephemeris Lahir
 
 For most dates, a 10-minute offset doesn't matter because the sankranti is far from any critical time boundary. But for dates where the sankranti falls within ~10 minutes of the critical time, our implementation and drikpanchang may assign the sankranti to different civil days.
 
-This affects approximately:
-- **0 dates** for Tamil (sunset is far from typical sankranti times)
-- **~0 dates** for Bengali (midnight boundary is far from typical sankranti times)
-- **~3 dates** in 150 years for Odia (near the 22:12 IST cutoff)
-- **~15 dates** in 150 years for Malayalam (the 3/5 daytime boundary is closer to typical sankranti times)
+The documented impact for Malayalam is ~15 dates in 150 years (the boundary zone cases from `MALAYALAM_ADJUSTMENTS.md`). The impact for the other three calendars has not been systematically measured. Any calendar can have affected dates whenever a sankranti falls within ~10 minutes of its critical time — none are inherently immune.
 
 ### 5.4 Sunrise Definition
 
