@@ -17,6 +17,7 @@ This guide documents everything needed to reimplement the Hindu calendar system 
 7. [Reference Tables](#7-reference-tables)
 - [Appendix A: Complete Pseudocode Reference](#appendix-a-complete-pseudocode-reference)
 - [Appendix B: Worked Examples](#appendix-b-worked-examples)
+- [References](#references)
 
 ---
 
@@ -38,9 +39,9 @@ This guide describes how to implement two closely related Hindu calendar systems
 
 There are two fundamental approaches to Hindu calendar computation:
 
-- **Surya Siddhanta** (traditional): Uses fixed mathematical models from ancient Indian astronomy. This is the approach taken by Reingold and Dershowitz in *Calendrical Calculations*. It gives approximate results that diverge from modern observations by up to a day.
+- **[Surya Siddhanta](https://en.wikipedia.org/wiki/Surya_Siddhanta)** (traditional): Uses fixed mathematical models from ancient Indian astronomy. This is the approach taken by Reingold and Dershowitz in *[Calendrical Calculations](https://www.cambridge.org/us/academic/subjects/computer-science/computing-general-interest/calendrical-calculations-ultimate-edition-4th-edition)*. It gives approximate results that diverge from modern observations by up to a day.
 
-- **Drik Siddhanta** (observational/modern): Uses modern planetary ephemeris calculations (typically Swiss Ephemeris) with the Lahiri ayanamsa. This matches what actual Hindu calendar makers (panchang publishers) use today and what appears on [drikpanchang.com](https://www.drikpanchang.com/).
+- **Drik Siddhanta** (observational/modern): Uses modern planetary ephemeris calculations (typically [Swiss Ephemeris](https://www.astro.com/swisseph/)) with the [Lahiri ayanamsa](https://en.wikipedia.org/wiki/Lahiri_ayanamsa). This matches what actual Hindu calendar makers (panchang publishers) use today and what appears on [drikpanchang.com](https://www.drikpanchang.com/).
 
 **This guide uses the Drik Siddhanta approach.** The algorithms require a planetary ephemeris library that can compute:
 - Solar and lunar ecliptic longitudes (tropical/sidereal)
@@ -65,25 +66,30 @@ To implement these calendars, you need:
 
 ### 1.4 Key Terminology
 
-| Term | Meaning |
-|------|---------|
-| **Tithi** | Lunar day; one of 30 divisions of the synodic month, each 12° of moon-sun elongation |
-| **Paksha** | Fortnight; Shukla (bright/waxing, tithis 1–15) or Krishna (dark/waning, tithis 16–30) |
-| **Purnima** | Full moon; tithi 15, end of Shukla paksha |
-| **Amavasya** | New moon; tithi 30, end of Krishna paksha |
-| **Masa** | Lunar month; the period between two new moons (Amanta scheme) |
-| **Adhika** | Intercalary/leap; an extra month or repeated tithi |
-| **Kshaya** | Lost/skipped; a dropped month or skipped tithi |
-| **Rashi** | Sidereal zodiac sign; one of 12 equal 30° segments of the sidereal ecliptic |
-| **Sankranti** | The moment the sun enters a new rashi (sidereal zodiac sign) |
-| **Ayanamsa** | The angular difference between tropical and sidereal ecliptic longitudes (~24° currently) |
-| **Lahiri** | The standard ayanamsa used by the Indian government and most panchang publishers |
-| **Sayana** | Tropical; measured from the vernal equinox |
-| **Nirayana** | Sidereal; measured from a fixed star reference point |
-| **Saka** | The Indian national calendar era; year 1 = 78 CE |
-| **Vikram Samvat** | Another common Hindu era; year 1 = 57 BCE |
-| **JD** | Julian Day number; continuous day count used in astronomy |
-| **IST** | Indian Standard Time; UTC+5:30 |
+| Term | Meaning | Reference |
+|------|---------|-----------|
+| **[Tithi]** | Lunar day; one of 30 divisions of the synodic month, each 12° of moon-sun elongation | [Wikipedia: Tithi](https://en.wikipedia.org/wiki/Tithi) |
+| **[Paksha]** | Fortnight; Shukla (bright/waxing, tithis 1–15) or Krishna (dark/waning, tithis 16–30) | [Wikipedia: Paksha](https://en.wikipedia.org/wiki/Paksha) |
+| **[Purnima]** | Full moon; tithi 15, end of Shukla paksha | [Wikipedia: Purnima](https://en.wikipedia.org/wiki/Purnima) |
+| **[Amavasya]** | New moon; tithi 30, end of Krishna paksha | [Wikipedia: Amavasya](https://en.wikipedia.org/wiki/Amavasya) |
+| **[Masa]** | Lunar month; the period between two new moons (Amanta scheme) | [Wikipedia: Hindu month](https://en.wikipedia.org/wiki/Hindu_calendar#Months) |
+| **[Adhika]** | Intercalary/leap; an extra month or repeated tithi | [Wikipedia: Adhik Maas](https://en.wikipedia.org/wiki/Adhik_Maas) |
+| **[Kshaya]** | Lost/skipped; a dropped month or skipped tithi | [Wikipedia: Hindu month — Kshaya](https://en.wikipedia.org/wiki/Hindu_calendar#Kshaya) |
+| **[Rashi]** | Sidereal zodiac sign; one of 12 equal 30° segments of the sidereal ecliptic | [Wikipedia: Rashi](https://en.wikipedia.org/wiki/Hindu_astrology#Rashi) |
+| **[Sankranti]** | The moment the sun enters a new rashi (sidereal zodiac sign) | [Wikipedia: Sankranti](https://en.wikipedia.org/wiki/Sankranti) |
+| **[Ayanamsa]** | The angular difference between tropical and sidereal ecliptic longitudes (~24° currently) | [Wikipedia: Ayanamsa](https://en.wikipedia.org/wiki/Ayanamsa) |
+| **[Lahiri]** | The standard ayanamsa used by the Indian government and most panchang publishers | [Wikipedia: Lahiri ayanamsa](https://en.wikipedia.org/wiki/Lahiri_ayanamsa) |
+| **[Sayana]** | Tropical; measured from the vernal equinox | [Wikipedia: Tropical coordinate system](https://en.wikipedia.org/wiki/Ecliptic_coordinate_system) |
+| **[Nirayana]** | Sidereal; measured from a fixed star reference point | [Wikipedia: Sidereal and tropical astrology](https://en.wikipedia.org/wiki/Sidereal_and_tropical_astrology) |
+| **[Saka]** | The Indian national calendar era; year 1 = 78 CE | [Wikipedia: Indian national calendar](https://en.wikipedia.org/wiki/Indian_national_calendar) |
+| **[Vikram Samvat]** | Another common Hindu era; year 1 = 57 BCE | [Wikipedia: Vikram Samvat](https://en.wikipedia.org/wiki/Vikram_Samvat) |
+| **[JD]** | Julian Day number; continuous day count used in astronomy | [Wikipedia: Julian day](https://en.wikipedia.org/wiki/Julian_day) |
+| **[IST]** | Indian Standard Time; UTC+5:30 | [Wikipedia: Indian Standard Time](https://en.wikipedia.org/wiki/Indian_Standard_Time) |
+| **[Panchang]** | Hindu almanac/calendar; literally "five limbs" (tithi, vara, nakshatra, yoga, karana) | [Wikipedia: Panchangam](https://en.wikipedia.org/wiki/Panchangam) |
+| **[Ecliptic]** | The apparent path of the sun through the sky; the reference plane for celestial longitude | [Wikipedia: Ecliptic](https://en.wikipedia.org/wiki/Ecliptic) |
+| **[Synodic month]** | The period between two new moons; ~29.53 days | [Wikipedia: Lunar month](https://en.wikipedia.org/wiki/Lunar_month#Synodic_month) |
+| **[Precession]** | Slow westward shift of the equinox points; ~50.3 arcsec/year; causes tropical–sidereal divergence | [Wikipedia: Axial precession](https://en.wikipedia.org/wiki/Axial_precession) |
+| **[Kali Yuga]** | Hindu cosmological epoch starting 3102 BCE; the Kali Ahargana day count starts here | [Wikipedia: Kali Yuga](https://en.wikipedia.org/wiki/Kali_Yuga) |
 
 ---
 
@@ -91,7 +97,7 @@ To implement these calendars, you need:
 
 ### 2.1 The Ecliptic and Celestial Coordinates
 
-The **ecliptic** is the apparent path of the sun across the sky over a year. It is the fundamental reference plane for Hindu calendar calculations. Positions on the ecliptic are measured as **ecliptic longitude** — an angle from 0° to 360°.
+The **[ecliptic](https://en.wikipedia.org/wiki/Ecliptic)** is the apparent path of the sun across the sky over a year. It is the fundamental reference plane for Hindu calendar calculations. Positions on the ecliptic are measured as **[ecliptic longitude](https://en.wikipedia.org/wiki/Ecliptic_coordinate_system)** — an angle from 0° to 360°.
 
 For Hindu calendar purposes, we only need ecliptic longitude (not latitude). The sun's ecliptic latitude is always 0° by definition. The moon's ecliptic latitude is small enough (±5.1°) to be irrelevant — we only use its ecliptic longitude.
 
@@ -99,9 +105,9 @@ For Hindu calendar purposes, we only need ecliptic longitude (not latitude). The
 
 There are two ways to measure ecliptic longitude:
 
-**Tropical (Sayana)**: Measured from the vernal equinox point (where the sun is at the March equinox). This point slowly moves against the stars due to Earth's axial precession. Tropical longitude is what most Western astronomy uses.
+**Tropical (Sayana)**: Measured from the [vernal equinox](https://en.wikipedia.org/wiki/March_equinox) point (where the sun is at the March equinox). This point slowly moves against the stars due to Earth's [axial precession](https://en.wikipedia.org/wiki/Axial_precession). Tropical longitude is what most Western astronomy uses.
 
-**Sidereal (Nirayana)**: Measured from a fixed point among the stars. This is the traditional Hindu reference. The sidereal origin is defined by the chosen ayanamsa standard.
+**Sidereal (Nirayana)**: Measured from a fixed point among the stars. This is the traditional Hindu reference. The sidereal origin is defined by the chosen [ayanamsa](https://en.wikipedia.org/wiki/Ayanamsa) standard.
 
 The relationship is:
 
@@ -111,9 +117,9 @@ sidereal_longitude = tropical_longitude - ayanamsa
 
 ### 2.3 Ayanamsa
 
-The **ayanamsa** is the angular difference between the tropical and sidereal zero points. It increases by approximately 50.3 arcseconds per year due to precession. As of 2025, the Lahiri ayanamsa is approximately 24.2°.
+The **[ayanamsa](https://en.wikipedia.org/wiki/Ayanamsa)** is the angular difference between the tropical and sidereal zero points. It increases by approximately 50.3 arcseconds per year due to [precession](https://en.wikipedia.org/wiki/Axial_precession). As of 2025, the Lahiri ayanamsa is approximately 24.2°.
 
-**Lahiri ayanamsa** (also called Chitrapaksha ayanamsa) is the standard used by:
+**[Lahiri ayanamsa](https://en.wikipedia.org/wiki/Lahiri_ayanamsa)** (also called Chitrapaksha ayanamsa) is the standard used by:
 - The Indian government (Indian Astronomical Ephemeris)
 - Most panchang publishers
 - drikpanchang.com
@@ -142,8 +148,8 @@ This is a critical design decision and a common source of bugs:
 The sun moves approximately **1° per day** along the ecliptic (more precisely, 360° / 365.25636 days ≈ 0.9856°/day).
 
 Key values:
-- **Sidereal year** = 365.25636 days (sun returns to same star position)
-- **Tropical year** = 365.24219 days (equinox to equinox)
+- **[Sidereal year](https://en.wikipedia.org/wiki/Sidereal_year)** = 365.25636 days (sun returns to same star position)
+- **[Tropical year](https://en.wikipedia.org/wiki/Tropical_year)** = 365.24219 days (equinox to equinox)
 - Each rashi (30°) takes approximately 30.4 days on average, but varies from ~29 to ~32 days due to Earth's elliptical orbit
 - The sun moves fastest in January (~1.02°/day) and slowest in July (~0.95°/day)
 
@@ -152,8 +158,8 @@ Key values:
 The moon moves approximately **13° per day** along the ecliptic.
 
 Key values:
-- **Synodic month** = 29.53059 days (new moon to new moon)
-- **Sidereal month** = 27.32166 days (moon returns to same star position)
+- **[Synodic month](https://en.wikipedia.org/wiki/Lunar_month#Synodic_month)** = 29.53059 days (new moon to new moon)
+- **[Sidereal month](https://en.wikipedia.org/wiki/Lunar_month#Sidereal_month)** = 27.32166 days (moon returns to same star position)
 - Moon-sun elongation rate: ~12°/day (≈ 13° - 1°)
 - One tithi = 12° of elongation, so a tithi lasts approximately 12°/12°/day ≈ 1 day
 - Actual tithi duration varies from ~19 hours to ~27 hours due to orbital eccentricities
@@ -164,7 +170,7 @@ The Hindu calendar is sunrise-based: the tithi at sunrise governs the entire civ
 
 **Sunrise definition**: For matching drikpanchang.com, use:
 - **Center of disc** at the horizon (not upper limb)
-- **With atmospheric refraction** (standard ~34 arcminutes)
+- **With [atmospheric refraction](https://en.wikipedia.org/wiki/Atmospheric_refraction)** (standard ~34 arcminutes)
 
 In Swiss Ephemeris terms:
 ```
@@ -177,7 +183,7 @@ The `jd_ut` input to `swe_rise_trans` should be in UT (not local time). To find 
 
 ### 2.8 Julian Day Numbers
 
-The **Julian Day (JD)** is a continuous count of days used in astronomy. It is the universal time coordinate for all calculations in this guide.
+The **[Julian Day (JD)](https://en.wikipedia.org/wiki/Julian_day)** is a continuous count of days used in astronomy. It is the universal time coordinate for all calculations in this guide.
 
 **Critical convention**: JD is **noon-based**. JD 2451545.0 corresponds to **2000-01-01 12:00:00 UT** (noon), not midnight.
 
@@ -217,10 +223,10 @@ This is **not** the same as apparent noon (midpoint of sunrise and sunset), whic
 
 ### 3.1 Overview
 
-The Hindu lunisolar calendar tracks both the moon's phase (for tithis and months) and the sun's position (for month naming and year numbering). There are two main schemes:
+The [Hindu lunisolar calendar](https://en.wikipedia.org/wiki/Hindu_calendar) tracks both the moon's phase (for tithis and months) and the sun's position (for month naming and year numbering). There are two main schemes:
 
-- **Amanta** (also called Purnimanta's complement): Months run from new moon (Amavasya) to new moon. Used in South and West India. **This guide uses the Amanta scheme.**
-- **Purnimanta**: Months run from full moon (Purnima) to full moon. Used in North India. The Shukla paksha of an Amanta month = same Purnimanta month. The Krishna paksha of Amanta month N = Purnimanta month N+1.
+- **[Amanta](https://en.wikipedia.org/wiki/Amanta)** (also called Purnimanta's complement): Months run from new moon ([Amavasya](https://en.wikipedia.org/wiki/Amavasya)) to new moon. Used in South and West India. **This guide uses the Amanta scheme.**
+- **[Purnimanta](https://en.wikipedia.org/wiki/Purnimant)**: Months run from full moon ([Purnima](https://en.wikipedia.org/wiki/Purnima)) to full moon. Used in North India. The Shukla paksha of an Amanta month = same Purnimanta month. The Krishna paksha of Amanta month N = Purnimanta month N+1.
 
 The civil day starts at sunrise. The tithi prevailing at sunrise governs that entire day, even if a different tithi takes over later that day.
 
@@ -228,7 +234,7 @@ The civil day starts at sunrise. The tithi prevailing at sunrise governs that en
 
 #### Definition
 
-A **tithi** is one of 30 divisions of the synodic month. Each tithi spans exactly 12° of moon-sun elongation (lunar phase angle).
+A **[tithi](https://en.wikipedia.org/wiki/Tithi)** is one of 30 divisions of the [synodic month](https://en.wikipedia.org/wiki/Lunar_month#Synodic_month). Each tithi spans exactly 12° of moon-sun elongation (lunar phase angle).
 
 The **lunar phase** is the angular distance from sun to moon, measured eastward:
 
@@ -411,7 +417,7 @@ New moons (Amavasya) bracket the lunar months in the Amanta scheme. To determine
 
 #### The 17-Point Inverse Lagrange Interpolation Method
 
-Rather than bisection (which is slow for finding new moons), we use a faster approach: sample the lunar phase at 17 equally-spaced points around the estimated new moon, then use inverse Lagrange interpolation to find where the phase crosses 360° (= 0° wrapped).
+Rather than bisection (which is slow for finding new moons), we use a faster approach: sample the lunar phase at 17 equally-spaced points around the estimated new moon, then use inverse [Lagrange interpolation](https://en.wikipedia.org/wiki/Lagrange_polynomial) to find where the phase crosses 360° (= 0° wrapped).
 
 This method comes from the Python drik-panchanga reference implementation and is fast because it requires exactly 17 ephemeris evaluations (vs. 50+ for bisection).
 
@@ -580,7 +586,7 @@ function masa_for_date(year, month, day, location):
 
 #### Definition
 
-An **adhika masa** (intercalary month) occurs when the sun stays in the same sidereal rashi across two consecutive new moons. This means no sankranti (solar sign change) occurs during that lunar month. The month lacks a "solar identity," so it is declared adhika (extra).
+An **[adhika masa](https://en.wikipedia.org/wiki/Adhik_Maas)** (intercalary month) occurs when the sun stays in the same sidereal rashi across two consecutive new moons. This means no sankranti (solar sign change) occurs during that lunar month. The month lacks a "solar identity," so it is declared adhika (extra).
 
 #### Detection
 
@@ -608,9 +614,9 @@ Kshaya masas are extremely rare — the interval between occurrences ranges from
 
 #### Saka Era
 
-The Saka era is the official Indian national calendar era. Year 1 corresponds to 78 CE.
+The [Saka era](https://en.wikipedia.org/wiki/Indian_national_calendar) is the official Indian national calendar era. Year 1 corresponds to 78 CE.
 
-The year calculation uses the Kali Ahargana method:
+The year calculation uses the [Kali Ahargana](https://en.wikipedia.org/wiki/Kali_Yuga) method:
 
 ```
 function hindu_year_saka(jd, masa_num):
@@ -623,9 +629,9 @@ function hindu_year_saka(jd, masa_num):
 
 The `(4 - masa_num) * 30` term adjusts for the fact that the Hindu new year starts with Chaitra (masa 1), which falls in March/April. For months before Chaitra in a given Gregorian year, the Saka year is one less.
 
-The constant `588465.5` is the Julian Day of the Kali Yuga epoch (3102 BCE, January 23 midnight).
+The constant `588465.5` is the Julian Day of the [Kali Yuga](https://en.wikipedia.org/wiki/Kali_Yuga) epoch (3102 BCE, January 23 midnight).
 
-#### Vikram Samvat
+#### [Vikram Samvat](https://en.wikipedia.org/wiki/Vikram_Samvat)
 
 ```
 vikram_samvat = saka + 135
@@ -666,7 +672,7 @@ Note: When `day = 1`, the previous day is the last day of the previous Gregorian
 
 ### 4.1 Overview
 
-Hindu solar calendars define months by **sankranti** — the exact moment the sun enters a new sidereal zodiac sign. Each of the 12 rashis corresponds to one solar month, lasting 29–32 days depending on the sun's orbital speed.
+Hindu solar calendars define months by **[sankranti](https://en.wikipedia.org/wiki/Sankranti)** — the exact moment the sun enters a new sidereal zodiac sign. Each of the 12 [rashis](https://en.wikipedia.org/wiki/Hindu_astrology#Rashi) corresponds to one solar month, lasting 29–32 days depending on the sun's orbital speed.
 
 Four regional variants are covered here, all sharing the same astronomical basis but differing in:
 
@@ -694,7 +700,7 @@ A **sankranti** is the exact moment when the sun's sidereal ecliptic longitude c
 
 #### Bisection Algorithm
 
-To find the exact JD of a sankranti, use bisection on the sidereal solar longitude:
+To find the exact JD of a sankranti, use [bisection](https://en.wikipedia.org/wiki/Bisection_method) on the sidereal solar longitude:
 
 ```
 function sankranti_jd(jd_approx, target_longitude):
@@ -773,7 +779,7 @@ function sankranti_to_civil_day(jd_sankranti, location, calendar_type):
 
 Each calendar computes `critical_time_jd` differently — described in the following subsections.
 
-### 4.4 Tamil Solar Calendar (Tamizh Varudam)
+### 4.4 Tamil Solar Calendar (Tamizh Varudam) — [Wikipedia](https://en.wikipedia.org/wiki/Tamil_calendar)
 
 #### Critical Time: Sunset
 
@@ -825,7 +831,7 @@ function gregorian_to_tamil(year, month, day, location):
 
 See [Section 4.8](#48-generic-solar-date-conversion) for the generic conversion function.
 
-### 4.5 Bengali Solar Calendar (Bangabda)
+### 4.5 Bengali Solar Calendar (Bangabda) — [Wikipedia](https://en.wikipedia.org/wiki/Bengali_calendar)
 
 #### Critical Time: Midnight + 24-Minute Buffer
 
@@ -877,7 +883,7 @@ Mesha (rashi 1), typically around April 14 (Pohela Boishakh).
 | 11. Falgun | Kumbha |
 | 12. Choitro | Meena |
 
-### 4.6 Odia Solar Calendar (Saka)
+### 4.6 Odia Solar Calendar (Saka) — [Wikipedia](https://en.wikipedia.org/wiki/Odia_calendar)
 
 #### Critical Time: Fixed 22:12 IST
 
@@ -945,7 +951,7 @@ The tightest verified boundary cases (within 3 minutes of the 22:12 IST cutoff):
 | 1971-03-14 | 22:14:36 | +2m36s | Next day |
 | 2042-11-16 | 22:15:11 | +3m11s | Next day |
 
-### 4.7 Malayalam Solar Calendar (Kollam)
+### 4.7 Malayalam Solar Calendar (Kollam) — [Wikipedia](https://en.wikipedia.org/wiki/Malayalam_calendar)
 
 #### Critical Time: End of Madhyahna (3/5 of Daytime)
 
@@ -2030,13 +2036,155 @@ Year: Simha sankranti date, on/after → Kollam = 2025 - 824 = 1201
 
 ---
 
-## Acknowledgments
+## References
 
-This guide was developed alongside a C implementation that uses the Swiss Ephemeris library. The algorithms were validated against [drikpanchang.com](https://www.drikpanchang.com/) — the most widely used online panchang. The Python [drik-panchanga](https://github.com/webresh/drik-panchanga) project by webresh served as a key reference implementation.
+### Books
 
-The mathematical foundations draw from:
-- *Calendrical Calculations* by Edward M. Reingold and Nachum Dershowitz (Chapter 20: Hindu Calendars)
-- The Swiss Ephemeris documentation by Astrodienst
-- The Indian Astronomical Ephemeris published by the India Meteorological Department
+1. **Reingold, E. M. & Dershowitz, N.** (2018). *Calendrical Calculations: The Ultimate Edition* (4th ed.). Cambridge University Press.
+   - Chapter 20: Hindu Calendars (pp. 548–606) — mathematical foundations for both Surya Siddhanta and astronomical (Drik) Hindu calendars
+   - Chapter 14: Old Hindu Calendars — historical Surya Siddhanta algorithms
+   - Companion Lisp code: [github.com/EdReingold/calendar-code2](https://github.com/EdReingold/calendar-code2) — 72 Hindu calendar functions
+   - [Publisher page](https://www.cambridge.org/us/academic/subjects/computer-science/computing-general-interest/calendrical-calculations-ultimate-edition-4th-edition)
 
-The critical time rules for the Odia and Malayalam solar calendars were discovered through systematic empirical investigation against drikpanchang.com, as documented in the companion files `ODIA_ADJUSTMENTS.md` and `MALAYALAM_ADJUSTMENTS.md`.
+2. **Burgess, E.** (1860, reprinted 2014). *Translation of the Surya Siddhanta*. Motilal Banarsidass.
+   - The original ancient Indian astronomical treatise; defines the traditional (non-ephemeris) approach
+   - [Internet Archive full text](https://archive.org/details/SuryaSiddhanta_201312)
+
+3. **Sewell, R. & Dikshit, S. B.** (1896). *The Indian Calendar*. Motilal Banarsidass.
+   - Classic reference for Indian calendrical systems with extensive conversion tables
+   - [Internet Archive full text](https://archive.org/details/indiancalendar00sewerich)
+
+4. **Chatterjee, S. K.** (1998). *Indian Calendric System*. Publications Division, Government of India.
+   - Authoritative Indian government reference on the national calendar reform and Saka era
+
+### Software and Tools
+
+5. **Swiss Ephemeris** — Astrodienst AG.
+   - High-precision planetary ephemeris library; the standard for Hindu calendar implementations
+   - [Official site](https://www.astro.com/swisseph/)
+   - [GitHub repository](https://github.com/aloistr/swisseph)
+   - [General documentation (PDF)](https://www.astro.com/swisseph/swephprg.htm)
+   - [Swiss Ephemeris programmer's reference](https://www.astro.com/swisseph/swephprg.htm) — covers `swe_calc_ut`, `swe_rise_trans`, `swe_set_sid_mode`, ayanamsa modes
+
+6. **drik-panchanga** (Python reference implementation) — webresh.
+   - Python implementation using Swiss Ephemeris; same Drik Siddhanta approach as this guide
+   - [GitHub repository](https://github.com/webresh/drik-panchanga)
+   - Key reference for: 17-point Lagrange interpolation for new moon finding, Saka year (Kali Ahargana) formula, sunrise configuration flags
+
+7. **drikpanchang.com** — Panchang publisher and validation reference.
+   - The most widely used online panchang; ground truth for all our validation
+   - [Month Panchang](https://www.drikpanchang.com/panchang/month-panchang.html) — daily tithi, masa, paksha for any month
+   - [Tamil Calendar](https://www.drikpanchang.com/tamil/tamil-month-calendar.html)
+   - [Bengali Calendar](https://www.drikpanchang.com/bengali/bengali-month-calendar.html)
+   - [Odia Calendar](https://www.drikpanchang.com/odia/odia-month-calendar.html)
+   - [Malayalam Calendar](https://www.drikpanchang.com/malayalam/malayalam-month-calendar.html)
+
+### Astronomical Concepts
+
+8. **Ecliptic coordinate system** — the reference frame for all Hindu calendar calculations.
+   - [Wikipedia: Ecliptic coordinate system](https://en.wikipedia.org/wiki/Ecliptic_coordinate_system)
+
+9. **Axial precession** — causes the tropical and sidereal reference frames to diverge (~50.3"/year).
+   - [Wikipedia: Axial precession](https://en.wikipedia.org/wiki/Axial_precession)
+
+10. **Ayanamsa** — the angular measure of precession; Lahiri ayanamsa is the Indian standard.
+    - [Wikipedia: Ayanamsa](https://en.wikipedia.org/wiki/Ayanamsa)
+    - The Indian Astronomical Ephemeris (published by the Positional Astronomy Centre, Kolkata) defines the official Lahiri value; this differs by ~24 arcseconds from Swiss Ephemeris SE_SIDM_LAHIRI
+
+11. **Julian day** — the continuous day count used as the time coordinate in all algorithms.
+    - [Wikipedia: Julian day](https://en.wikipedia.org/wiki/Julian_day)
+    - [US Naval Observatory Julian Date Converter](https://aa.usno.navy.mil/data/JulianDate)
+
+12. **Sunrise and sunset computation** — atmospheric refraction, disc center vs upper limb.
+    - [Wikipedia: Sunrise equation](https://en.wikipedia.org/wiki/Sunrise_equation)
+    - Swiss Ephemeris docs on `swe_rise_trans` — [Rise/Transit documentation](https://www.astro.com/swisseph/swephprg.htm#_Toc112948997)
+
+### Hindu Calendar Concepts
+
+13. **Hindu calendar** — overview of the lunisolar system, regional variants, and eras.
+    - [Wikipedia: Hindu calendar](https://en.wikipedia.org/wiki/Hindu_calendar)
+
+14. **Tithi** — the lunar day, fundamental unit of the Hindu lunisolar calendar.
+    - [Wikipedia: Tithi](https://en.wikipedia.org/wiki/Tithi)
+    - [drikpanchang.com: Tithi](https://www.drikpanchang.com/panchang/tithi.html)
+
+15. **Panchangam** — the Hindu almanac ("five limbs": tithi, vara, nakshatra, yoga, karana).
+    - [Wikipedia: Panchangam](https://en.wikipedia.org/wiki/Panchangam)
+
+16. **Adhik Maas (Adhika Masa)** — the intercalary/leap month that keeps the lunisolar calendar aligned with the solar year.
+    - [Wikipedia: Adhik Maas](https://en.wikipedia.org/wiki/Adhik_Maas)
+    - Occurs when two consecutive new moons fall in the same sidereal rashi (~every 32.5 months)
+
+17. **Sankranti** — solar transit into a new zodiac sign; defines solar month boundaries.
+    - [Wikipedia: Sankranti](https://en.wikipedia.org/wiki/Sankranti)
+    - Major sankrantis: [Makar Sankranti](https://en.wikipedia.org/wiki/Makar_Sankranti) (Makara/Capricorn), [Vishu](https://en.wikipedia.org/wiki/Vishu) (Mesha/Aries)
+
+18. **Rashi** — the 12 sidereal zodiac signs used in Indian astronomy.
+    - [Wikipedia: Hindu astrology — Rashi](https://en.wikipedia.org/wiki/Hindu_astrology#Rashi)
+
+### Regional Solar Calendars
+
+19. **Tamil calendar** (Tamizh Varudam) — solar calendar of Tamil Nadu; year starts at Mesha.
+    - [Wikipedia: Tamil calendar](https://en.wikipedia.org/wiki/Tamil_calendar)
+    - [Puthandu (Tamil New Year)](https://en.wikipedia.org/wiki/Puthandu) — Chithirai 1
+
+20. **Bengali calendar** (Bangabda/Bangla calendar) — solar calendar of Bengal; year starts at Mesha.
+    - [Wikipedia: Bengali calendar](https://en.wikipedia.org/wiki/Bengali_calendar)
+    - [Pohela Boishakh (Bengali New Year)](https://en.wikipedia.org/wiki/Pohela_Boishakh) — Boishakh 1
+
+21. **Odia calendar** — solar calendar of Odisha; year starts at Mesha.
+    - [Wikipedia: Odia calendar](https://en.wikipedia.org/wiki/Odia_calendar)
+    - [Pana Sankranti (Odia New Year)](https://en.wikipedia.org/wiki/Pana_Sankranti) — Baisakha 1
+
+22. **Malayalam calendar** (Kollam era) — solar calendar of Kerala; uniquely starts at Simha.
+    - [Wikipedia: Malayalam calendar](https://en.wikipedia.org/wiki/Malayalam_calendar)
+    - [Chingam 1 (Malayalam New Year)](https://en.wikipedia.org/wiki/Chingam) — beginning of Simha
+
+### Year Eras
+
+23. **Indian national calendar (Saka era)** — year 1 = 78 CE; official civil calendar of India.
+    - [Wikipedia: Indian national calendar](https://en.wikipedia.org/wiki/Indian_national_calendar)
+
+24. **Vikram Samvat** — year 1 = 57 BCE; widely used in North India and Nepal.
+    - [Wikipedia: Vikram Samvat](https://en.wikipedia.org/wiki/Vikram_Samvat)
+
+25. **Kollam era** — year 1 = 824 CE; used by the Malayalam calendar.
+    - [Wikipedia: Kollam era](https://en.wikipedia.org/wiki/Kollam_era)
+
+26. **Kali Yuga** — cosmological epoch starting 3102 BCE; Kali Ahargana day count is used in year calculation.
+    - [Wikipedia: Kali Yuga](https://en.wikipedia.org/wiki/Kali_Yuga)
+
+### Numerical Methods
+
+27. **Bisection method** — root-finding algorithm used for tithi boundary and sankranti finding.
+    - [Wikipedia: Bisection method](https://en.wikipedia.org/wiki/Bisection_method)
+    - 50 iterations on a 40-day bracket gives ~3 nanosecond precision (40 / 2^50 ≈ 3.6 × 10⁻¹⁴ days)
+
+28. **Lagrange interpolation** — polynomial interpolation used for new moon finding (inverse form).
+    - [Wikipedia: Lagrange polynomial](https://en.wikipedia.org/wiki/Lagrange_polynomial)
+    - We use the *inverse* form: given y-values, find the x where y = target
+
+### Companion Documents
+
+29. **ODIA_ADJUSTMENTS.md** — detailed investigation of the Odia 22:12 IST critical time rule.
+    - Covers 4 hypothesis stages (midnight → apparent midnight → fixed offset → fixed IST)
+    - 35 verified boundary cases with IST times and cutoff distances
+
+30. **MALAYALAM_ADJUSTMENTS.md** — detailed investigation of the Malayalam 3/5-of-daytime critical time rule.
+    - Covers 4 hypothesis stages (apparent noon → fixed IST → 3/5 daytime → boundary zone analysis)
+    - 33 verified boundary cases; explains the ~24 arcsecond ayanamsa offset causing ~10 min ambiguity
+
+31. **IMPLEMENTATION_PLAN.md** — project roadmap covering all 8 implementation phases.
+
+32. **validation/malayalam_boundary_cases.csv** — all 33 Malayalam boundary cases with fractions, IST times, and drikpanchang assignments.
+
+### Further Reading
+
+33. **Subbarayappa, B. V. & Sarma, K. V.** (1985). *Indian Astronomy: A Source Book*. Nehru Centre.
+    - Comprehensive collection of primary Indian astronomical texts in translation
+
+34. **Ohashi, Y.** (2009). "The Foundations of Astronomy in the Hindu Calendric System." In *Handbook of Archaeoastronomy and Ethnoastronomy*, Springer.
+    - Academic treatment of the astronomical basis of Hindu time-keeping
+
+35. **Rao, S. Balachandra** (2000). *Indian Astronomy: An Introduction*. Universities Press India.
+    - Accessible introduction to Indian positional astronomy and calendar mathematics
