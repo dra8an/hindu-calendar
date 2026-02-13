@@ -1208,7 +1208,7 @@ The Swiss Ephemeris `SE_SIDM_LAHIRI` and the Indian Astronomical Ephemeris Lahir
 
 For most dates, a 10-minute offset doesn't matter because the sankranti is far from any critical time boundary. But for dates where the sankranti falls within ~10 minutes of the critical time, our implementation and drikpanchang may assign the sankranti to different civil days.
 
-The documented impact for Malayalam is ~15 dates in 150 years (the boundary zone cases from `MALAYALAM_ADJUSTMENTS.md`). The impact for the other three calendars has not been systematically measured. Any calendar can have affected dates whenever a sankranti falls within ~10 minutes of its critical time — none are inherently immune.
+For Malayalam, `MALAYALAM_ADJUSTMENTS.md` reports that 15 of 33 manually verified boundary cases fell in the ambiguous zone (fraction 0.586–0.600 of daytime) where our code and drikpanchang disagree. However, those 33 cases were specifically selected because they were *near* the cutoff — they are not a random sample. The total number of affected dates across all ~1,812 Malayalam month boundaries (1900–2050) has not been measured. The impact for Tamil, Bengali, and Odia has also not been systematically measured. Any calendar can have affected dates whenever a sankranti falls within ~10 minutes of its critical time.
 
 ### 5.4 Sunrise Definition
 
@@ -1317,7 +1317,7 @@ For implementers: do not try to find an "elegant" astronomical rule for Odia. Us
 
 The Malayalam 3/5-of-daytime rule has an inherent ambiguity zone (fractions 0.586–0.600) where no single fraction perfectly separates all drikpanchang.com assignments. This is due to the ~24 arcsecond ayanamsa difference (see [Section 5.3](#53-ayanamsa-differences)).
 
-There is no fix for this within the Swiss Ephemeris. To exactly match drikpanchang.com for all dates, you would need their exact ayanamsa implementation. For practical purposes, 3/5 of daytime is correct for ~99.5% of dates in the 1900–2050 range (~15 mismatches out of ~1,812 month boundaries).
+There is no fix for this within the Swiss Ephemeris. To exactly match drikpanchang.com for all dates, you would need their exact ayanamsa implementation. For practical purposes, 3/5 of daytime is correct for the vast majority of dates. Of 33 manually verified boundary cases, 15 fell in the ambiguous zone — but these were specifically selected for being near the cutoff, so the overall mismatch rate across all ~1,812 month boundaries is unknown.
 
 ---
 
@@ -1378,7 +1378,7 @@ Our implementation has 51,943 assertions across 9 test suites, covering:
 ### 6.6 Known Limitations
 
 1. **Kshaya masa**: Not implemented. These are so rare (19–141 year gaps) that they don't affect the 1900–2050 validation range
-2. **Ayanamsa boundary zone**: ~15 Malayalam and ~3 Odia dates may differ from drikpanchang.com due to the ~24 arcsecond ayanamsa offset
+2. **Ayanamsa boundary zone**: Some dates near each calendar's critical time boundary may differ from drikpanchang.com due to the ~24 arcsecond ayanamsa offset (15 of 33 verified Malayalam boundary cases; other calendars not yet measured)
 3. **Location dependence**: All validation uses New Delhi (28.6139°N, 77.2090°E). Different locations may shift sunrise enough to change the tithi on a few dates per year
 
 ---
