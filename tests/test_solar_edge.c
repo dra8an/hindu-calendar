@@ -54,18 +54,18 @@ static struct {
 } edge_cases[] = {
 
     /* ---- TAMIL - 100 closest to sunset ---- */
-    {1962,  2, 12, SOLAR_CAL_TAMIL,       11, 1, 1883},  /* delta=-0.2min sank=18:07:30 crit=18:07:41 rashi=11 */
+    {1962,  2, 12, SOLAR_CAL_TAMIL,       10, 30, 1883},  /* delta=-0.2min sank=18:07:30 crit=18:07:41 rashi=11 CORRECTED */
     {1949,  6, 15, SOLAR_CAL_TAMIL,        3, 1, 1871},  /* delta=+1.1min sank=19:19:42 crit=19:18:36 rashi=3 */
-    {1969,  4, 13, SOLAR_CAL_TAMIL,        1, 1, 1891},  /* delta=-2.1min sank=18:42:28 crit=18:44:34 rashi=1 */
+    {1969,  4, 13, SOLAR_CAL_TAMIL,       12, 31, 1890},  /* delta=-2.1min sank=18:42:28 crit=18:44:34 rashi=1 CORRECTED */
     {1910,  6, 15, SOLAR_CAL_TAMIL,        3, 1, 1832},  /* delta=+3.4min sank=19:21:48 crit=19:18:21 rashi=3 */
     {1977,  9, 17, SOLAR_CAL_TAMIL,        6, 1, 1899},  /* delta=+3.5min sank=18:27:51 crit=18:24:24 rashi=6 */
-    {1971, 11, 16, SOLAR_CAL_TAMIL,        8, 1, 1893},  /* delta=-4.5min sank=17:21:52 crit=17:26:24 rashi=8 */
-    {2032,  5, 14, SOLAR_CAL_TAMIL,        2, 1, 1954},  /* delta=-4.7min sank=18:58:47 crit=19:03:27 rashi=2 */
+    {1971, 11, 16, SOLAR_CAL_TAMIL,        7, 31, 1893},  /* delta=-4.5min sank=17:21:52 crit=17:26:24 rashi=8 CORRECTED */
+    {2032,  5, 14, SOLAR_CAL_TAMIL,        1, 31, 1954},  /* delta=-4.7min sank=18:58:47 crit=19:03:27 rashi=2 CORRECTED */
     {2037,  7, 17, SOLAR_CAL_TAMIL,        4, 1, 1959},  /* delta=+6.3min sank=19:25:38 crit=19:19:20 rashi=4 */
     {1915,  5, 15, SOLAR_CAL_TAMIL,        2, 1, 1837},  /* delta=+6.8min sank=19:09:09 crit=19:02:18 rashi=2 */
     {1930,  4, 14, SOLAR_CAL_TAMIL,        1, 1, 1852},  /* delta=+7.2min sank=18:51:25 crit=18:44:14 rashi=1 */
-    {1923,  2, 12, SOLAR_CAL_TAMIL,       11, 1, 1844},  /* delta=-7.4min sank=17:59:55 crit=18:07:21 rashi=11 */
-    {1964,  1, 14, SOLAR_CAL_TAMIL,       10, 1, 1885},  /* delta=-7.7min sank=17:35:54 crit=17:43:36 rashi=10 */
+    {1923,  2, 12, SOLAR_CAL_TAMIL,       10, 30, 1844},  /* delta=-7.4min sank=17:59:55 crit=18:07:21 rashi=11 CORRECTED */
+    {1964,  1, 14, SOLAR_CAL_TAMIL,        9, 30, 1885},  /* delta=-7.7min sank=17:35:54 crit=17:43:36 rashi=10 CORRECTED */
     {2040,  2, 14, SOLAR_CAL_TAMIL,       11, 1, 1961},  /* delta=+8.4min sank=18:16:43 crit=18:08:21 rashi=11 */
     {2031,  6, 16, SOLAR_CAL_TAMIL,        3, 1, 1953},  /* delta=+8.4min sank=19:27:36 crit=19:19:09 rashi=3 */
     {1998,  7, 17, SOLAR_CAL_TAMIL,        4, 1, 1920},  /* delta=+8.5min sank=19:28:00 crit=19:19:28 rashi=4 */
@@ -360,32 +360,32 @@ static struct {
     {1981, 12, 15, SOLAR_CAL_ODIA,         9, 1, 1903},  /* delta=-37.3min sank=21:34:44 crit=22:11:59 rashi=9 */
 
     /* ---- MALAYALAM - 100 closest to end of madhyahna ---- */
-    {1913,  6, 14, SOLAR_CAL_MALAYALAM,   11, 1, 1088},  /* delta=-0.0min sank=13:44:30 crit=13:44:33 rashi=3 */
+    {1913,  6, 14, SOLAR_CAL_MALAYALAM,   10, 32, 1088},  /* delta=-0.0min sank=13:44:30 crit=13:44:33 rashi=3 CORRECTED */
     {1954,  3, 15, SOLAR_CAL_MALAYALAM,    8, 1, 1129},  /* delta=+0.3min sank=13:42:26 crit=13:42:10 rashi=12 */
-    {2021, 11, 16, SOLAR_CAL_MALAYALAM,    4, 1, 1197},  /* delta=-0.3min sank=13:09:32 crit=13:09:49 rashi=8 */
-    {1982, 11, 16, SOLAR_CAL_MALAYALAM,    4, 1, 1158},  /* delta=-0.8min sank=13:09:00 crit=13:09:50 rashi=8 */
-    {1943, 11, 16, SOLAR_CAL_MALAYALAM,    4, 1, 1119},  /* delta=-1.2min sank=13:08:40 crit=13:09:52 rashi=8 */
-    {1976,  4, 13, SOLAR_CAL_MALAYALAM,    9, 1, 1151},  /* delta=-1.2min sank=13:37:16 crit=13:38:29 rashi=1 */
-    {1934,  2, 12, SOLAR_CAL_MALAYALAM,    7, 1, 1109},  /* delta=-1.4min sank=13:40:42 crit=13:42:05 rashi=11 */
-    {1996,  5, 14, SOLAR_CAL_MALAYALAM,   10, 1, 1171},  /* delta=-1.5min sank=13:37:13 crit=13:38:45 rashi=2 */
+    {2021, 11, 16, SOLAR_CAL_MALAYALAM,    3, 30, 1197},  /* delta=-0.3min sank=13:09:32 crit=13:09:49 rashi=8 CORRECTED */
+    {1982, 11, 16, SOLAR_CAL_MALAYALAM,    3, 30, 1158},  /* delta=-0.8min sank=13:09:00 crit=13:09:50 rashi=8 CORRECTED */
+    {1943, 11, 16, SOLAR_CAL_MALAYALAM,    3, 30, 1119},  /* delta=-1.2min sank=13:08:40 crit=13:09:52 rashi=8 CORRECTED */
+    {1976,  4, 13, SOLAR_CAL_MALAYALAM,    8, 31, 1151},  /* delta=-1.2min sank=13:37:16 crit=13:38:29 rashi=1 CORRECTED */
+    {1934,  2, 12, SOLAR_CAL_MALAYALAM,    6, 30, 1109},  /* delta=-1.4min sank=13:40:42 crit=13:42:05 rashi=11 CORRECTED */
+    {1996,  5, 14, SOLAR_CAL_MALAYALAM,    9, 31, 1171},  /* delta=-1.5min sank=13:37:13 crit=13:38:45 rashi=2 CORRECTED */
     {1993,  3, 15, SOLAR_CAL_MALAYALAM,    8, 1, 1168},  /* delta=+2.8min sank=13:44:52 crit=13:42:05 rashi=12 */
-    {1904, 11, 15, SOLAR_CAL_MALAYALAM,    4, 1, 1080},  /* delta=-3.9min sank=13:05:57 crit=13:09:53 rashi=8 */
+    {1904, 11, 15, SOLAR_CAL_MALAYALAM,    3, 30, 1080},  /* delta=-3.9min sank=13:05:57 crit=13:09:53 rashi=8 CORRECTED */
     {1957,  5, 15, SOLAR_CAL_MALAYALAM,   10, 1, 1132},  /* delta=+4.0min sank=13:42:36 crit=13:38:37 rashi=2 */
     {2021, 10, 18, SOLAR_CAL_MALAYALAM,    3, 1, 1197},  /* delta=+4.2min sank=13:18:54 crit=13:14:44 rashi=7 */
-    {1915,  3, 14, SOLAR_CAL_MALAYALAM,    8, 1, 1090},  /* delta=-4.7min sank=13:37:37 crit=13:42:17 rashi=12 */
+    {1915,  3, 14, SOLAR_CAL_MALAYALAM,    7, 30, 1090},  /* delta=-4.7min sank=13:37:37 crit=13:42:17 rashi=12 CORRECTED */
     {2023,  9, 18, SOLAR_CAL_MALAYALAM,    2, 1, 1199},  /* delta=+4.9min sank=13:34:02 crit=13:29:10 rashi=6 */
-    {1901,  1, 13, SOLAR_CAL_MALAYALAM,    6, 1, 1076},  /* delta=-5.0min sank=13:27:34 crit=13:32:34 rashi=10 */
+    {1901,  1, 13, SOLAR_CAL_MALAYALAM,    5, 30, 1076},  /* delta=-5.0min sank=13:27:34 crit=13:32:34 rashi=10 CORRECTED */
     {2040,  7, 17, SOLAR_CAL_MALAYALAM,   12, 1, 1215},  /* delta=+5.2min sank=13:54:48 crit=13:49:36 rashi=4 */
-    {2032,  3, 14, SOLAR_CAL_MALAYALAM,    8, 1, 1207},  /* delta=-5.5min sank=13:36:29 crit=13:42:01 rashi=12 */
+    {2032,  3, 14, SOLAR_CAL_MALAYALAM,    7, 30, 1207},  /* delta=-5.5min sank=13:36:29 crit=13:42:01 rashi=12 CORRECTED */
     {2007, 12, 17, SOLAR_CAL_MALAYALAM,    5, 1, 1183},  /* delta=+6.2min sank=13:24:27 crit=13:18:15 rashi=9 */
-    {1937,  4, 13, SOLAR_CAL_MALAYALAM,    9, 1, 1112},  /* delta=-6.2min sank=13:32:18 crit=13:38:32 rashi=1 */
+    {1937,  4, 13, SOLAR_CAL_MALAYALAM,    8, 31, 1112},  /* delta=-6.2min sank=13:32:18 crit=13:38:32 rashi=1 CORRECTED */
     {1918,  5, 15, SOLAR_CAL_MALAYALAM,   10, 1, 1093},  /* delta=+6.4min sank=13:44:52 crit=13:38:30 rashi=2 */
     {2051,  2, 14, SOLAR_CAL_MALAYALAM,    7, 1, 1226},  /* delta=+7.6min sank=13:49:39 crit=13:42:05 rashi=11 */
     {2015,  4, 15, SOLAR_CAL_MALAYALAM,    9, 1, 1190},  /* delta=+7.7min sank=13:46:10 crit=13:38:26 rashi=1 */
-    {2023,  8, 17, SOLAR_CAL_MALAYALAM,    1, 1, 1199},  /* delta=-8.4min sank=13:35:19 crit=13:43:43 rashi=5 */
-    {1973,  2, 12, SOLAR_CAL_MALAYALAM,    7, 1, 1148},  /* delta=-9.1min sank=13:33:01 crit=13:42:06 rashi=11 */
+    {2023,  8, 17, SOLAR_CAL_MALAYALAM,   12, 32, 1198},  /* delta=-8.4min sank=13:35:19 crit=13:43:43 rashi=5 CORRECTED */
+    {1973,  2, 12, SOLAR_CAL_MALAYALAM,    6, 30, 1148},  /* delta=-9.1min sank=13:33:01 crit=13:42:06 rashi=11 CORRECTED */
     {2012,  2, 14, SOLAR_CAL_MALAYALAM,    7, 1, 1187},  /* delta=+9.2min sank=13:51:16 crit=13:42:04 rashi=11 */
-    {1952,  6, 14, SOLAR_CAL_MALAYALAM,   11, 1, 1127},  /* delta=-9.3min sank=13:35:28 crit=13:44:46 rashi=3 */
+    {1952,  6, 14, SOLAR_CAL_MALAYALAM,   10, 32, 1127},  /* delta=-9.3min sank=13:35:28 crit=13:44:46 rashi=3 CORRECTED */
     {1940,  1, 15, SOLAR_CAL_MALAYALAM,    6, 1, 1115},  /* delta=+9.4min sank=13:42:04 crit=13:32:42 rashi=10 */
     {1982, 10, 18, SOLAR_CAL_MALAYALAM,    3, 1, 1158},  /* delta=+9.4min sank=13:24:21 crit=13:14:57 rashi=7 */
     {1943, 10, 18, SOLAR_CAL_MALAYALAM,    3, 1, 1119},  /* delta=+9.7min sank=13:24:52 crit=13:15:10 rashi=7 */

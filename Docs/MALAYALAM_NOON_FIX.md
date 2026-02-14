@@ -46,7 +46,7 @@ Updated `tests/test_solar_validation.c`:
 - Added all 12 months of 2025 (verified against prokerala.com)
 - Removed "~46% differ" disclaimer
 
-All 51,735 assertions pass across 9 test suites.
+All 53,143 assertions pass across 10 test suites (updated in v0.3.2 with ayanamsa buffer adjustments — see `Docs/MALAYALAM_ADJUSTMENTS.md`).
 
 ## Lesson Learned
 

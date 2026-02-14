@@ -31,6 +31,7 @@ hindu-calendar/
 │   ├── test_solar.c
 │   ├── test_solar_validation.c
 │   ├── test_solar_regression.c
+│   ├── test_solar_edge.c
 │   ├── test_validation.c
 │   ├── test_csv_regression.c
 │   └── test_adhika_kshaya.c
@@ -38,7 +39,10 @@ hindu-calendar/
 │   ├── generate_ref_data.c # Generate lunisolar reference CSV
 │   ├── gen_solar_ref.c     # Generate solar calendar CSVs
 │   ├── malayalam_diag.c    # Malayalam critical time diagnostic
-│   └── csv_to_json.py      # Convert ref CSV + Reingold CSV → per-month JSON
+│   ├── solar_boundary_scan.c  # Solar edge case scanner (100 closest per calendar)
+│   ├── edge_corrections.c  # Compute corrected expected values for wrong edge cases
+│   ├── csv_to_json.py      # Convert ref CSV + Reingold CSV → per-month JSON
+│   └── csv_to_solar_json.py   # Convert solar CSVs → per-month JSON for web page
 ├── validation/             # Reference data from drikpanchang.com
 ├── ephe/                   # Swiss Ephemeris data files (optional)
 ├── Docs/                   # Documentation
@@ -171,10 +175,12 @@ The solar calendar module computes dates for four Indian regional solar traditio
 
 | Calendar | Critical Time | Rule |
 |----------|---------------|------|
-| **Tamil** | Sunset | If sankranti is before sunset, that day starts the new month |
+| **Tamil** | Sunset − 8 min | If sankranti is before (sunset − 8 min), that day starts the new month |
 | **Bengali** | Midnight + 24 min | Midnight IST with a 24-minute buffer into the next day (R/D edge-case zone) |
-| **Odia** | End of civil day | Sankranti is assigned to whichever local date it falls on |
-| **Malayalam** | Apparent noon | Midpoint of sunrise and sunset |
+| **Odia** | 22:12 IST (fixed) | Sankranti ≤22:11 IST = current day, ≥22:12 IST = next day |
+| **Malayalam** | End of madhyahna − 9.5 min | sunrise + 3/5 × (sunset − sunrise) minus 9.5 min buffer |
+
+The Tamil and Malayalam buffers compensate for ~24 arcsecond difference between Swiss Ephemeris SE_SIDM_LAHIRI and drikpanchang.com's Lahiri ayanamsa (~8–10 min in sankranti time). Verified against 400 boundary cases (100 per calendar).
 
 **Regional eras** are computed directly from the Gregorian year:
 

@@ -73,7 +73,7 @@ Hindu Date: Adhika Bhadrapada Shukla 1, Saka 1934 (Vikram 2069)
 make test
 ```
 
-Runs 51,735 assertions across 9 test suites: unit tests for astronomical calculations, tithi, month determination, and solar calendars; 186 lunisolar dates validated against drikpanchang.com (1900-2050, including 132 adhika/kshaya edge cases); 327 solar calendar month-start dates validated against drikpanchang.com/prokerala.com across all four regional variants; and regression tests covering 1,104 sampled lunisolar days, all 4,269 adhika/kshaya tithi edge cases, and 7,244 solar month boundaries (1900-2050).
+Runs 53,143 assertions across 10 test suites: unit tests for astronomical calculations, tithi, month determination, and solar calendars; 186 lunisolar dates validated against drikpanchang.com (1900-2050, including 132 adhika/kshaya edge cases); 327 solar calendar month-start dates validated against drikpanchang.com/prokerala.com across all four regional variants; 1,200 solar edge case assertions covering the 100 closest-to-critical-time sankrantis per calendar (21 corrected from drikpanchang.com verification); and regression tests covering 1,104 sampled lunisolar days, all 4,269 adhika/kshaya tithi edge cases, and 7,244 solar month boundaries (1900-2050).
 
 ## Documentation
 

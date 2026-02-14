@@ -23,7 +23,10 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technical deep-dive. Tech stack, module dependency graph, all core algorithms explained (tithi, new moon, masa, sunrise, solar calendar), Swiss Ephemeris usage, data structures, and reference implementations. |
 | [SOLAR_PLAN.md](SOLAR_PLAN.md) | Design document for the Hindu solar calendar module (Tamil, Bengali, Odia, Malayalam). Includes regional differences, critical time rules, era calculations, and implementation findings. |
 | [SOLAR_TESTING_PLAN.md](SOLAR_TESTING_PLAN.md) | Plan for solar calendar reference data generation (1900-2050 CSVs) and regression/validation test suites. |
-| [MALAYALAM_NOON_FIX.md](MALAYALAM_NOON_FIX.md) | Investigation into Malayalam critical time rule. Confirmed apparent noon is correct; the initial "~46% differ" hypothesis was based on misreading drikpanchang's festivals page (sankramam dates vs month starts). |
+| [MALAYALAM_NOON_FIX.md](MALAYALAM_NOON_FIX.md) | Investigation into Malayalam critical time rule. Confirmed end-of-madhyahna (3/5 of daytime) is correct; the initial "~46% differ" hypothesis was based on misreading drikpanchang's festivals page. |
+| [MALAYALAM_ADJUSTMENTS.md](MALAYALAM_ADJUSTMENTS.md) | Malayalam critical time boundary investigation. Documents the 3/5 daytime discovery and the v0.3.2 ayanamsa buffer (−9.5 min). |
+| [ODIA_ADJUSTMENTS.md](ODIA_ADJUSTMENTS.md) | Odia critical time investigation. Documents discovery of fixed 22:12 IST cutoff from 35 boundary cases. |
+| [SOLAR_VERIFICATION_WEB.md](SOLAR_VERIFICATION_WEB.md) | Plan for adding solar calendar support to the validation web page. |
 | [REINGOLD_VALIDATION.md](REINGOLD_VALIDATION.md) | Approach for comparing our Drik Siddhanta output against Reingold/Dershowitz Surya Siddhanta (HL function via SBCL). |
 | [REINGOLD_VALIDATION_WEB_PAGE.md](REINGOLD_VALIDATION_WEB_PAGE.md) | Design for embedding Reingold diff overlay into the validation web page. |
 | calendrical-calculations.pdf | Reference book by Reingold & Dershowitz. Chapter 20 covers Hindu calendar mathematics. |

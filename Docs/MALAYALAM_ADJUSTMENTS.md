@@ -66,7 +66,7 @@ Since sankranti is defined as the moment the sidereal solar longitude crosses a 
 
 This means: the rule IS 3/5 of daytime, but drikpanchang's sankranti times are ~10 minutes later than ours for every date. Cases well before or well after the cutoff match perfectly. Cases within ~10 minutes of the cutoff may disagree.
 
-## Solution
+## Solution (v0.3.1)
 
 Changed the Malayalam critical time from apparent noon to 3/5 of daytime:
 
@@ -80,12 +80,28 @@ return sr + 0.6 * (ss - sr);
 
 This change is in `src/solar.c`, function `critical_time_jd()`, case `SOLAR_CAL_MALAYALAM`.
 
+## Ayanamsa Buffer Fix (v0.3.2)
+
+In v0.3.2, a comprehensive edge case scan of all 1,812 Malayalam sankrantis (1900–2050) found 100 cases closest to the madhyahna cutoff. Manual verification against drikpanchang.com revealed:
+
+- **Delta > 0** (sankranti after critical time): all correct
+- **Delta ≤ −10.0 min**: all correct
+- **0 > Delta ≥ −9.3 min**: all 15 entries wrong (our code shows day 1 of new month, drikpanchang shows last day of previous month)
+
+The 9.3–10.0 min gap corresponds exactly to the ~24 arcsecond Lahiri ayanamsa difference between SE_SIDM_LAHIRI and drikpanchang.com. Applied a −9.5 min buffer to the critical time:
+
+```c
+// v0.3.2: end of madhyahna minus ayanamsa buffer
+return sr + 0.6 * (ss - sr) - 9.5 / (24.0 * 60.0);
+```
+
+This splits the 9.3–10.0 min gap cleanly and fixes all 15 boundary dates. The same approach was applied to Tamil (−8.0 min buffer from sunset).
+
 ## Validation Results
 
-Of the 33 manually verified boundary cases:
-- **18 cases** are far enough from the cutoff (fraction < 0.58 or > 0.60) that both we and drikpanchang agree. These are included in the test suite (`tests/test_solar.c`).
-- **15 cases** fall in the boundary zone (fraction 0.586–0.600) where the ~10 minute ayanamsa offset causes our assignment to differ from drikpanchang's. These are documented in `validation/malayalam_boundary_cases.csv` but excluded from automated tests.
+- **33 manually verified boundary cases** from the initial investigation (v0.3.1)
+- **100 edge case assertions** from the comprehensive scan (v0.3.2), with 15 corrected entries
+- All 33 original data points stored in `validation/malayalam_boundary_cases.csv`
+- Edge case test data in `tests/test_solar_edge.c`
 
-All 33 verified data points are stored in `validation/malayalam_boundary_cases.csv`.
-
-Total test suite: 51,943 assertions across 9 suites, all passing.
+Total test suite: 53,143 assertions across 10 suites, all passing.

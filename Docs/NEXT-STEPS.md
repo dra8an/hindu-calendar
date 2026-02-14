@@ -2,16 +2,19 @@
 
 ## Priority 1: Expanded Validation (Phase 5+6+7+8 — Largely Complete)
 
-186 lunisolar dates verified against drikpanchang.com with 100% match. 143 solar calendar assertions verified across 4 regional variants. Validation web page enables manual month-by-month comparison across all 1,812 months (1900-2050). Reingold diff overlay highlights where Surya Siddhanta disagrees (89.2% match).
+186 lunisolar dates verified against drikpanchang.com with 100% match. 30,854 solar calendar assertions across 4 regional variants. Validation web page enables manual month-by-month comparison across all 1,812 months (1900-2050). Reingold diff overlay highlights where Surya Siddhanta disagrees (89.2% match).
 
 - [x] 186 dates verified against drikpanchang.com (tithi, masa, adhika, saka all 100%)
 - [x] Validation web page for visual month-by-month comparison (`bash validation/web/serve.sh`)
 - [x] Reingold/Dershowitz diff overlay on validation web page
-- [x] Hindu solar calendars: Tamil, Bengali, Odia, Malayalam (143 unit + 327 validation + 28,976 regression assertions)
+- [x] Hindu solar calendars: Tamil, Bengali, Odia, Malayalam (351 unit + 327 validation + 28,976 regression + 1,200 edge case assertions)
 - [x] Generate bulk regression CSV for solar calendars (4 CSVs, 1,811 months each, 1900-2050)
-- [x] Malayalam critical time rule verified: apparent noon confirmed correct (see `Docs/MALAYALAM_NOON_FIX.md`)
+- [x] Malayalam critical time rule verified: end of madhyahna (3/5 of daytime) confirmed correct (see `Docs/MALAYALAM_NOON_FIX.md`)
+- [x] Solar edge case scanner: 100 closest sankrantis per calendar scanned and verified against drikpanchang.com
+- [x] Ayanamsa buffer adjustments: Tamil −8.0 min, Malayalam −9.5 min (fixes 6 + 15 boundary dates)
+- [x] Validation web page extended for solar calendar comparison (dropdown for all 4 calendars)
+- [ ] Resolve Bengali solar calendar edge cases (23 wrong entries with complex rashi-dependent pattern)
 - [ ] Continue manual validation of remaining lunisolar months via web page against drikpanchang.com
-- [ ] Extend validation web page for solar calendar comparison (or create separate page)
 - [ ] Document any edge-case discrepancies (midnight new moons, polar regions)
 
 ## Priority 2: Sunrise Accuracy

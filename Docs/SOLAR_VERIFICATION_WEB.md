@@ -84,7 +84,7 @@ Create `tools/csv_to_solar_json.py` that reads the 4 existing solar CSVs and pro
 
 1. `python3 tools/csv_to_solar_json.py` — generates all 7,248 solar JSON files
 2. `bash validation/web/serve.sh` — start dev server
-3. Open http://localhost:8081 — default shows Lunisolar (same as before)
+3. Open http://localhost:8082 — default shows Lunisolar (same as before)
 4. Switch dropdown to Tamil → see Tamil solar dates for current month
 5. Navigate to April 2025 → verify Chithirai 1 on Apr 14
 6. Switch to Malayalam → verify Chingam 1 on Aug 17

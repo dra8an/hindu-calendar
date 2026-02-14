@@ -275,8 +275,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 7,1844,30,1922,10,17,Aippasi
 8,1844,30,1922,11,16,Karthikai
 9,1844,29,1922,12,16,Maargazhi
-10,1844,29,1923,1,14,Thai
-11,1844,30,1923,2,12,Maasi
+10,1844,30,1923,1,14,Thai
+11,1844,29,1923,2,13,Maasi
 12,1844,31,1923,3,14,Panguni
 1,1845,31,1923,4,14,Chithirai
 2,1845,31,1923,5,15,Vaikaasi
@@ -743,8 +743,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 7,1883,30,1961,10,17,Aippasi
 8,1883,30,1961,11,16,Karthikai
 9,1883,29,1961,12,16,Maargazhi
-10,1883,29,1962,1,14,Thai
-11,1883,30,1962,2,12,Maasi
+10,1883,30,1962,1,14,Thai
+11,1883,29,1962,2,13,Maasi
 12,1883,31,1962,3,14,Panguni
 1,1884,31,1962,4,14,Chithirai
 2,1884,31,1962,5,15,Vaikaasi
@@ -766,8 +766,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 6,1885,30,1963,9,17,Purattaasi
 7,1885,30,1963,10,17,Aippasi
 8,1885,30,1963,11,16,Karthikai
-9,1885,29,1963,12,16,Maargazhi
-10,1885,30,1964,1,14,Thai
+9,1885,30,1963,12,16,Maargazhi
+10,1885,29,1964,1,15,Thai
 11,1885,30,1964,2,13,Maasi
 12,1885,30,1964,3,14,Panguni
 1,1886,31,1964,4,13,Chithirai
@@ -829,8 +829,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 9,1890,30,1968,12,15,Maargazhi
 10,1890,29,1969,1,14,Thai
 11,1890,30,1969,2,12,Maasi
-12,1890,30,1969,3,14,Panguni
-1,1891,31,1969,4,13,Chithirai
+12,1890,31,1969,3,14,Panguni
+1,1891,30,1969,4,14,Chithirai
 2,1891,32,1969,5,14,Vaikaasi
 3,1891,31,1969,6,15,Aani
 4,1891,31,1969,7,16,Aadi
@@ -860,8 +860,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 4,1893,31,1971,7,17,Aadi
 5,1893,31,1971,8,17,Aavani
 6,1893,30,1971,9,17,Purattaasi
-7,1893,30,1971,10,17,Aippasi
-8,1893,30,1971,11,16,Karthikai
+7,1893,31,1971,10,17,Aippasi
+8,1893,29,1971,11,17,Karthikai
 9,1893,30,1971,12,16,Maargazhi
 10,1893,29,1972,1,15,Thai
 11,1893,30,1972,2,13,Maasi
@@ -1586,8 +1586,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 10,1953,29,2032,1,15,Thai
 11,1953,30,2032,2,13,Maasi
 12,1953,31,2032,3,14,Panguni
-1,1954,30,2032,4,14,Chithirai
-2,1954,32,2032,5,14,Vaikaasi
+1,1954,31,2032,4,14,Chithirai
+2,1954,31,2032,5,15,Vaikaasi
 3,1954,31,2032,6,15,Aani
 4,1954,32,2032,7,16,Aadi
 5,1954,31,2032,8,17,Aavani

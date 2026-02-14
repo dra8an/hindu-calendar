@@ -115,3 +115,4 @@ All steps completed. Results:
   - Bengali: 24 entries (Boishakh 1 x 12 years + all 12 months of 2025)
   - Odia: 24 entries (all 12 months of 2025 + 2030)
   - Malayalam: 28 entries (Chingam 1 x 16 years + all 12 months of 2025)
+- `test_solar_edge.c` (added in v0.3.2): 1,200 assertions — 100 closest-to-critical-time sankrantis per calendar, 21 corrected after drikpanchang.com verification (6 Tamil + 15 Malayalam)
