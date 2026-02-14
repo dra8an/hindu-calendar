@@ -22,6 +22,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [NEXT-STEPS.md](NEXT-STEPS.md) | Prioritized roadmap for future work. Expanded validation, additional panchang elements (nakshatra, yoga, karana), Purnimanta scheme, and usability improvements. |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technical deep-dive. Tech stack, module dependency graph, all core algorithms explained (tithi, new moon, masa, sunrise, solar calendar), Swiss Ephemeris usage, data structures, and reference implementations. |
 | [SOLAR_PLAN.md](SOLAR_PLAN.md) | Design document for the Hindu solar calendar module (Tamil, Bengali, Odia, Malayalam). Includes regional differences, critical time rules, era calculations, and implementation findings. |
+| [TOOLS.md](TOOLS.md) | Reference for all utility programs in `tools/` — data generators, edge case scanner, and diagnostic/investigation tools. |
 | [SOLAR_TESTING_PLAN.md](SOLAR_TESTING_PLAN.md) | Plan for solar calendar reference data generation (1900-2050 CSVs) and regression/validation test suites. |
 | [MALAYALAM_NOON_FIX.md](MALAYALAM_NOON_FIX.md) | Investigation into Malayalam critical time rule. Confirmed end-of-madhyahna (3/5 of daytime) is correct; the initial "~46% differ" hypothesis was based on misreading drikpanchang's festivals page. |
 | [MALAYALAM_ADJUSTMENTS.md](MALAYALAM_ADJUSTMENTS.md) | Malayalam critical time boundary investigation. Documents the 3/5 daytime discovery and the v0.3.2 ayanamsa buffer (−9.5 min). |
