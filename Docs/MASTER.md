@@ -27,6 +27,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [MALAYALAM_NOON_FIX.md](MALAYALAM_NOON_FIX.md) | Investigation into Malayalam critical time rule. Confirmed end-of-madhyahna (3/5 of daytime) is correct; the initial "~46% differ" hypothesis was based on misreading drikpanchang's festivals page. |
 | [MALAYALAM_ADJUSTMENTS.md](MALAYALAM_ADJUSTMENTS.md) | Malayalam critical time boundary investigation. Documents the 3/5 daytime discovery and the v0.3.2 ayanamsa buffer (−9.5 min). |
 | [ODIA_ADJUSTMENTS.md](ODIA_ADJUSTMENTS.md) | Odia critical time investigation. Documents discovery of fixed 22:12 IST cutoff from 35 boundary cases. |
+| [BENGALI_INVESTIGATION.md](BENGALI_INVESTIGATION.md) | Bengali critical time investigation. Tracking document for 23 unresolved edge cases. |
 | [SOLAR_VERIFICATION_WEB.md](SOLAR_VERIFICATION_WEB.md) | Plan for adding solar calendar support to the validation web page. |
 | [REINGOLD_VALIDATION.md](REINGOLD_VALIDATION.md) | Approach for comparing our Drik Siddhanta output against Reingold/Dershowitz Surya Siddhanta (HL function via SBCL). |
 | [REINGOLD_VALIDATION_WEB_PAGE.md](REINGOLD_VALIDATION_WEB_PAGE.md) | Design for embedding Reingold diff overlay into the validation web page. |
