@@ -157,63 +157,63 @@ static struct {
 
     /* ---- BENGALI - 100 closest to midnight+24min ---- */
     {1963,  2, 13, SOLAR_CAL_BENGALI,     11, 1, 1369},  /* delta=-0.1min sank=00:23:53 crit=00:23:59 rashi=11 */
-    {1908,  5, 14, SOLAR_CAL_BENGALI,      2, 1, 1315},  /* delta=-0.2min sank=00:23:49 crit=00:23:59 rashi=2 */
-    {1976, 10, 17, SOLAR_CAL_BENGALI,      7, 1, 1383},  /* delta=-0.7min sank=00:23:17 crit=00:23:59 rashi=7 */
+    {1908,  5, 14, SOLAR_CAL_BENGALI,      1,31, 1315},  /* delta=-0.2min sank=00:23:49 crit=00:23:59 rashi=2 — tithi rule: W */
+    {1976, 10, 17, SOLAR_CAL_BENGALI,      7, 1, 1383},  /* delta=-0.7min sank=00:23:17 crit=00:23:59 rashi=7 — KNOWN: dp says W but tithi rule says C */
     {1966,  4, 15, SOLAR_CAL_BENGALI,      1, 1, 1373},  /* delta=+0.8min sank=00:24:49 crit=00:23:59 rashi=1 */
     {2041,  2, 14, SOLAR_CAL_BENGALI,     11, 1, 1447},  /* delta=+1.1min sank=00:25:07 crit=00:23:59 rashi=11 */
-    {2022,  3, 15, SOLAR_CAL_BENGALI,     12, 1, 1428},  /* delta=-2.2min sank=00:21:50 crit=00:23:59 rashi=12 */
-    {1983,  3, 15, SOLAR_CAL_BENGALI,     12, 1, 1389},  /* delta=-2.3min sank=00:21:39 crit=00:23:59 rashi=12 */
-    {2047,  1, 15, SOLAR_CAL_BENGALI,     10, 1, 1453},  /* delta=-2.8min sank=00:21:14 crit=00:23:59 rashi=10 */
+    {2022,  3, 15, SOLAR_CAL_BENGALI,     11,30, 1428},  /* delta=-2.2min sank=00:21:50 crit=00:23:59 rashi=12 — tithi rule: W */
+    {1983,  3, 15, SOLAR_CAL_BENGALI,     11,30, 1389},  /* delta=-2.3min sank=00:21:39 crit=00:23:59 rashi=12 — tithi rule: W */
+    {2047,  1, 15, SOLAR_CAL_BENGALI,      9,30, 1453},  /* delta=-2.8min sank=00:21:14 crit=00:23:59 rashi=10 — Makara rule: W */
     {2002,  2, 14, SOLAR_CAL_BENGALI,     11, 1, 1408},  /* delta=+4.1min sank=00:28:03 crit=00:23:59 rashi=11 */
     {1909,  7, 16, SOLAR_CAL_BENGALI,      4, 1, 1316},  /* delta=-4.3min sank=00:19:40 crit=00:23:59 rashi=4 */
-    {1935,  8, 17, SOLAR_CAL_BENGALI,      5, 1, 1342},  /* delta=-4.4min sank=00:19:33 crit=00:23:59 rashi=5 */
+    {1935,  8, 17, SOLAR_CAL_BENGALI,      4,32, 1342},  /* delta=-4.4min sank=00:19:33 crit=00:23:59 rashi=5 — tithi rule: W */
     {2024,  6, 16, SOLAR_CAL_BENGALI,      3, 1, 1431},  /* delta=+4.9min sank=00:28:55 crit=00:23:59 rashi=3 */
-    {1937, 10, 17, SOLAR_CAL_BENGALI,      7, 1, 1344},  /* delta=-5.2min sank=00:18:50 crit=00:23:59 rashi=7 */
-    {1944,  3, 14, SOLAR_CAL_BENGALI,     12, 1, 1350},  /* delta=-5.4min sank=00:18:38 crit=00:23:59 rashi=12 */
+    {1937, 10, 17, SOLAR_CAL_BENGALI,      6,31, 1344},  /* delta=-5.2min sank=00:18:50 crit=00:23:59 rashi=7 — tithi rule: W */
+    {1944,  3, 14, SOLAR_CAL_BENGALI,     11,30, 1350},  /* delta=-5.4min sank=00:18:38 crit=00:23:59 rashi=12 — tithi rule: W */
     {1947,  5, 15, SOLAR_CAL_BENGALI,      2, 1, 1354},  /* delta=-5.9min sank=00:18:06 crit=00:23:59 rashi=2 */
     {1923, 12, 17, SOLAR_CAL_BENGALI,      9, 1, 1330},  /* delta=+7.3min sank=00:31:15 crit=00:23:59 rashi=9 */
-    {2015, 10, 18, SOLAR_CAL_BENGALI,      7, 1, 1422},  /* delta=-7.3min sank=00:16:42 crit=00:23:59 rashi=7 */
+    {2015, 10, 18, SOLAR_CAL_BENGALI,      6,31, 1422},  /* delta=-7.3min sank=00:16:42 crit=00:23:59 rashi=7 — tithi rule: W */
     {1952,  7, 17, SOLAR_CAL_BENGALI,      4, 1, 1359},  /* delta=+7.5min sank=00:31:27 crit=00:23:59 rashi=4 */
     {1927,  4, 14, SOLAR_CAL_BENGALI,      1, 1, 1334},  /* delta=-8.9min sank=00:15:06 crit=00:23:59 rashi=1 */
     {1905,  3, 14, SOLAR_CAL_BENGALI,     12, 1, 1311},  /* delta=-9.6min sank=00:14:26 crit=00:23:59 rashi=12 */
-    {1935,  9, 17, SOLAR_CAL_BENGALI,      6, 1, 1342},  /* delta=-9.6min sank=00:14:25 crit=00:23:59 rashi=6 */
-    {1981,  6, 15, SOLAR_CAL_BENGALI,      3, 1, 1388},  /* delta=-10.0min sank=00:14:01 crit=00:23:59 rashi=3 */
+    {1935,  9, 17, SOLAR_CAL_BENGALI,      5,31, 1342},  /* delta=-9.6min sank=00:14:25 crit=00:23:59 rashi=6 — tithi rule: W */
+    {1981,  6, 15, SOLAR_CAL_BENGALI,      2,32, 1388},  /* delta=-10.0min sank=00:14:01 crit=00:23:59 rashi=3 — tithi rule: W */
     {1991,  7, 17, SOLAR_CAL_BENGALI,      4, 1, 1398},  /* delta=-10.3min sank=00:13:40 crit=00:23:59 rashi=4 */
-    {1903,  6, 15, SOLAR_CAL_BENGALI,      3, 1, 1310},  /* delta=-10.9min sank=00:13:04 crit=00:23:59 rashi=3 */
-    {1969,  1, 14, SOLAR_CAL_BENGALI,     10, 1, 1375},  /* delta=-11.1min sank=00:12:53 crit=00:23:59 rashi=10 */
+    {1903,  6, 15, SOLAR_CAL_BENGALI,      2,32, 1310},  /* delta=-10.9min sank=00:13:04 crit=00:23:59 rashi=3 — tithi rule: W */
+    {1969,  1, 14, SOLAR_CAL_BENGALI,      9,30, 1375},  /* delta=-11.1min sank=00:12:53 crit=00:23:59 rashi=10 — Makara rule: W */
     {2005,  4, 14, SOLAR_CAL_BENGALI,      1, 1, 1412},  /* delta=-12.1min sank=00:11:55 crit=00:23:59 rashi=1 */
     {2025,  5, 15, SOLAR_CAL_BENGALI,      2, 1, 1432},  /* delta=-12.1min sank=00:11:52 crit=00:23:59 rashi=2 */
     {1973,  1, 15, SOLAR_CAL_BENGALI,     10, 1, 1379},  /* delta=+12.3min sank=00:36:16 crit=00:23:59 rashi=10 */
-    {1930,  1, 14, SOLAR_CAL_BENGALI,     10, 1, 1336},  /* delta=-14.3min sank=00:09:43 crit=00:23:59 rashi=10 */
+    {1930,  1, 14, SOLAR_CAL_BENGALI,      9,30, 1336},  /* delta=-14.3min sank=00:09:43 crit=00:23:59 rashi=10 — Makara rule: W */
     {1942,  6, 15, SOLAR_CAL_BENGALI,      3, 1, 1349},  /* delta=-14.4min sank=00:09:37 crit=00:23:59 rashi=3 */
-    {1986,  5, 15, SOLAR_CAL_BENGALI,      2, 1, 1393},  /* delta=-15.1min sank=00:08:51 crit=00:23:59 rashi=2 */
+    {1986,  5, 15, SOLAR_CAL_BENGALI,      1,31, 1393},  /* delta=-15.1min sank=00:08:51 crit=00:23:59 rashi=2 — tithi rule: W */
     {2040, 12, 17, SOLAR_CAL_BENGALI,      9, 1, 1447},  /* delta=+15.4min sank=00:39:24 crit=00:23:59 rashi=9 */
     {2029,  5, 16, SOLAR_CAL_BENGALI,      2, 1, 1436},  /* delta=+15.4min sank=00:39:26 crit=00:23:59 rashi=2 */
     {1934,  1, 15, SOLAR_CAL_BENGALI,     10, 1, 1340},  /* delta=+15.5min sank=00:39:28 crit=00:23:59 rashi=10 */
-    {1976, 11, 16, SOLAR_CAL_BENGALI,      8, 1, 1383},  /* delta=-15.9min sank=00:08:07 crit=00:23:59 rashi=8 */
+    {1976, 11, 16, SOLAR_CAL_BENGALI,      7,31, 1383},  /* delta=-15.9min sank=00:08:07 crit=00:23:59 rashi=8 — tithi rule: W */
     {1913,  7, 17, SOLAR_CAL_BENGALI,      4, 1, 1320},  /* delta=+16.3min sank=00:40:18 crit=00:23:59 rashi=4 */
     {2030,  7, 17, SOLAR_CAL_BENGALI,      4, 1, 1437},  /* delta=-16.5min sank=00:07:29 crit=00:23:59 rashi=4 */
     {2048,  4, 15, SOLAR_CAL_BENGALI,      1, 1, 1455},  /* delta=+17.3min sank=00:41:20 crit=00:23:59 rashi=1 */
     {1978,  9, 18, SOLAR_CAL_BENGALI,      6, 1, 1385},  /* delta=+17.4min sank=00:41:21 crit=00:23:59 rashi=6 */
     {2009,  4, 15, SOLAR_CAL_BENGALI,      1, 1, 1416},  /* delta=+17.5min sank=00:41:29 crit=00:23:59 rashi=1 */
-    {1924,  2, 13, SOLAR_CAL_BENGALI,     11, 1, 1330},  /* delta=-17.8min sank=00:06:12 crit=00:23:59 rashi=11 */
-    {2036, 12, 16, SOLAR_CAL_BENGALI,      9, 1, 1443},  /* delta=-18.2min sank=00:05:49 crit=00:23:59 rashi=9 */
+    {1924,  2, 13, SOLAR_CAL_BENGALI,     10,30, 1330},  /* delta=-17.8min sank=00:06:12 crit=00:23:59 rashi=11 — tithi rule: W */
+    {2036, 12, 16, SOLAR_CAL_BENGALI,      8,30, 1443},  /* delta=-18.2min sank=00:05:49 crit=00:23:59 rashi=9 — tithi rule: W */
     {1951,  5, 16, SOLAR_CAL_BENGALI,      2, 1, 1358},  /* delta=+18.2min sank=00:42:13 crit=00:23:59 rashi=2 */
     {1980, 11, 17, SOLAR_CAL_BENGALI,      8, 1, 1387},  /* delta=+18.4min sank=00:42:26 crit=00:23:59 rashi=8 */
     {2001, 12, 17, SOLAR_CAL_BENGALI,      9, 1, 1408},  /* delta=+18.5min sank=00:42:29 crit=00:23:59 rashi=9 */
     {1997, 12, 16, SOLAR_CAL_BENGALI,      9, 1, 1404},  /* delta=-18.8min sank=00:05:13 crit=00:23:59 rashi=9 */
-    {2008,  1, 15, SOLAR_CAL_BENGALI,     10, 1, 1414},  /* delta=-19.3min sank=00:04:40 crit=00:23:59 rashi=10 */
+    {2008,  1, 15, SOLAR_CAL_BENGALI,      9,30, 1414},  /* delta=-19.3min sank=00:04:40 crit=00:23:59 rashi=10 — Makara rule: W */
     {2015, 11, 17, SOLAR_CAL_BENGALI,      8, 1, 1422},  /* delta=-19.6min sank=00:04:25 crit=00:23:59 rashi=8 */
     {1962, 12, 17, SOLAR_CAL_BENGALI,      9, 1, 1369},  /* delta=+20.0min sank=00:44:02 crit=00:23:59 rashi=9 */
     {1990,  5, 16, SOLAR_CAL_BENGALI,      2, 1, 1397},  /* delta=+20.2min sank=00:44:09 crit=00:23:59 rashi=2 */
-    {2044,  4, 14, SOLAR_CAL_BENGALI,      1, 1, 1451},  /* delta=-20.4min sank=00:03:38 crit=00:23:59 rashi=1 */
+    {2044,  4, 14, SOLAR_CAL_BENGALI,     12,31, 1450},  /* delta=-20.4min sank=00:03:38 crit=00:23:59 rashi=1 — tithi rule: W (year changes) */
     {1985,  6, 16, SOLAR_CAL_BENGALI,      3, 1, 1392},  /* delta=+20.9min sank=00:44:53 crit=00:23:59 rashi=3 */
     {2017,  9, 18, SOLAR_CAL_BENGALI,      6, 1, 1424},  /* delta=+20.9min sank=00:44:55 crit=00:23:59 rashi=6 */
     {1902, 11, 17, SOLAR_CAL_BENGALI,      8, 1, 1309},  /* delta=+21.2min sank=00:45:13 crit=00:23:59 rashi=8 */
-    {2013,  8, 17, SOLAR_CAL_BENGALI,      5, 1, 1420},  /* delta=-21.2min sank=00:02:45 crit=00:23:59 rashi=5 */
+    {2013,  8, 17, SOLAR_CAL_BENGALI,      4,32, 1420},  /* delta=-21.2min sank=00:02:45 crit=00:23:59 rashi=5 — tithi rule: W */
     {1970,  4, 15, SOLAR_CAL_BENGALI,      1, 1, 1377},  /* delta=+21.9min sank=00:45:53 crit=00:23:59 rashi=1 */
-    {1974,  8, 17, SOLAR_CAL_BENGALI,      5, 1, 1381},  /* delta=-22.3min sank=00:01:40 crit=00:23:59 rashi=5 */
-    {1937, 11, 16, SOLAR_CAL_BENGALI,      8, 1, 1344},  /* delta=-22.5min sank=00:01:27 crit=00:23:59 rashi=8 */
+    {1974,  8, 17, SOLAR_CAL_BENGALI,      4,32, 1381},  /* delta=-22.3min sank=00:01:40 crit=00:23:59 rashi=5 — tithi rule: W */
+    {1937, 11, 16, SOLAR_CAL_BENGALI,      7,30, 1344},  /* delta=-22.5min sank=00:01:27 crit=00:23:59 rashi=8 — tithi rule: W */
     {2020,  6, 15, SOLAR_CAL_BENGALI,      3, 1, 1427},  /* delta=-22.8min sank=00:01:12 crit=00:23:59 rashi=3 */
     {1948,  7, 16, SOLAR_CAL_BENGALI,      4, 1, 1355},  /* delta=-22.9min sank=00:01:03 crit=00:23:59 rashi=4 */
     {1939,  9, 18, SOLAR_CAL_BENGALI,      6, 1, 1346},  /* delta=+23.3min sank=00:47:20 crit=00:23:59 rashi=6 */

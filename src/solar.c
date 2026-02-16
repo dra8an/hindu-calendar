@@ -1,6 +1,7 @@
 #include "solar.h"
 #include "astro.h"
 #include "masa.h"
+#include "tithi.h"
 #include "date_utils.h"
 #include <math.h>
 #include <string.h>
@@ -129,11 +130,11 @@ static double critical_time_jd(double jd_midnight_ut, const Location *loc,
         return sunset_jd(jd_midnight_ut, loc) - 8.0 / (24.0 * 60.0);
 
     case SOLAR_CAL_BENGALI:
-        /* Bengali midnight rule with edge-case buffer.
-         * drikpanchang.com treats sankrantis up to ~24 min past midnight
-         * as belonging to the current day (Reingold/Dershowitz describe a
-         * special zone between 11:36 PM and 12:24 AM).
-         * Critical time = 00:24 local = midnight + 24 min. */
+        /* Bengali midnight zone upper bound (00:24 IST = midnight + 24 min).
+         * This is the outer boundary of the "zone" described by
+         * Reingold/Dershowitz (11:36 PM to 12:24 AM).  Within the zone,
+         * the actual assignment uses a tithi-based rule applied in
+         * sankranti_to_civil_day(). */
         return jd_midnight_ut - loc->utc_offset / 24.0 + 24.0 / (24.0 * 60.0);
 
     case SOLAR_CAL_ODIA:
@@ -223,12 +224,17 @@ double sankranti_before(double jd_ut)
 
 /* ---- Determine civil day of a sankranti ----
  *
- * Given a sankranti JD and calendar type, determine which Gregorian day
- * "owns" that sankranti (i.e., the first day of the new solar month).
+ * Given a sankranti JD, calendar type, and rashi being entered, determine
+ * which Gregorian day "owns" that sankranti (i.e., the first day of the
+ * new solar month).
+ *
+ * For Bengali, a tithi-based rule applies when the sankranti falls in the
+ * "midnight zone" (~24 min around midnight).  See Sewell & Dikshit,
+ * "The Indian Calendar" (1896), pp. 12-13.
  */
 
 static void sankranti_to_civil_day(double jd_sankranti, const Location *loc,
-                                    SolarCalendarType type,
+                                    SolarCalendarType type, int rashi,
                                     int *gy, int *gm, int *gd)
 {
     /* Convert sankranti JD (UT) to local date */
@@ -243,10 +249,38 @@ static void sankranti_to_civil_day(double jd_sankranti, const Location *loc,
     double crit = critical_time_jd(jd_day, loc, type);
 
     if (jd_sankranti <= crit) {
+        /* Bengali tithi-based override for sankrantis in the midnight zone.
+         *
+         * Traditional Bengali rule (Sewell & Dikshit, 1896):
+         *   Karkata (rashi 4): always "before midnight" → this day
+         *   Makara (rashi 10): always "after midnight" → next day
+         *   Others: if the tithi at the Hindu day's sunrise (= previous
+         *           civil day's sunrise) extends past the sankranti moment,
+         *           treat as "before midnight" → this day; otherwise → next day.
+         *
+         * Verified against 37 drikpanchang.com edge cases: 36/37 correct.
+         * (1 failure: 1976-10-17 Tula — tithi extends 134 min past sankranti
+         * but drikpanchang assigns "after midnight".) */
+        if (type == SOLAR_CAL_BENGALI && rashi != 4) {
+            int push_next = 0;
+            if (rashi == 10) {
+                push_next = 1;
+            } else {
+                /* Tithi at previous day's sunrise (= start of the Hindu day
+                 * containing this post-midnight sankranti). */
+                int py, pm, pd;
+                jd_to_gregorian(jd_day - 1.0, &py, &pm, &pd);
+                TithiInfo ti = tithi_at_sunrise(py, pm, pd, loc);
+                push_next = (ti.jd_end <= jd_sankranti) ? 1 : 0;
+            }
+            if (push_next) {
+                jd_to_gregorian(jd_day + 1.0, gy, gm, gd);
+                return;
+            }
+        }
         *gy = sy; *gm = sm; *gd = sd;
     } else {
-        double next_jd = gregorian_to_jd(sy, sm, sd) + 1.0;
-        jd_to_gregorian(next_jd, gy, gm, gd);
+        jd_to_gregorian(jd_day + 1.0, gy, gm, gd);
     }
 }
 
@@ -287,7 +321,8 @@ static int solar_year(double jd_ut, const Location *loc,
     /* Determine which civil day "owns" the year-start sankranti,
      * using the same critical-time rule as the calendar. */
     int ysy, ysm, ysd;
-    sankranti_to_civil_day(jd_year_start, loc, type, &ysy, &ysm, &ysd);
+    sankranti_to_civil_day(jd_year_start, loc, type, cfg->first_rashi,
+                           &ysy, &ysm, &ysd);
     double jd_year_civil = gregorian_to_jd(ysy, ysm, ysd);
 
     if (jd_greg_date >= jd_year_civil) {
@@ -325,11 +360,24 @@ SolarDate gregorian_to_solar(int year, int month, int day,
 
     /* Find the civil day of that sankranti */
     int sy, sm, s_day;
-    sankranti_to_civil_day(sd.jd_sankranti, loc, type, &sy, &sm, &s_day);
+    sankranti_to_civil_day(sd.jd_sankranti, loc, type, rashi, &sy, &sm, &s_day);
 
     /* Day within solar month = days since month start + 1 */
     double jd_month_start = gregorian_to_jd(sy, sm, s_day);
     sd.day = (int)(jd - jd_month_start) + 1;
+
+    /* Bengali tithi-based rule may push the month start past our date.
+     * In that case, this date belongs to the previous solar month. */
+    if (sd.day <= 0) {
+        rashi = (rashi == 1) ? 12 : rashi - 1;
+        sd.rashi = rashi;
+        double prev_target = (double)(rashi - 1) * 30.0;
+        sd.jd_sankranti = sankranti_jd(sd.jd_sankranti - 28.0, prev_target);
+        sankranti_to_civil_day(sd.jd_sankranti, loc, type, rashi,
+                               &sy, &sm, &s_day);
+        jd_month_start = gregorian_to_jd(sy, sm, s_day);
+        sd.day = (int)(jd - jd_month_start) + 1;
+    }
 
     /* Regional month number */
     sd.month = rashi_to_regional_month(rashi, type);
@@ -380,7 +428,7 @@ void solar_to_gregorian(const SolarDate *sd, SolarCalendarType type,
 
     /* Find the civil day of the sankranti */
     int sy, sm, s_day;
-    sankranti_to_civil_day(jd_sank, loc, type, &sy, &sm, &s_day);
+    sankranti_to_civil_day(jd_sank, loc, type, rashi, &sy, &sm, &s_day);
 
     /* Add (day - 1) days */
     double jd_result = gregorian_to_jd(sy, sm, s_day) + (sd->day - 1);
