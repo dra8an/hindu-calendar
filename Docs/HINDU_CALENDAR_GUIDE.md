@@ -2,7 +2,7 @@
 
 **A language-agnostic guide to implementing Hindu lunisolar (panchang) and regional solar calendars using modern astronomical ephemerides.**
 
-This guide documents everything needed to reimplement the Hindu calendar system from scratch: astronomical background, step-by-step algorithms in pseudocode, critical time rules for four regional solar calendars, implementation pitfalls, and validation strategies. All algorithms have been verified against [drikpanchang.com](https://www.drikpanchang.com/) with 51,943+ assertions across 150 years (1900–2050).
+This guide documents everything needed to reimplement the Hindu calendar system from scratch: astronomical background, step-by-step algorithms in pseudocode, critical time rules for four regional solar calendars, implementation pitfalls, and validation strategies. All algorithms have been verified against [drikpanchang.com](https://www.drikpanchang.com/) with 53,143+ assertions across 150 years (1900–2050).
 
 ---
 
@@ -833,25 +833,44 @@ See [Section 4.8](#48-generic-solar-date-conversion) for the generic conversion 
 
 ### 4.5 Bengali Solar Calendar (Bangabda) — [Wikipedia](https://en.wikipedia.org/wiki/Bengali_calendar)
 
-#### Critical Time: Midnight + 24-Minute Buffer
+#### Critical Time: Midnight + 24-Minute Buffer + Tithi-Based Rule
 
-The Bengali calendar uses midnight as its primary critical time, but with a special buffer zone. Sankrantis that fall within 24 minutes after midnight (00:00–00:24 local time) are treated as belonging to the **previous** day rather than the new day.
+The Bengali calendar uses midnight as its primary critical time, with a 48-minute buffer zone (23:36–00:24 local time). Sankrantis that fall **after** the critical time (00:24) are clearly assigned to the next day. Sankrantis that fall **before** the critical time use a tithi-based rule from Sewell & Dikshit ("The Indian Calendar", 1896, pp. 12-13) to determine the assignment:
 
-This is described by Reingold and Dershowitz as a "special zone" between 23:36 and 00:24 where sankrantis are assigned to the current (previous) civil day.
+1. **Karkata (Cancer, rashi 4)**: Always treat as "before midnight" → current day starts new month
+2. **Makara (Capricorn, rashi 10)**: Always treat as "after midnight" → next day starts new month
+3. **All other rashis**: Check the **tithi at sunrise** of the Hindu day (= previous civil day's sunrise):
+   - If the tithi **extends past** the sankranti moment → "before midnight" → current day starts new month
+   - If the tithi **ends before** the sankranti → "after midnight" → next day starts new month
 
 ```
 function critical_time_bengali(jd_midnight_ut, location):
     // midnight UT + 24 minutes in the local timezone
     return jd_midnight_ut - utc_offset / 24.0 + 24.0 / (24.0 * 60.0)
+
+function bengali_civil_day(jd_sankranti, location, rashi):
+    // First check if sankranti is after critical time
+    (sy, sm, sd) = civil_day_of(jd_sankranti, location)
+    crit = critical_time_bengali(midnight_of(sy, sm, sd), location)
+    if jd_sankranti > crit:
+        return next_day(sy, sm, sd)  // after critical time → next day
+
+    // Within midnight zone — apply tithi-based rule
+    if rashi == 4 (Karkata):
+        return (sy, sm, sd)          // always "before midnight"
+    if rashi == 10 (Makara):
+        return next_day(sy, sm, sd)  // always "after midnight"
+
+    // Check tithi at previous day's sunrise (Hindu day start)
+    (py, pm, pd) = prev_day(sy, sm, sd)
+    tithi = tithi_at_sunrise(py, pm, pd, location)
+    if tithi.jd_end > jd_sankranti:
+        return (sy, sm, sd)          // tithi extends past → "before midnight"
+    else:
+        return next_day(sy, sm, sd)  // tithi ended → "after midnight"
 ```
 
-Breaking this down:
-- `jd_midnight_ut - utc_offset / 24.0` = midnight UT for this local date
-- `+ 24 / (24 * 60)` = plus 24 minutes
-- So the critical time is 00:24 local time
-
-A sankranti at 00:20 local → before critical time → current day starts new month.
-A sankranti at 00:30 local → after critical time → next day starts new month.
+This rule achieves 36/37 accuracy on verified edge cases (97.3%). The single failure is 1976-10-17 (Tula sankranti). See `Docs/BENGALI_INVESTIGATION.md` for the full investigation.
 
 #### Era: Bangabda
 
@@ -1297,11 +1316,13 @@ This means:
 
 Getting this wrong gives the wrong month number for every date, even though the rashi and month name might still be correct.
 
-### 5.12 Bengali Midnight Buffer Zone
+### 5.12 Bengali Midnight Buffer Zone and Tithi-Based Rule
 
-The Bengali calendar's 48-minute buffer zone (23:36–00:24) requires special handling. The logic from Reingold/Dershowitz states that sankrantis within this zone are assigned to the "current" day rather than using the strict midnight boundary.
+The Bengali calendar's 48-minute buffer zone (23:36–00:24) requires special handling beyond what Reingold/Dershowitz describe. Setting the critical time to 00:24 local time handles the basic case, but **23 of 100 boundary cases** still disagree with drikpanchang.com when using a simple time-based cutoff.
 
-In practice, the simplest implementation is to set the critical time to 00:24 local time. This automatically handles the buffer zone because any sankranti between midnight and 00:24 will be "before" the critical time and assigned to the current day.
+The key discovery is that a **tithi-based rule** from Sewell & Dikshit ("The Indian Calendar", 1896) is needed: when a sankranti falls in the midnight zone, the tithi at the Hindu day's sunrise determines the assignment. Karkata (Cancer) and Makara (Capricorn) sankrantis have fixed overrides. This rule achieves 36/37 accuracy on verified edge cases.
+
+Crucially, time-based approaches are provably insufficient — rashi 8 (Vrischika) has W-C-W ordering in time (1937: W at 00:01, 2015: C at 00:04, 1976: W at 00:08), making it impossible to separate with any single time cutoff. See `Docs/BENGALI_INVESTIGATION.md` for the full exhaustive analysis.
 
 ### 5.13 Odia Fixed vs Astronomical Rule
 
@@ -1369,16 +1390,17 @@ Once the algorithms are validated, generate a comprehensive reference dataset:
 - Store as CSV
 - Write automated tests that recompute every date and compare against the CSV
 
-Our implementation has 51,943 assertions across 9 test suites, covering:
+Our implementation has 53,143 assertions across 10 test suites, covering:
 - 186 dates hand-verified against drikpanchang.com (lunisolar)
 - 351 solar calendar assertions (35 Odia boundary + 17 Malayalam boundary + more)
 - 327 solar validation assertions
+- 1,200 solar edge case assertions (100 per calendar, 23 Bengali updated for tithi rule)
 - Full regression across the complete date range
 
 ### 6.6 Known Limitations
 
 1. **Kshaya masa**: Not implemented. These are so rare (19–141 year gaps) that they don't affect the 1900–2050 validation range
-2. **Ayanamsa boundary zone**: Some dates near each calendar's critical time boundary may differ from drikpanchang.com due to the ~24 arcsecond ayanamsa offset (15 of 33 verified Malayalam boundary cases; other calendars not yet measured)
+2. **Ayanamsa boundary zone**: Some dates near each calendar's critical time boundary may differ from drikpanchang.com due to the ~24 arcsecond ayanamsa offset. Tamil and Malayalam use empirical buffers (−8.0 and −9.5 min). Bengali uses a tithi-based rule (36/37 verified, 1 known failure). Odia's fixed 22:12 IST cutoff is unaffected
 3. **Location dependence**: All validation uses New Delhi (28.6139°N, 77.2090°E). Different locations may shift sunrise enough to change the tithi on a few dates per year
 
 ---
@@ -1493,7 +1515,7 @@ GY = Gregorian Year.
 | Calendar | Critical Time | Formula | Season-Dependent? |
 |----------|--------------|---------|-------------------|
 | Tamil | Sunset | `sunset_jd(date, location)` | Yes (sunset varies) |
-| Bengali | Midnight + 24 min | `midnight_ut + 24min` | No |
+| Bengali | Midnight + 24 min + tithi rule | `midnight_ut + 24min` + Sewell & Dikshit tithi rule | Partially (tithi varies) |
 | Odia | 22:12 IST | `midnight_ut + 16.7h` | No |
 | Malayalam | End of madhyahna | `sunrise + 0.6 × (sunset − sunrise)` | Yes (day length varies) |
 
@@ -2170,17 +2192,26 @@ Year: Simha sankranti date, on/after → Kollam = 2025 - 824 = 1201
     - Covers 4 hypothesis stages (apparent noon → fixed IST → 3/5 daytime → boundary zone analysis)
     - 33 verified boundary cases; explains the ~24 arcsecond ayanamsa offset causing ~10 min ambiguity
 
-31. **IMPLEMENTATION_PLAN.md** — project roadmap covering all 8 implementation phases.
+31. **BENGALI_INVESTIGATION.md** — detailed investigation of the Bengali tithi-based rule.
+    - Documents exhaustive testing of time-based rules (all failed, max 22/37)
+    - Proof of inseparability (W-C-W ordering within rashis)
+    - Discovery and validation of Sewell & Dikshit tithi-based rule (36/37 correct)
+    - 37 verified edge cases with drikpanchang.com assignments
 
-32. **validation/malayalam_boundary_cases.csv** — all 33 Malayalam boundary cases with fractions, IST times, and drikpanchang assignments.
+32. **IMPLEMENTATION_PLAN.md** — project roadmap covering all 8 implementation phases.
+
+33. **validation/malayalam_boundary_cases.csv** — all 33 Malayalam boundary cases with fractions, IST times, and drikpanchang assignments.
 
 ### Further Reading
 
-33. **Subbarayappa, B. V. & Sarma, K. V.** (1985). *Indian Astronomy: A Source Book*. Nehru Centre.
+34. **Sewell, Robert & Dikshit, Sankara Balkrishna** (1896). *The Indian Calendar*. Swan Sonnenschein & Co.
+    - pp. 12-13: Bengali tithi-based rule for midnight zone sankrantis (Karkata/Makara overrides, tithi extension test)
+
+35. **Subbarayappa, B. V. & Sarma, K. V.** (1985). *Indian Astronomy: A Source Book*. Nehru Centre.
     - Comprehensive collection of primary Indian astronomical texts in translation
 
-34. **Ohashi, Y.** (2009). "The Foundations of Astronomy in the Hindu Calendric System." In *Handbook of Archaeoastronomy and Ethnoastronomy*, Springer.
+36. **Ohashi, Y.** (2009). "The Foundations of Astronomy in the Hindu Calendric System." In *Handbook of Archaeoastronomy and Ethnoastronomy*, Springer.
     - Academic treatment of the astronomical basis of Hindu time-keeping
 
-35. **Rao, S. Balachandra** (2000). *Indian Astronomy: An Introduction*. Universities Press India.
+37. **Rao, S. Balachandra** (2000). *Indian Astronomy: An Introduction*. Universities Press India.
     - Accessible introduction to Indian positional astronomy and calendar mathematics

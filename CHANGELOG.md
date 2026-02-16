@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.0 — 2026-02-13
+
+### Added
+
+- **Bengali tithi-based rule**: Implemented the traditional rule from Sewell & Dikshit ("The Indian Calendar", 1896) for resolving Bengali solar calendar edge cases when sankranti falls near midnight. The rule uses three sub-rules: Karkata (Cancer) sankrantis always treat as "before midnight", Makara (Capricorn) always as "after midnight", and all others check whether the tithi at the Hindu day's sunrise extends past the sankranti moment
+- **Bengali diagnostic tools**: `bengali_tithi_rule.c` (validation against 37 verified entries), `bengali_weekday.c` (day-of-week analysis, ruled out), `bengali_shifted.c` (shifted sankranti sweep), `bengali_eot.c` (equation of time midnight), `bengali_ayanamsa.c` (ayanamsa comparison), `bengali_analysis.c` (nishita/midnight variants)
+- Total test count: 53,143 assertions across 10 suites (unchanged count but 23 Bengali edge case expectations corrected)
+
+### Fixed
+
+- **Bengali solar calendar**: 22 of 23 previously wrong boundary cases now match drikpanchang.com (36/37 verified edge cases correct, up from 14/37). The single remaining failure is 1976-10-17 (Tula sankranti) where the tithi extends 134 min past sankranti but drikpanchang assigns it to the previous month
+- Regenerated Bengali solar reference CSV and validation web page JSON files
+
+### Documentation
+
+- Rewrote `Docs/BENGALI_INVESTIGATION.md` as a complete investigation report documenting the tithi-based rule discovery, exhaustive testing of time-based rules (all failed), and proof of inseparability
+- Updated all project documentation to reflect Bengali tithi rule implementation
+
 ## 0.3.2 — 2026-02-13
 
 ### Added

@@ -1,6 +1,6 @@
 # Project Status
 
-## Current Version: 0.3.2
+## Current Version: 0.4.0
 
 ## Phase Completion
 
@@ -30,7 +30,7 @@
 | test_solar | 351 | **Solar calendars**: dates across 4 regional variants + roundtrip + sankranti precision + month/era names + Odia/Malayalam boundary cases |
 | test_solar_validation | 327 | **External validation**: month-start dates verified against drikpanchang.com/prokerala.com for all 4 solar calendars |
 | test_solar_regression | 28,976 | **Regression**: 1,811 months x 4 calendars checked against generated CSVs (1900-2050) |
-| test_solar_edge | 1,200 | **Edge cases**: 100 closest-to-critical-time sankrantis per calendar (400 total), 21 corrected from drikpanchang.com verification |
+| test_solar_edge | 1,200 | **Edge cases**: 100 closest-to-critical-time sankrantis per calendar (400 total), 21 corrected from drikpanchang.com verification (Tamil/Malayalam), 23 Bengali entries updated for tithi-based rule |
 
 ## Validated Against drikpanchang.com
 
@@ -64,7 +64,7 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 351 unit test assertions + 327 external validation assertions + 28,976 regression assertions + 1,200 edge case assertions across 4 regional solar calendar variants:
 
 - **Tamil** (10 unit + 33 validation + 100 edge case dates): Sankranti boundaries, mid-month, year transitions, all 12 months of 2025, Chithirai 1 across 21 years (Saka era). Critical time adjusted by −8.0 min for ayanamsa difference; 6 boundary dates corrected
-- **Bengali** (9 unit + 24 validation + 100 edge case dates): Midnight + 24min edge case, Boishakh 1 across 12 years, all 12 months of 2025 (Bangabda era). 23 edge cases disagree with drikpanchang — complex rashi-dependent pattern, not yet resolved
+- **Bengali** (9 unit + 24 validation + 100 edge case dates): Midnight + 24min buffer with tithi-based rule (Sewell & Dikshit, 1896) for edge cases — Karkata always "before midnight", Makara always "after midnight", others check tithi at Hindu sunrise. 36/37 verified edge cases correct (1 known failure: 1976-10-17). Boishakh 1 across 12 years, all 12 months of 2025 (Bangabda era)
 - **Odia** (7 unit + 24 validation + 100 edge case dates): Fixed 22:12 IST cutoff, all 12 months of 2025 + 2030 (Saka era). 100/100 edge cases correct — no ayanamsa adjustment needed
 - **Malayalam** (7 unit + 28 validation + 100 edge case dates): End-of-madhyahna critical time, Chingam 1 across 16 years, all 12 months of 2025 (Kollam era). Critical time adjusted by −9.5 min for ayanamsa difference; 15 boundary dates corrected
 - Roundtrip tests: `gregorian_to_solar()` → `solar_to_gregorian()` for all 33 unit test dates
@@ -82,7 +82,7 @@ Swiss Ephemeris SE_SIDM_LAHIRI differs from drikpanchang.com's Lahiri ayanamsa b
 | Calendar | Danger zone (delta) | Wrong entries | Buffer applied | Result |
 |----------|-------------------|---------------|----------------|--------|
 | Tamil | 0 to −7.7 min | 6 | −8.0 min from sunset | All 6 fixed |
-| Bengali | Complex pattern | 23 | None (not yet resolved) | — |
+| Bengali | Tithi-based rule | 1 (of 37 verified) | Tithi at Hindu sunrise + Karkata/Makara overrides | 36/37 correct |
 | Odia | None | 0 | None needed | 100/100 correct |
 | Malayalam | 0 to −9.3 min | 15 | −9.5 min from madhyahna | All 15 fixed |
 
@@ -97,7 +97,7 @@ The buffer is subtracted from `critical_time_jd()` in `src/solar.c`. This single
 - UTC offset is manual (no IANA timezone / DST support)
 - Location defaults to New Delhi; no city database
 - Solar calendars validated with 351 unit + 327 external + 28,976 regression + 1,200 edge case assertions; Tamil and Malayalam have empirical ayanamsa buffers (−8.0 and −9.5 min) to compensate for ~24 arcsecond Lahiri ayanamsa difference with drikpanchang.com
-- Bengali solar calendar has 23 unresolved edge cases with a complex rashi-dependent pattern (no simple delta threshold)
+- Bengali solar calendar has 1 known edge case failure (1976-10-17 Tula sankranti) where the tithi-based rule disagrees with drikpanchang.com; 36/37 verified edge cases correct. See `Docs/BENGALI_INVESTIGATION.md`
 
 ## Source Statistics
 

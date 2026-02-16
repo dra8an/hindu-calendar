@@ -62,6 +62,18 @@ One-off tools built while reverse-engineering drikpanchang.com's critical time r
 | `odia_nishita.c` | Tests apparent midnight (nishita midpoint) hypothesis against 11 confirmed boundary cases. Showed that same-distance cases got different assignments, ruling out nishita |
 | `odia_cutoff_scan.c` | Scans sankrantis in the 21:30–22:30 IST range, computes distance to apparent midnight. Led to the discovery of the fixed 22:12 IST cutoff. See `Docs/ODIA_ADJUSTMENTS.md` |
 
+### Bengali investigation
+
+| Tool | Purpose |
+|------|---------|
+| `bengali_tithi_rule.c` | Tests the traditional tithi-based rule (Sewell & Dikshit, 1896) against all 37 verified Bengali edge case entries across 8 configurations ({Delhi, Kolkata} x {prev_day, civil_date} x {our sank, dp sank}). Best result: 36/37 with "Delhi sunrise(prev_day), our sank" |
+| `bengali_diag.c` | Prints all 100 Bengali edge cases with multiple candidate rules. Original diagnostic tool |
+| `bengali_analysis.c` | Analysis of the 37 verified entries against nishita and midnight variants |
+| `bengali_eot.c` | Tests equation of time midnight at IST, Ujjain, Delhi, and Kolkata longitudes. Ruled out |
+| `bengali_ayanamsa.c` | Computes critical ayanamsa difference for each entry and tests linear ayanamsa models. Used to measure the ~24 arcsecond SE_SIDM_LAHIRI vs drikpanchang offset |
+| `bengali_shifted.c` | Tests shifted sankranti times (with ayanamsa correction) against all fixed IST cutoffs and nishita+buffer combinations. Confirmed max non-trivial score of 22/37 |
+| `bengali_weekday.c` | Day-of-week analysis — showed each rashi's edge cases always fall on the same weekday, so weekday alone can't separate W/C entries |
+
 ### Edge case correction helper
 
 | Tool | Purpose |
