@@ -1,6 +1,9 @@
 #include "date_utils.h"
-#include "swephexp.h"
 #include <math.h>
+
+#ifdef USE_SWISSEPH
+
+#include "swephexp.h"
 
 double gregorian_to_jd(int year, int month, int day)
 {
@@ -18,6 +21,28 @@ int day_of_week(double jd)
     /* swe_day_of_week returns 0=Monday..6=Sunday */
     return swe_day_of_week(jd);
 }
+
+#else /* Moshier backend */
+
+#include "moshier.h"
+
+double gregorian_to_jd(int year, int month, int day)
+{
+    return moshier_julday(year, month, day, 0.0);
+}
+
+void jd_to_gregorian(double jd, int *year, int *month, int *day)
+{
+    double hour;
+    moshier_revjul(jd, year, month, day, &hour);
+}
+
+int day_of_week(double jd)
+{
+    return moshier_day_of_week(jd);
+}
+
+#endif /* USE_SWISSEPH */
 
 static const char *DOW_NAMES[] = {
     "Monday", "Tuesday", "Wednesday", "Thursday",

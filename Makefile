@@ -4,16 +4,27 @@ LDFLAGS = -lm
 
 # Directories
 SRCDIR = src
-LIBDIR = lib/swisseph
 TESTDIR = tests
 BUILDDIR = build
 
-# Swiss Ephemeris sources
-SWE_SRCS = $(LIBDIR)/swecl.c $(LIBDIR)/swedate.c $(LIBDIR)/sweephe4.c \
-           $(LIBDIR)/swehel.c $(LIBDIR)/swehouse.c $(LIBDIR)/swejpl.c \
-           $(LIBDIR)/swemmoon.c $(LIBDIR)/swemplan.c $(LIBDIR)/sweph.c \
-           $(LIBDIR)/swephlib.c
-SWE_OBJS = $(patsubst $(LIBDIR)/%.c,$(BUILDDIR)/swe/%.o,$(SWE_SRCS))
+# Ephemeris backend selection: default = moshier, USE_SWISSEPH=1 = Swiss Ephemeris
+ifdef USE_SWISSEPH
+  CFLAGS += -DUSE_SWISSEPH
+  LIBDIR = lib/swisseph
+  SWE_SRCS = $(LIBDIR)/swecl.c $(LIBDIR)/swedate.c $(LIBDIR)/sweephe4.c \
+             $(LIBDIR)/swehel.c $(LIBDIR)/swehouse.c $(LIBDIR)/swejpl.c \
+             $(LIBDIR)/swemmoon.c $(LIBDIR)/swemplan.c $(LIBDIR)/sweph.c \
+             $(LIBDIR)/swephlib.c
+  EPH_OBJS = $(patsubst $(LIBDIR)/%.c,$(BUILDDIR)/swe/%.o,$(SWE_SRCS))
+  INCLUDES = -I$(LIBDIR) -I$(SRCDIR)
+  EPH_OBJDIR = $(BUILDDIR)/swe
+else
+  LIBDIR = lib/moshier
+  MOSH_SRCS = $(wildcard $(LIBDIR)/*.c)
+  EPH_OBJS = $(patsubst $(LIBDIR)/%.c,$(BUILDDIR)/moshier/%.o,$(MOSH_SRCS))
+  INCLUDES = -I$(LIBDIR) -I$(SRCDIR)
+  EPH_OBJDIR = $(BUILDDIR)/moshier
+endif
 
 # Our sources (excluding main.c for test builds)
 APP_SRCS = $(SRCDIR)/astro.c $(SRCDIR)/date_utils.c $(SRCDIR)/tithi.c \
@@ -25,9 +36,6 @@ MAIN_OBJ = $(BUILDDIR)/main.o
 TEST_SRCS = $(wildcard $(TESTDIR)/test_*.c)
 TEST_BINS = $(patsubst $(TESTDIR)/%.c,$(BUILDDIR)/%,$(TEST_SRCS))
 
-# Include paths
-INCLUDES = -I$(LIBDIR) -I$(SRCDIR)
-
 # Target binary
 TARGET = hindu-calendar
 
@@ -35,11 +43,14 @@ TARGET = hindu-calendar
 
 all: $(BUILDDIR) $(TARGET)
 
-$(TARGET): $(SWE_OBJS) $(APP_OBJS) $(MAIN_OBJ)
+$(TARGET): $(EPH_OBJS) $(APP_OBJS) $(MAIN_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Swiss Ephemeris objects
-$(BUILDDIR)/swe/%.o: $(LIBDIR)/%.c | $(BUILDDIR)/swe
+# Ephemeris library objects
+$(BUILDDIR)/swe/%.o: lib/swisseph/%.c | $(BUILDDIR)/swe
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/moshier/%.o: lib/moshier/%.c | $(BUILDDIR)/moshier
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # Application objects
@@ -47,8 +58,8 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.c | $(BUILDDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # Test binaries
-$(BUILDDIR)/test_%: $(TESTDIR)/test_%.c $(SWE_OBJS) $(APP_OBJS) | $(BUILDDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(SWE_OBJS) $(APP_OBJS) $(LDFLAGS)
+$(BUILDDIR)/test_%: $(TESTDIR)/test_%.c $(EPH_OBJS) $(APP_OBJS) | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(LDFLAGS)
 
 # Directories
 $(BUILDDIR):
@@ -56,6 +67,9 @@ $(BUILDDIR):
 
 $(BUILDDIR)/swe:
 	mkdir -p $(BUILDDIR)/swe
+
+$(BUILDDIR)/moshier:
+	mkdir -p $(BUILDDIR)/moshier
 
 test: $(TEST_BINS)
 	@for t in $(TEST_BINS); do \

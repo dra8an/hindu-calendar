@@ -1,7 +1,10 @@
 #include "astro.h"
-#include "swephexp.h"
 #include <math.h>
 #include <stdio.h>
+
+#ifdef USE_SWISSEPH
+
+#include "swephexp.h"
 
 void astro_init(const char *ephe_path)
 {
@@ -104,3 +107,55 @@ double sunset_jd(double jd_ut, const Location *loc)
     }
     return tset;
 }
+
+#else /* Moshier backend */
+
+#include "moshier.h"
+
+void astro_init(const char *ephe_path)
+{
+    (void)ephe_path;  /* Moshier needs no initialization */
+}
+
+void astro_close(void)
+{
+    /* Nothing to clean up */
+}
+
+double solar_longitude(double jd_ut)
+{
+    return moshier_solar_longitude(jd_ut);
+}
+
+double lunar_longitude(double jd_ut)
+{
+    return moshier_lunar_longitude(jd_ut);
+}
+
+double solar_longitude_sidereal(double jd_ut)
+{
+    double sayana = solar_longitude(jd_ut);
+    double ayan = moshier_ayanamsa(jd_ut);
+    double nirayana = fmod(sayana - ayan, 360.0);
+    if (nirayana < 0) nirayana += 360.0;
+    return nirayana;
+}
+
+double get_ayanamsa(double jd_ut)
+{
+    return moshier_ayanamsa(jd_ut);
+}
+
+double sunrise_jd(double jd_ut, const Location *loc)
+{
+    return moshier_sunrise(jd_ut - loc->utc_offset / 24.0,
+                           loc->longitude, loc->latitude, loc->altitude);
+}
+
+double sunset_jd(double jd_ut, const Location *loc)
+{
+    return moshier_sunset(jd_ut - loc->utc_offset / 24.0,
+                          loc->longitude, loc->latitude, loc->altitude);
+}
+
+#endif /* USE_SWISSEPH */
