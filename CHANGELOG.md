@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.0 — 2026-02-16
+
+### Added
+
+- **Self-contained Moshier ephemeris library** (`lib/moshier/`, 1,265 lines): Replaces the 51,493-line Swiss Ephemeris as the default backend (41x code reduction). Implements all 8 SE functions used by the project using Meeus/VSOP87 algorithms. No external ephemeris files needed
+- **VSOP87 solar longitude**: Ported 135-term harmonic summation from Swiss Ephemeris source code (Bretagnon & Francou, 1988). Full pipeline: VSOP87 J2000 → IAU 1976 precession → EMB→Earth correction → geocentric → nutation → aberration. Achieves ±1 arcsecond precision vs SE
+- **Lahiri ayanamsa**: IAU 1976 3D equatorial precession matching SE's algorithm (Lieske et al., 1977). Achieves ±0.3 arcsecond precision vs SE
+- **ELP-2000/82 lunar longitude**: Meeus Ch.47 with 60 terms, E correction, and A1/A2/A3 additional terms. ±10 arcsecond precision vs SE
+- **Iterative sunrise/sunset**: Meeus Ch.15 algorithm with disc-center and atmospheric refraction. ±14 seconds vs SE
+- **Delta-T**: Polynomial approximations from Meeus & Simons (2000)
+- **Dual backend build**: `make` uses moshier (default), `make USE_SWISSEPH=1` uses Swiss Ephemeris. Both produce identical CLI output for non-edge-case dates
+- Moshier backend: 53,114/53,143 assertions pass (99.95%). 29 failures are tithi boundary edge cases from ~10 arcsecond lunar longitude precision
+- Swiss Ephemeris backend: 53,143/53,143 assertions pass (100%)
+
+### Fixed
+
+- **Ayanamsa nutation double-counting**: Discovered that `swe_get_ayanamsa_ut()` returns the MEAN ayanamsa (without nutation in longitude). Our initial implementation added nutation, causing ~17 arcsecond oscillating error with 18.6-year period. Nutation cancels in sidereal positions: `sid = (trop + dpsi) - (ayan + dpsi) = trop - ayan`
+- **Solar calendar test failures eliminated**: VSOP87 upgrade reduced total failures from 120 to 29. All 91 solar-related failures fixed (solar unit tests, edge cases, and regression tests now 100% pass)
+
+### Documentation
+
+- Created `Docs/VSOP87_IMPLEMENTATION.md`: Comprehensive document covering the VSOP87 pipeline, ayanamsa implementation, precision analysis, test results, evolution of approaches, and key lessons learned
+- Updated all project documentation to reflect dual backend architecture
+
 ## 0.4.0 — 2026-02-13
 
 ### Added

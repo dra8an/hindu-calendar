@@ -5,9 +5,10 @@
 | Component | Technology | Notes |
 |-----------|-----------|-------|
 | Language | C99 | Chosen for performance and Swiss Ephemeris native compatibility |
-| Ephemeris | Swiss Ephemeris (Moshier mode) | Vendored C source, ~34K lines, built-in planetary theory |
-| Ayanamsa | Lahiri (SE_SIDM_LAHIRI) | Standard for Indian government calendar, matches drikpanchang.com |
-| Build | GNU Make | Simple Makefile, no external dependencies beyond libc + libm |
+| Ephemeris (default) | Self-contained Moshier library | 1,265 lines, VSOP87 solar + ELP-2000/82 lunar, no external files |
+| Ephemeris (optional) | Swiss Ephemeris | 51K lines, vendored C source, `make USE_SWISSEPH=1` to enable |
+| Ayanamsa | Lahiri | IAU 1976 3D equatorial precession, matches SE_SIDM_LAHIRI |
+| Build | GNU Make | `make` (moshier) or `make USE_SWISSEPH=1` (SE) |
 | Tests | Custom C test harness | Assert macros, no test framework dependency |
 
 ## Directory Structure
@@ -16,14 +17,21 @@
 hindu-calendar/
 ├── src/                    # Application source
 │   ├── types.h             # Shared data structures and constants
-│   ├── astro.h/.c          # Swiss Ephemeris wrapper
-│   ├── date_utils.h/.c     # Julian Day / Gregorian helpers
+│   ├── astro.h/.c          # Ephemeris abstraction layer (#ifdef selects backend)
+│   ├── date_utils.h/.c     # Julian Day / Gregorian helpers (#ifdef selects backend)
 │   ├── tithi.h/.c          # Tithi (lunar day) calculation
 │   ├── masa.h/.c           # Month determination (lunisolar)
 │   ├── solar.h/.c          # Solar calendar (Tamil, Bengali, Odia, Malayalam)
 │   ├── panchang.h/.c       # High-level panchang and display
 │   └── main.c              # CLI entry point
-├── lib/swisseph/           # Vendored Swiss Ephemeris C source
+├── lib/moshier/            # Self-contained Moshier ephemeris (default backend)
+│   ├── moshier.h           # Public API — 8 replacement functions
+│   ├── moshier_jd.c        # JD ↔ Gregorian, day of week
+│   ├── moshier_sun.c       # VSOP87 solar longitude, nutation, delta-T
+│   ├── moshier_moon.c      # Lunar longitude (60-term ELP-2000/82)
+│   ├── moshier_ayanamsa.c  # Lahiri ayanamsa (IAU 1976 precession)
+│   └── moshier_rise.c      # Iterative sunrise/sunset
+├── lib/swisseph/           # Vendored Swiss Ephemeris C source (optional backend)
 ├── tests/                  # Test suites
 │   ├── test_astro.c
 │   ├── test_tithi.c
@@ -58,7 +66,7 @@ main.c
   ├── panchang.h  (generate_month_panchang, print_month_panchang)
   │     ├── tithi.h  (tithi_at_sunrise)
   │     │     └── astro.h  (lunar/solar_longitude, sunrise_jd)
-  │     │           └── Swiss Ephemeris (swe_calc_ut, swe_rise_trans)
+  │     │           └── Moshier library OR Swiss Ephemeris (compile-time selection)
   │     └── masa.h  (masa_for_date)
   │           ├── tithi.h
   │           └── astro.h  (solar_longitude_sidereal)
@@ -68,7 +76,7 @@ main.c
   │     └── date_utils.h
   ├── astro.h  (astro_init, astro_close)
   └── date_utils.h  (gregorian_to_jd)
-        └── Swiss Ephemeris (swe_julday, swe_revjul)
+        └── Moshier library OR Swiss Ephemeris (compile-time selection)
 ```
 
 ## Key Algorithms
@@ -193,16 +201,32 @@ The Tamil and Malayalam buffers compensate for ~24 arcsecond difference between 
 
 **Malayalam** is unique: its year starts at Simha (Leo, rashi 5) instead of Mesha (Aries, rashi 1). Month numbering rotates so that Chingam (Simha) = month 1, Kanni (Kanya) = month 2, ..., Karkadakam (Karka) = month 12.
 
-## Swiss Ephemeris
+## Ephemeris Backends
 
-The Swiss Ephemeris is a high-precision astronomical calculation library developed by Astrodienst AG (astro.com). We use it in **Moshier mode** which provides built-in semi-analytical planetary theories without requiring external data files.
+The project supports two astronomical backends, selected at compile time via `#ifdef USE_SWISSEPH`. The application code (`src/astro.c`, `src/date_utils.c`) provides an abstraction layer so all other modules are backend-agnostic.
 
-**Moshier mode accuracy**: ~1 arcsecond for the Sun, ~3 arcseconds for the Moon. This is more than sufficient for tithi calculation (each tithi spans 12 degrees = 43,200 arcseconds).
+### Default: Moshier Library (`lib/moshier/`, 1,265 lines)
+
+A self-contained ephemeris implementing the same 8 SE functions used by the project. No external data files needed.
+
+| Component | Algorithm | Precision vs SE |
+|-----------|-----------|----------------|
+| Solar longitude | VSOP87 (135 harmonic terms) | ±1″ |
+| Lunar longitude | ELP-2000/82 (60 Meeus Ch.47 terms) | ±10″ |
+| Ayanamsa | IAU 1976 3D equatorial precession | ±0.3″ |
+| Sunrise/sunset | Meeus Ch.15 iterative | ±14 seconds |
+| JD conversions | Meeus Ch.7 | Exact |
+
+See [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) for the full solar longitude pipeline, the ayanamsa nutation discovery, and precision analysis.
+
+### Optional: Swiss Ephemeris (`lib/swisseph/`, 51,493 lines)
+
+The Swiss Ephemeris (Astrodienst AG) provides higher-precision planetary positions via the Moshier analytical ephemeris mode. Enable with `make USE_SWISSEPH=1`.
 
 **Key functions used**:
 - `swe_calc_ut()` — planetary longitude at a given Julian Day
 - `swe_rise_trans()` — sunrise/sunset time for a given location
-- `swe_get_ayanamsa_ut()` — Lahiri ayanamsa value
+- `swe_get_ayanamsa_ut()` — Lahiri ayanamsa value (mean, without nutation)
 - `swe_julday()` / `swe_revjul()` — Julian Day conversions
 - `swe_set_sid_mode()` — configure sidereal mode (Lahiri)
 

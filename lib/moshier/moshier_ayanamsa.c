@@ -134,9 +134,10 @@ double moshier_ayanamsa(double jd_ut)
     /* Step 6: Ayanamsa = -longitude + initial value */
     double ayan = -lon + LAHIRI_AYAN_T0;
 
-    /* Step 7: Add nutation in longitude */
-    double dpsi = moshier_nutation_longitude(jd_ut);
-    ayan += dpsi;
+    /* Note: swe_get_ayanamsa_ut() returns the MEAN ayanamsa (without nutation).
+     * Do NOT add nutation here — it would cause a mismatch with SE output.
+     * The nutation in longitude cancels when computing sidereal positions:
+     * sid_lon = (trop_lon + dpsi) - (ayan + dpsi) = trop_lon - ayan */
 
     /* Normalize to [0, 360) */
     ayan = fmod(ayan, 360.0);

@@ -17,6 +17,20 @@
 - [ ] Continue manual validation of remaining lunisolar months via web page against drikpanchang.com
 - [ ] Document any edge-case discrepancies (midnight new moons, polar regions)
 
+## Priority 1.5: Self-Contained Ephemeris (Phase 9+10 — Complete)
+
+Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshier library as the default backend. Both backends remain available via compile-time selection.
+
+- [x] Self-contained Moshier ephemeris library (`lib/moshier/`, 1,265 lines)
+- [x] VSOP87 solar longitude (135-term harmonic summation, ±1″ vs SE)
+- [x] ELP-2000/82 lunar longitude (60 Meeus Ch.47 terms, ±10″ vs SE)
+- [x] Lahiri ayanamsa via IAU 1976 3D equatorial precession (±0.3″ vs SE)
+- [x] Iterative sunrise/sunset (Meeus Ch.15, ±14 seconds vs SE)
+- [x] Dual backend: `make` = moshier, `make USE_SWISSEPH=1` = SE
+- [x] All solar calendar tests 100% pass with moshier (91 failures eliminated by VSOP87)
+- [x] 53,114/53,143 (99.95%) pass with moshier; 29 remaining failures are tithi boundary edge cases from ~10″ lunar precision
+- [ ] Optionally improve lunar longitude precision to eliminate remaining 29 failures (would require more ELP-2000/82 terms or a different approach)
+
 ## Priority 2: Sunrise Accuracy
 
 - [ ] Compare `SE_BIT_DISC_CENTER` (current, with refraction) vs `SE_BIT_DISC_CENTER | SE_BIT_NO_REFRACTION` (geometric) against drikpanchang.com

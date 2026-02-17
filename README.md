@@ -1,11 +1,14 @@
 # Hindu Calendar (Panchang)
 
-A Hindu lunisolar and solar calendar implementation in C. Computes tithi, lunar month, and Hindu date (lunisolar panchang), plus regional solar calendars for Tamil, Bengali, Odia, and Malayalam traditions. Matches [drikpanchang.com](https://www.drikpanchang.com) output using the Drik Siddhanta approach with Swiss Ephemeris and Lahiri ayanamsa.
+A Hindu lunisolar and solar calendar implementation in C. Computes tithi, lunar month, and Hindu date (lunisolar panchang), plus regional solar calendars for Tamil, Bengali, Odia, and Malayalam traditions. Matches [drikpanchang.com](https://www.drikpanchang.com) output using the Drik Siddhanta approach with Lahiri ayanamsa.
+
+**Dual backend**: Ships with a self-contained Moshier ephemeris library (1,265 lines, VSOP87 solar + ELP-2000/82 lunar) as the default. Swiss Ephemeris (51K lines) available via `make USE_SWISSEPH=1`.
 
 ## Build
 
 ```
-make
+make                    # Default: self-contained Moshier ephemeris
+make USE_SWISSEPH=1     # Optional: Swiss Ephemeris backend
 ```
 
 ## Usage
@@ -82,5 +85,6 @@ See [Docs/MASTER.md](Docs/MASTER.md) for a full index. Key files:
 - [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) — algorithms, tech stack, module structure
 - [Docs/PROJECT-STATUS.md](Docs/PROJECT-STATUS.md) — what works, test coverage, known limitations
 - [Docs/NEXT-STEPS.md](Docs/NEXT-STEPS.md) — roadmap (nakshatra, yoga, Purnimanta, etc.)
+- [Docs/VSOP87_IMPLEMENTATION.md](Docs/VSOP87_IMPLEMENTATION.md) — VSOP87 solar longitude pipeline, ayanamsa, precision analysis
 - [Docs/SOLAR_PLAN.md](Docs/SOLAR_PLAN.md) — solar calendar design document
 - [CHANGELOG.md](CHANGELOG.md) — version history
