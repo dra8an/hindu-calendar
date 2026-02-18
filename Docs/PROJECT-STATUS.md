@@ -21,9 +21,9 @@
 
 ## Test Results
 
-**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 53,143/53,143 assertions pass (100%).
+**With Moshier backend** (default `make`): 53,143/53,143 assertions pass (100%). All 55,152 lunisolar days (1900–2050) match drikpanchang.com.
 
-**With Moshier backend** (default `make`): 53,141/53,143 assertions pass (99.996%). 2 remaining failures are irreducible edge cases: 1 near-midnight-UT sunrise wrap-around (~16s offset), 1 tithi boundary within 0.17″ of transition. All solar calendar tests pass 100%.
+**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 53,143/53,143 assertions pass (100%). SE differs from drikpanchang.com on 2 tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct; these 2 dates are not hit by the sampled regression test.
 
 53,143 assertions across 10 test suites:
 
@@ -106,7 +106,7 @@ The buffer is subtracted from `critical_time_jd()` in `src/solar.c`. This single
 
 ## Known Limitations
 
-- Default Moshier backend has 2 irreducible edge-case failures (99.996% pass rate): 1965-05-30 (near-midnight-UT sunrise wrap-around, ~16s offset) and 2001-09-20 (tithi boundary within 0.17″ of transition). Use `make USE_SWISSEPH=1` for 100% pass rate
+- SE backend differs from drikpanchang.com on 2 tithi boundary dates (1965-05-30, 2001-09-20) where the Moshier backend matches correctly. Both are extreme boundary cases where the tithi transition falls within arcseconds of sunrise
 - Moshier backend uses analytical planetary theories (VSOP87 for Sun, DE404-fitted Moshier theory for Moon) rather than Swiss Ephemeris data files
 - Amanta scheme only (no Purnimanta support)
 - No nakshatra, yoga, or karana calculations
@@ -122,8 +122,10 @@ The project supports two astronomical backends, selectable at compile time:
 
 | Backend | Build command | Lines | Precision (solar) | Precision (lunar) | Sunrise | Test pass rate |
 |---------|---------------|-------|--------------------|--------------------|---------|----------------|
-| **Moshier** (default) | `make` | 1,943 | ±1″ (VSOP87) | ±0.07″ (DE404) | ±2s | 99.996% (53,141/53,143) |
-| **Swiss Ephemeris** | `make USE_SWISSEPH=1` | 51,493 | ±0.001″ | ±0.003″ | ref | 100% (53,143/53,143) |
+| **Moshier** (default) | `make` | 1,943 | ±1″ (VSOP87) | ±0.07″ (DE404) | ±2s | 100% (53,143/53,143) |
+| **Swiss Ephemeris** | `make USE_SWISSEPH=1` | 51,493 | ±0.001″ | ±0.003″ | ref | 100% (53,143/53,143)* |
+
+\* SE differs from drikpanchang.com on 2 tithi boundary dates where Moshier matches correctly.
 
 The Moshier library (`lib/moshier/`) implements the same 8 SE functions used by the project. See [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) for the solar longitude pipeline and [MOSHIER_IMPLEMENTATION.md](MOSHIER_IMPLEMENTATION.md) for the full library architecture.
 

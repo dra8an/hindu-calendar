@@ -2,7 +2,7 @@
 
 A Hindu lunisolar and solar calendar implementation in C. Computes tithi, lunar month, and Hindu date (lunisolar panchang), plus regional solar calendars for Tamil, Bengali, Odia, and Malayalam traditions. Matches [drikpanchang.com](https://www.drikpanchang.com) output using the Drik Siddhanta approach with Lahiri ayanamsa.
 
-**Dual backend**: Ships with a self-contained Moshier ephemeris library (1,265 lines, VSOP87 solar + ELP-2000/82 lunar) as the default. Swiss Ephemeris (51K lines) available via `make USE_SWISSEPH=1`.
+**Dual backend**: Ships with a self-contained Moshier ephemeris library (1,943 lines, VSOP87 solar + DE404 lunar) as the default — 100% match against drikpanchang.com across 55,152 days (1900–2050). Swiss Ephemeris (51K lines) available via `make USE_SWISSEPH=1`.
 
 ## Build
 

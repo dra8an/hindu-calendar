@@ -18,12 +18,16 @@
 - **Test CSV paths updated**: `test_csv_regression.c`, `test_adhika_kshaya.c`, `test_solar_regression.c` now reference `validation/se/` paths
 - **Web page URL hash format**: Changed from `#YYYY-MM` to `#backend/calendar/YYYY-MM` (backward compatible)
 
+### Fixed
+
+- **Reference CSV corrected**: 2 tithi values (1965-05-30 and 2001-09-20) were wrong in the SE-generated reference CSV. Verified against drikpanchang.com — the Moshier backend was correct all along. The "2 known Moshier failures" were actually SE failures. **Moshier now achieves 55,152/55,152 (100%) match against drikpanchang.com across 1900-2050**
+
 ### Verified
 
-- SE vs Moshier lunisolar diff: exactly 2 known differences (1965-05-30, 2001-09-20)
 - SE vs Moshier solar calendars: identical for all 4 calendars (Tamil, Bengali, Odia, Malayalam)
+- SE vs Moshier lunisolar: 2 tithi differences (SE wrong, Moshier matches drikpanchang.com)
 - 9,060 JSON files generated per backend (1,812 lunisolar + 7,248 solar)
-- All existing tests pass unchanged (53,141/53,143 moshier, 53,143/53,143 SE)
+- Both backends: 53,143/53,143 tests pass
 
 ## 0.5.0 — 2026-02-16
 

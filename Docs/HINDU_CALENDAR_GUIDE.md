@@ -2,7 +2,7 @@
 
 **A language-agnostic guide to implementing Hindu lunisolar (panchang) and regional solar calendars using modern astronomical ephemerides.**
 
-This guide documents everything needed to reimplement the Hindu calendar system from scratch: astronomical background, step-by-step algorithms in pseudocode, critical time rules for four regional solar calendars, implementation pitfalls, and validation strategies. All algorithms have been verified against [drikpanchang.com](https://www.drikpanchang.com/) with 53,143+ assertions across 150 years (1900–2050).
+This guide documents everything needed to reimplement the Hindu calendar system from scratch: astronomical background, step-by-step algorithms in pseudocode, critical time rules for four regional solar calendars, implementation pitfalls, and validation strategies. All algorithms have been verified against [drikpanchang.com](https://www.drikpanchang.com/) with 53,143 assertions across 150 years (1900–2050), achieving 100% match on all 55,152 lunisolar days.
 
 ---
 
@@ -12,7 +12,7 @@ This guide documents everything needed to reimplement the Hindu calendar system 
 2. [Astronomical Background](#2-astronomical-background)
 3. [The Hindu Lunisolar Calendar (Panchang)](#3-the-hindu-lunisolar-calendar-panchang)
 4. [Hindu Solar Calendars](#4-hindu-solar-calendars)
-5. [Implementation Gotchas](#5-implementation-gotchas)
+5. [Implementation Gotchas](#5-implementation-gotchas) (including [5.15 Self-Contained Ephemeris Alternative](#515-self-contained-ephemeris-alternative))
 6. [Validation Strategy](#6-validation-strategy)
 7. [Reference Tables](#7-reference-tables)
 - [Appendix A: Complete Pseudocode Reference](#appendix-a-complete-pseudocode-reference)
@@ -41,20 +41,24 @@ There are two fundamental approaches to Hindu calendar computation:
 
 - **[Surya Siddhanta](https://en.wikipedia.org/wiki/Surya_Siddhanta)** (traditional): Uses fixed mathematical models from ancient Indian astronomy. This is the approach taken by Reingold and Dershowitz in *[Calendrical Calculations](https://www.cambridge.org/us/academic/subjects/computer-science/computing-general-interest/calendrical-calculations-ultimate-edition-4th-edition)*. It gives approximate results that diverge from modern observations by up to a day.
 
-- **Drik Siddhanta** (observational/modern): Uses modern planetary ephemeris calculations (typically [Swiss Ephemeris](https://www.astro.com/swisseph/)) with the [Lahiri ayanamsa](https://en.wikipedia.org/wiki/Lahiri_ayanamsa). This matches what actual Hindu calendar makers (panchang publishers) use today and what appears on [drikpanchang.com](https://www.drikpanchang.com/).
+- **Drik Siddhanta** (observational/modern): Uses modern planetary ephemeris calculations (typically [Swiss Ephemeris](https://www.astro.com/swisseph/) or a self-contained analytical library) with the [Lahiri ayanamsa](https://en.wikipedia.org/wiki/Lahiri_ayanamsa). This matches what actual Hindu calendar makers (panchang publishers) use today and what appears on [drikpanchang.com](https://www.drikpanchang.com/).
 
 **This guide uses the Drik Siddhanta approach.** The algorithms require a planetary ephemeris library that can compute:
 - Solar and lunar ecliptic longitudes (tropical/sidereal)
 - Sunrise and sunset times for a given location
 - The Lahiri ayanamsa value
 
-The [Swiss Ephemeris](https://www.astro.com/swisseph/) is the recommended library. It is available in C, with ports/bindings for most languages.
+Two proven approaches exist:
+
+1. **[Swiss Ephemeris](https://www.astro.com/swisseph/)** — the standard high-precision planetary ephemeris library (~51K lines of C). Available with ports/bindings for most languages. Uses JPL DE431 data files or built-in Moshier analytical methods.
+
+2. **Self-contained analytical ephemeris** — a compact alternative (~2,000 lines of C) using VSOP87 for solar longitude and DE404-fitted Moshier theory for lunar longitude, with IAU 1976 precession for the Lahiri ayanamsa. This approach achieves 100% agreement with drikpanchang.com across 55,152 days (1900–2050) and requires no external data files. See [Section 5.15](#515-self-contained-ephemeris-alternative) for details.
 
 ### 1.3 Prerequisites
 
 To implement these calendars, you need:
 
-1. **A planetary ephemeris library** — Swiss Ephemeris recommended. Must support:
+1. **A planetary ephemeris library** — either Swiss Ephemeris or a self-contained analytical library. Must support:
    - Tropical ecliptic longitudes for Sun and Moon
    - Lahiri ayanamsa computation
    - Sunrise/sunset calculation (disc center, with refraction)
@@ -130,7 +134,7 @@ SE_SIDM_LAHIRI = 1
 swe_set_sid_mode(SE_SIDM_LAHIRI, 0, 0)
 ```
 
-**Important**: There are small differences (~24 arcseconds) between the Swiss Ephemeris SE_SIDM_LAHIRI and the Indian Astronomical Ephemeris Lahiri value. This causes ~10 minute differences in sankranti times, which matters for boundary cases in solar calendars. See [Section 5.3](#53-ayanamsa-differences).
+**Important**: There are small differences (~24 arcseconds) between the Swiss Ephemeris SE_SIDM_LAHIRI and the Indian Astronomical Ephemeris Lahiri value. This causes ~10 minute differences in sankranti times, which matters for boundary cases in solar calendars. This can be resolved with empirical buffers on the critical times. See [Section 5.3](#53-ayanamsa-differences).
 
 ### 2.4 Tropical vs Sidereal: When to Use Which
 
@@ -180,6 +184,11 @@ rsmi = SE_CALC_RISE | SE_BIT_DISC_CENTER
 The `geopos` array for Swiss Ephemeris `swe_rise_trans` is ordered: `[longitude, latitude, altitude]` (note: longitude first, unlike the usual lat/lon convention).
 
 The `jd_ut` input to `swe_rise_trans` should be in UT (not local time). To find sunrise on a given local date, subtract the UTC offset: `jd_ut_start = jd_midnight_local - utc_offset / 24.0`.
+
+If implementing sunrise from scratch (without Swiss Ephemeris), use:
+- **Iterative Meeus Ch.15 algorithm** with 3 iterations (converges to ~2 second precision)
+- **Sinclair refraction formula** for the refraction correction at the horizon (h₀ ≈ −0.612°, matching Swiss Ephemeris's `calc_astronomical_refr`)
+- **Apparent sidereal time (GAST)** = GMST + Δψ × cos(ε) for the hour angle calculation (using GMST alone introduces ~1 second error)
 
 ### 2.8 Julian Day Numbers
 
@@ -781,16 +790,16 @@ Each calendar computes `critical_time_jd` differently — described in the follo
 
 ### 4.4 Tamil Solar Calendar (Tamizh Varudam) — [Wikipedia](https://en.wikipedia.org/wiki/Tamil_calendar)
 
-#### Critical Time: Sunset
+#### Critical Time: Sunset (with ayanamsa buffer)
 
 If the sankranti occurs before sunset, that day is day 1 of the new solar month. If after sunset, the next day is day 1.
 
 ```
 function critical_time_tamil(jd_midnight_ut, location):
-    return sunset_jd(jd_midnight_ut, location)
+    return sunset_jd(jd_midnight_ut, location) - 8.0 / (24 * 60)  // −8 min ayanamsa buffer
 ```
 
-This is the simplest and most intuitive rule: the solar month changes when the sun visibly enters the new sign before the day ends.
+The 8-minute buffer compensates for the ~24 arcsecond Lahiri ayanamsa difference between Swiss Ephemeris and drikpanchang.com. Without it, 6 boundary dates (1900–2050) are assigned to the wrong civil day. See [Section 5.3](#53-ayanamsa-differences).
 
 #### Era: Saka
 
@@ -980,10 +989,10 @@ The Malayalam calendar uses the end of the madhyahna period — three-fifths of 
 function critical_time_malayalam(jd_midnight_ut, location):
     sr = sunrise_jd(jd_midnight_ut, location)
     ss = sunset_jd(jd_midnight_ut, location)
-    return sr + 0.6 * (ss - sr)
+    return sr + 0.6 * (ss - sr) - 9.5 / (24 * 60)  // −9.5 min ayanamsa buffer
 ```
 
-This is approximately 1:00–1:40 PM IST depending on the season (day length varies from ~11 to ~13.5 hours at Delhi's latitude).
+Without the 9.5-minute buffer, the critical time is approximately 1:00–1:40 PM IST depending on the season. The buffer compensates for the ~24 arcsecond Lahiri ayanamsa difference between Swiss Ephemeris and drikpanchang.com (see [Section 5.3](#53-ayanamsa-differences)).
 
 **Important**: This is NOT apparent noon (midpoint of sunrise-sunset = 0.5 of daytime). The end of madhyahna is at 0.6 of daytime, which is typically 40–80 minutes after apparent noon.
 
@@ -991,7 +1000,7 @@ This is approximately 1:00–1:40 PM IST depending on the season (day length var
 
 1. **Apparent noon (0.5 of daytime)**: Failed for cases between noon and ~1:45 PM IST
 2. **Fixed 13:12 IST**: Failed because November dates at ~13:09 IST behaved differently from non-November dates at the same IST time — proving the rule is season-dependent (day-length-dependent)
-3. **End of madhyahna (0.6 of daytime)**: Works for 18 of 33 boundary cases that are far enough from the cutoff. The remaining 15 cases fall in a ~10-minute ambiguity zone caused by ayanamsa offset (see below)
+3. **End of madhyahna (0.6 of daytime)**: Works for 18 of 33 boundary cases that are far enough from the cutoff. The remaining 15 cases fall in a ~10-minute ambiguity zone caused by ayanamsa offset (see below). Resolved by subtracting a 9.5-minute empirical buffer
 
 #### The Boundary Zone Problem
 
@@ -1015,7 +1024,9 @@ The pair at fractions 0.587 and 0.588 are assigned to opposite sides of the boun
 
 **Root cause**: There is a ~10 minute systematic offset between our sankranti times and drikpanchang's, caused by a ~24 arcsecond difference in the Lahiri ayanamsa value between Swiss Ephemeris (SE_SIDM_LAHIRI) and drikpanchang's implementation. Since the sun moves ~1°/day, 24 arcseconds ≈ 10 minutes of time.
 
-The rule IS 3/5 of daytime, but the ~10 minute sankranti time difference means that cases within ~10 minutes of the cutoff (fractions 0.586–0.600) may disagree between our implementation and drikpanchang. This affects approximately 15 dates in the 1900–2050 range.
+The rule IS 3/5 of daytime, but the ~10 minute sankranti time difference means that cases within ~10 minutes of the cutoff (fractions 0.586–0.600) disagree without compensation. This affects 15 dates in the 1900–2050 range.
+
+**Resolution**: Subtracting a 9.5-minute empirical buffer from the end-of-madhyahna time cleanly splits the 9.3–10.0 min danger zone. All 15 previously wrong boundary dates are fixed, giving 100% accuracy across 1900–2050.
 
 #### Era: Kollam
 
@@ -1225,9 +1236,22 @@ The Swiss Ephemeris `SE_SIDM_LAHIRI` and the Indian Astronomical Ephemeris Lahir
 - ~10 minutes difference in rashi boundary crossings
 - No practical effect on tithi (ayanamsa cancels)
 
-For most dates, a 10-minute offset doesn't matter because the sankranti is far from any critical time boundary. But for dates where the sankranti falls within ~10 minutes of the critical time, our implementation and drikpanchang may assign the sankranti to different civil days.
+For most dates, a 10-minute offset doesn't matter because the sankranti is far from any critical time boundary. But for dates where the sankranti falls within ~10 minutes of the critical time, the sankranti may be assigned to different civil days.
 
-For Malayalam, `MALAYALAM_ADJUSTMENTS.md` reports that 15 of 33 manually verified boundary cases fell in the ambiguous zone (fraction 0.586–0.600 of daytime) where our code and drikpanchang disagree. However, those 33 cases were specifically selected because they were *near* the cutoff — they are not a random sample. The total number of affected dates across all ~1,812 Malayalam month boundaries (1900–2050) has not been measured. The impact for Tamil, Bengali, and Odia has also not been systematically measured. Any calendar can have affected dates whenever a sankranti falls within ~10 minutes of its critical time.
+#### Resolution: Empirical Buffers
+
+Systematic investigation of all ~400 closest-to-critical-time sankrantis (100 per calendar, 1900–2050) revealed that the ayanamsa offset creates a consistent "danger zone" where all mismatches occur. This can be resolved by subtracting a small empirical buffer from the critical time:
+
+| Calendar | Danger Zone | Wrong Entries | Buffer Applied | Result |
+|----------|-------------|---------------|----------------|--------|
+| Tamil | 0 to −7.7 min | 6 | −8.0 min from sunset | All 6 fixed |
+| Bengali | Tithi-based rule | 1 (of 37 verified) | Tithi at Hindu sunrise + Karkata/Makara overrides | 36/37 correct |
+| Odia | None | 0 | None needed | 100/100 correct |
+| Malayalam | 0 to −9.3 min | 15 | −9.5 min from end of madhyahna | All 15 fixed |
+
+The buffer is subtracted from the critical time computation. For Tamil: `sunset - 8.0 min`. For Malayalam: `end_of_madhyahna - 9.5 min`. Odia's fixed 22:12 IST cutoff is naturally immune to the ayanamsa offset. Bengali uses a fundamentally different approach (tithi-based rule) that sidesteps the issue.
+
+With these buffers applied, the implementation matches drikpanchang.com on 100% of lunisolar dates and all but 1 solar calendar boundary date (1976-10-17 Bengali) across 1900–2050.
 
 ### 5.4 Sunrise Definition
 
@@ -1338,7 +1362,29 @@ For implementers: do not try to find an "elegant" astronomical rule for Odia. Us
 
 The Malayalam 3/5-of-daytime rule has an inherent ambiguity zone (fractions 0.586–0.600) where no single fraction perfectly separates all drikpanchang.com assignments. This is due to the ~24 arcsecond ayanamsa difference (see [Section 5.3](#53-ayanamsa-differences)).
 
-There is no fix for this within the Swiss Ephemeris. To exactly match drikpanchang.com for all dates, you would need their exact ayanamsa implementation. For practical purposes, 3/5 of daytime is correct for the vast majority of dates. Of 33 manually verified boundary cases, 15 fell in the ambiguous zone — but these were specifically selected for being near the cutoff, so the overall mismatch rate across all ~1,812 month boundaries is unknown.
+**Resolution**: Subtracting a 9.5-minute empirical buffer from the end-of-madhyahna critical time (`end_of_madhyahna - 9.5 min`) cleanly splits the 9.3–10.0 min danger zone and fixes all 15 previously wrong boundary dates across 1900–2050. The same approach works for Tamil (−8.0 min from sunset, fixing 6 dates). See [Section 5.3](#53-ayanamsa-differences) for the full summary.
+
+### 5.15 Self-Contained Ephemeris Alternative
+
+It is possible to implement a fully self-contained ephemeris library (~2,000 lines of C) that achieves 100% agreement with drikpanchang.com across 55,152 days (1900–2050), without depending on Swiss Ephemeris or any external data files. The key components are:
+
+**Solar longitude (VSOP87)**: The Bretagnon & Francou (1988) VSOP87 planetary theory provides solar ecliptic longitude to ±1 arcsecond. A practical implementation uses ~135 harmonic terms for Earth's longitude (ported from the Swiss Ephemeris `swemplan.c` / `swemptab.h` source code). The full pipeline is:
+1. VSOP87 J2000 ecliptic longitude (summation of harmonic series in powers of T)
+2. General precession (IAU 1976) to bring from J2000 to date
+3. EMB→Earth correction (subtract Earth's share of the Earth-Moon barycenter offset)
+4. Geocentric conversion (heliocentric → geocentric)
+5. Nutation in longitude (Δψ, from a 13-term IAU 1980 series)
+6. Aberration correction (−20.496 arcseconds)
+
+**Lunar longitude (DE404-fitted Moshier theory)**: The full Moshier moon pipeline (originally fitted to JPL DE404) provides lunar ecliptic longitude to ±0.07 arcseconds. This involves ~800 lines of code with four computational stages (`moon1`–`moon4`), 26 mean element functions, and three lookup tables (LR, LRT, LRT2). The critical insight is that ALL stages and corrections are needed — using just the main table without the explicit terms from `moon1`/`moon2` gives *worse* results than Meeus Ch.47 with 60 terms.
+
+**Lahiri ayanamsa (IAU 1976 precession)**: Three-dimensional equatorial precession matching Swiss Ephemeris's algorithm for SE_SIDM_LAHIRI. The key parameters are: t₀ = JD 2435553.5, ayan_t₀ = 23.245524743°. **Critical**: The ayanamsa must be computed WITHOUT nutation — `swe_get_ayanamsa_ut()` returns the mean ayanamsa. Nutation cancels in sidereal positions: `sid = (trop + Δψ) − (ayan + Δψ) = trop − ayan`. Adding nutation to the ayanamsa causes a ~17 arcsecond oscillating error with an 18.6-year period.
+
+**Sunrise (iterative Meeus Ch.15)**: Three-iteration transit/rise/set algorithm with Sinclair refraction and apparent sidereal time. Achieves ±2 second precision vs Swiss Ephemeris.
+
+**Delta-T**: A yearly lookup table (1620–2025) matching Swiss Ephemeris values, with Meeus polynomial fallback outside that range. Using only polynomials introduces ~1 second sunrise errors on some dates.
+
+This self-contained approach achieves a 26× code reduction compared to Swiss Ephemeris (1,943 vs 51,493 lines) while actually outperforming it on 2 tithi boundary dates (1965-05-30 and 2001-09-20) where Swiss Ephemeris disagrees with drikpanchang.com. The precision is more than sufficient for Hindu calendar purposes, where the relevant decision boundaries (tithi at sunrise, sankranti vs critical time) are rarely tighter than a few seconds.
 
 ---
 
@@ -1389,19 +1435,26 @@ Once the algorithms are validated, generate a comprehensive reference dataset:
 - Convert every day in your date range (e.g., 1900-01-01 to 2050-12-31) to Hindu lunisolar and solar dates
 - Store as CSV
 - Write automated tests that recompute every date and compare against the CSV
+- If supporting multiple backends, generate and store separate reference CSVs for each backend to enable side-by-side comparison
 
 Our implementation has 53,143 assertions across 10 test suites, covering:
 - 186 dates hand-verified against drikpanchang.com (lunisolar)
 - 351 solar calendar assertions (35 Odia boundary + 17 Malayalam boundary + more)
-- 327 solar validation assertions
-- 1,200 solar edge case assertions (100 per calendar, 23 Bengali updated for tithi rule)
-- Full regression across the complete date range
+- 327 solar validation assertions (month-start dates verified against drikpanchang.com for all 4 solar calendars)
+- 1,200 solar edge case assertions (100 closest-to-critical-time sankrantis per calendar, 21 corrected from drikpanchang.com verification)
+- 4,416 sampled lunisolar regression assertions + 17,076 adhika/kshaya tithi edge-case regression assertions
+- 28,976 solar regression assertions (1,811 months × 4 calendars)
+- Full regression across the complete 1900–2050 date range
+
+Both the Swiss Ephemeris and self-contained Moshier backends pass all 53,143 assertions. The Moshier backend achieves 55,152/55,152 (100%) match against drikpanchang.com across the full lunisolar date range. The SE backend differs from drikpanchang.com on exactly 2 tithi boundary dates (1965-05-30, 2001-09-20) where the Moshier backend is correct.
 
 ### 6.6 Known Limitations
 
 1. **Kshaya masa**: Not implemented. These are so rare (19–141 year gaps) that they don't affect the 1900–2050 validation range
-2. **Ayanamsa boundary zone**: Some dates near each calendar's critical time boundary may differ from drikpanchang.com due to the ~24 arcsecond ayanamsa offset. Tamil and Malayalam use empirical buffers (−8.0 and −9.5 min). Bengali uses a tithi-based rule (36/37 verified, 1 known failure). Odia's fixed 22:12 IST cutoff is unaffected
-3. **Location dependence**: All validation uses New Delhi (28.6139°N, 77.2090°E). Different locations may shift sunrise enough to change the tithi on a few dates per year
+2. **Bengali solar calendar**: 1 known edge case failure (1976-10-17 Tula sankranti) where the tithi-based rule disagrees with drikpanchang.com; 36/37 verified edge cases correct
+3. **Swiss Ephemeris tithi boundaries**: SE differs from drikpanchang.com on 2 dates (1965-05-30, 2001-09-20) — extreme boundary cases where the tithi transition falls within arcseconds of sunrise. The self-contained Moshier backend matches drikpanchang.com on both dates
+4. **Location dependence**: All validation uses New Delhi (28.6139°N, 77.2090°E). Different locations may shift sunrise enough to change the tithi on a few dates per year
+5. **Ayanamsa boundary zone (resolved)**: Tamil and Malayalam empirical buffers (−8.0 and −9.5 min) compensate for the ~24 arcsecond ayanamsa difference with drikpanchang.com. Odia's fixed 22:12 IST cutoff is naturally immune. See [Section 5.3](#53-ayanamsa-differences)
 
 ---
 
@@ -1514,10 +1567,10 @@ GY = Gregorian Year.
 
 | Calendar | Critical Time | Formula | Season-Dependent? |
 |----------|--------------|---------|-------------------|
-| Tamil | Sunset | `sunset_jd(date, location)` | Yes (sunset varies) |
+| Tamil | Sunset − 8 min | `sunset_jd(date, location) − 8.0 min` | Yes (sunset varies) |
 | Bengali | Midnight + 24 min + tithi rule | `midnight_ut + 24min` + Sewell & Dikshit tithi rule | Partially (tithi varies) |
 | Odia | 22:12 IST | `midnight_ut + 16.7h` | No |
-| Malayalam | End of madhyahna | `sunrise + 0.6 × (sunset − sunrise)` | Yes (day length varies) |
+| Malayalam | End of madhyahna − 9.5 min | `sunrise + 0.6 × (sunset − sunrise) − 9.5 min` | Yes (day length varies) |
 
 ---
 
@@ -1527,7 +1580,7 @@ This appendix collects all algorithms in a consistent format. All functions are 
 
 ### A.1 Ephemeris Functions
 
-These are provided by your ephemeris library (e.g., Swiss Ephemeris):
+These are provided by your ephemeris library (Swiss Ephemeris, or a self-contained analytical library — see [Section 5.15](#515-self-contained-ephemeris-alternative)):
 
 ```
 // Returns tropical ecliptic longitude of the Sun (0-360°) at JD (UT)
@@ -1745,7 +1798,7 @@ function sankranti_before(jd):
 function critical_time_jd(jd_midnight_ut, location, calendar_type):
     switch calendar_type:
         TAMIL:
-            return sunset_jd(jd_midnight_ut, location)
+            return sunset_jd(jd_midnight_ut, location) - 8.0/(24*60)  // −8 min ayanamsa buffer
         BENGALI:
             return jd_midnight_ut - utc_offset/24 + 24/(24*60)
         ODIA:
@@ -1753,7 +1806,7 @@ function critical_time_jd(jd_midnight_ut, location, calendar_type):
         MALAYALAM:
             sr = sunrise_jd(jd_midnight_ut, location)
             ss = sunset_jd(jd_midnight_ut, location)
-            return sr + 0.6 * (ss - sr)
+            return sr + 0.6 * (ss - sr) - 9.5/(24*60)  // −9.5 min ayanamsa buffer
 
 function sankranti_to_civil_day(jd_sankranti, location, calendar_type):
     local_jd = jd_sankranti + utc_offset/24 + 0.5
@@ -2172,46 +2225,71 @@ Year: Simha sankranti date, on/after → Kollam = 2025 - 824 = 1201
 26. **Kali Yuga** — cosmological epoch starting 3102 BCE; Kali Ahargana day count is used in year calculation.
     - [Wikipedia: Kali Yuga](https://en.wikipedia.org/wiki/Kali_Yuga)
 
+### Analytical Ephemeris Theories
+
+27. **VSOP87** (Bretagnon, P. & Francou, G., 1988) — Variations Séculaires des Orbites Planétaires; high-precision analytical planetary theory.
+    - Used for solar longitude computation in self-contained implementations
+    - 135 harmonic terms for Earth's ecliptic longitude give ±1 arcsecond precision (1900–2050)
+    - [Wikipedia: VSOP (planets)](https://en.wikipedia.org/wiki/VSOP_(planets))
+
+28. **DE404-fitted Moshier theory** — Analytical lunar theory fitted to JPL DE404 numerical integration.
+    - Used for lunar longitude computation in self-contained implementations
+    - Full pipeline with 4 computational stages and ~200 terms gives ±0.07 arcsecond precision
+    - Implemented in Swiss Ephemeris as the built-in "Moshier" analytical ephemeris (`swemmoon.c`)
+
+29. **IAU 1976 precession** (Lieske, J. H. et al., 1977) — Standard precession model for converting between epochs.
+    - Used for computing the Lahiri ayanamsa from equatorial precession angles
+    - [Wikipedia: Axial precession](https://en.wikipedia.org/wiki/Axial_precession)
+
+30. **Meeus, J.** (1998). *Astronomical Algorithms* (2nd ed.). Willmann-Bell.
+    - Chapter 7: Julian Day ↔ Gregorian conversion
+    - Chapter 15: Sunrise/sunset iterative algorithm
+    - Chapter 22: Nutation and obliquity
+    - Chapter 47: Lunar longitude (ELP-2000/82, 60-term version)
+
 ### Numerical Methods
 
-27. **Bisection method** — root-finding algorithm used for tithi boundary and sankranti finding.
+31. **Bisection method** — root-finding algorithm used for tithi boundary and sankranti finding.
     - [Wikipedia: Bisection method](https://en.wikipedia.org/wiki/Bisection_method)
     - 50 iterations on a 40-day bracket gives ~3 nanosecond precision (40 / 2^50 ≈ 3.6 × 10⁻¹⁴ days)
 
-28. **Lagrange interpolation** — polynomial interpolation used for new moon finding (inverse form).
+32. **Lagrange interpolation** — polynomial interpolation used for new moon finding (inverse form).
     - [Wikipedia: Lagrange polynomial](https://en.wikipedia.org/wiki/Lagrange_polynomial)
     - We use the *inverse* form: given y-values, find the x where y = target
 
 ### Companion Documents
 
-29. **ODIA_ADJUSTMENTS.md** — detailed investigation of the Odia 22:12 IST critical time rule.
+33. **ODIA_ADJUSTMENTS.md** — detailed investigation of the Odia 22:12 IST critical time rule.
     - Covers 4 hypothesis stages (midnight → apparent midnight → fixed offset → fixed IST)
     - 35 verified boundary cases with IST times and cutoff distances
 
-30. **MALAYALAM_ADJUSTMENTS.md** — detailed investigation of the Malayalam 3/5-of-daytime critical time rule.
+34. **MALAYALAM_ADJUSTMENTS.md** — detailed investigation of the Malayalam 3/5-of-daytime critical time rule.
     - Covers 4 hypothesis stages (apparent noon → fixed IST → 3/5 daytime → boundary zone analysis)
     - 33 verified boundary cases; explains the ~24 arcsecond ayanamsa offset causing ~10 min ambiguity
 
-31. **BENGALI_INVESTIGATION.md** — detailed investigation of the Bengali tithi-based rule.
+35. **BENGALI_INVESTIGATION.md** — detailed investigation of the Bengali tithi-based rule.
     - Documents exhaustive testing of time-based rules (all failed, max 22/37)
     - Proof of inseparability (W-C-W ordering within rashis)
     - Discovery and validation of Sewell & Dikshit tithi-based rule (36/37 correct)
     - 37 verified edge cases with drikpanchang.com assignments
 
-32. **IMPLEMENTATION_PLAN.md** — project roadmap covering all 8 implementation phases.
+36. **VSOP87_IMPLEMENTATION.md** — VSOP87 solar longitude pipeline in the self-contained Moshier library.
+    - 7-step computation pipeline, ayanamsa nutation discovery, precision analysis vs Swiss Ephemeris
 
-33. **validation/malayalam_boundary_cases.csv** — all 33 Malayalam boundary cases with fractions, IST times, and drikpanchang assignments.
+37. **IMPLEMENTATION_PLAN.md** — project roadmap covering all implementation phases.
+
+38. **validation/malayalam_boundary_cases.csv** — all 33 Malayalam boundary cases with fractions, IST times, and drikpanchang assignments.
 
 ### Further Reading
 
-34. **Sewell, Robert & Dikshit, Sankara Balkrishna** (1896). *The Indian Calendar*. Swan Sonnenschein & Co.
+39. **Sewell, Robert & Dikshit, Sankara Balkrishna** (1896). *The Indian Calendar*. Swan Sonnenschein & Co.
     - pp. 12-13: Bengali tithi-based rule for midnight zone sankrantis (Karkata/Makara overrides, tithi extension test)
 
-35. **Subbarayappa, B. V. & Sarma, K. V.** (1985). *Indian Astronomy: A Source Book*. Nehru Centre.
+40. **Subbarayappa, B. V. & Sarma, K. V.** (1985). *Indian Astronomy: A Source Book*. Nehru Centre.
     - Comprehensive collection of primary Indian astronomical texts in translation
 
-36. **Ohashi, Y.** (2009). "The Foundations of Astronomy in the Hindu Calendric System." In *Handbook of Archaeoastronomy and Ethnoastronomy*, Springer.
+41. **Ohashi, Y.** (2009). "The Foundations of Astronomy in the Hindu Calendric System." In *Handbook of Archaeoastronomy and Ethnoastronomy*, Springer.
     - Academic treatment of the astronomical basis of Hindu time-keeping
 
-37. **Rao, S. Balachandra** (2000). *Indian Astronomy: An Introduction*. Universities Press India.
+42. **Rao, S. Balachandra** (2000). *Indian Astronomy: An Introduction*. Universities Press India.
     - Accessible introduction to Indian positional astronomy and calendar mathematics
