@@ -4,11 +4,11 @@
  * Algorithm from Meeus, "Astronomical Algorithms", 2nd ed., Ch. 15.
  * Iterative method using hour angle computation.
  *
- * Configuration: disc center with atmospheric refraction (SE_BIT_DISC_CENTER)
- *   h₀ = Sinclair refraction at horizon (matches Swiss Ephemeris behavior)
+ * Configuration: disc center with atmospheric refraction
+ *   h₀ = Sinclair refraction at horizon (~-0.612°)
  *   Sidereal time = GAST (apparent, with equation of equinoxes)
  *
- * Precision: ~2 seconds vs Swiss Ephemeris (sufficient for Hindu calendar)
+ * Precision: ~2 seconds (sufficient for Hindu calendar)
  */
 #include "moshier.h"
 #include <math.h>
@@ -30,7 +30,7 @@ static double normalize_deg(double d)
 }
 
 /* Sinclair refraction at apparent altitude 0° (horizon).
- * Returns refraction in degrees. Matches SE's calc_astronomical_refr().
+ * Returns refraction in degrees (Sinclair 1982).
  * Parameters: atpress in hPa, attemp in °C. */
 static double sinclair_refraction_horizon(double atpress, double attemp)
 {
@@ -135,11 +135,11 @@ static double rise_set_for_date(double jd_0h, double lon, double lat, double h0,
 }
 
 /* Compute rise or set, searching forward from jd_ut.
- * Matches SE behavior: finds the next event after the given JD. */
+ * Finds the next event after the given JD. */
 static double rise_set(double jd_ut, double lon, double lat, double alt, int is_rise)
 {
-    /* Compute h0 using Sinclair refraction formula (matches SE behavior).
-     * SE uses attemp=0°C and estimates atpress from observer altitude. */
+    /* Compute h0 using Sinclair refraction formula.
+     * Uses attemp=0°C and estimates atpress from observer altitude. */
     double atpress = 1013.25;
     if (alt > 0)
         atpress = 1013.25 * pow(1.0 - 0.0065 * alt / 288.0, 5.255);

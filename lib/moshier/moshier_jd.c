@@ -50,7 +50,6 @@ void moshier_revjul(double jd, int *year, int *month, int *day, double *hour)
 
 int moshier_day_of_week(double jd)
 {
-    /* SE convention: 0=Mon, 1=Tue, ..., 6=Sun
-     * Same formula as swe_day_of_week() */
+    /* ISO convention: 0=Mon, 1=Tue, ..., 6=Sun */
     return (((int)floor(jd - 2433282 - 1.5) % 7) + 7) % 7;
 }

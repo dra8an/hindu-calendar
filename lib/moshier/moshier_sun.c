@@ -1,15 +1,15 @@
 /*
  * moshier_sun.c — Solar longitude and declination
  *
- * VSOP87 planetary theory for Earth-Moon Barycenter (from SE's swemptab.h)
+ * VSOP87 planetary theory (Bretagnon & Francou 1988) for Earth-Moon Barycenter
  * with EMB→Earth correction, general precession, nutation, and aberration.
  *
  * Pipeline: VSOP87 EMB J2000 → precession → EMB→Earth → geocentric → nutation → aberration
  *
- * Nutation: Ch. 22 IAU 1980, 13 terms (Meeus Table 22.A)
- * Obliquity: Ch. 22 Laskar's formula
+ * Nutation: IAU 1980, 13 terms (Meeus Ch. 22, Table 22.A)
+ * Obliquity: Laskar's formula (Meeus Ch. 22)
  *
- * Precision vs SE: ~0.5 arcsecond for solar longitude (1900-2100)
+ * Precision: ~1 arcsecond for solar longitude (1900-2100)
  */
 #include "moshier.h"
 #include <math.h>
@@ -18,7 +18,7 @@
 #define DEG2RAD (M_PI / 180.0)
 #define RAD2DEG (180.0 / M_PI)
 
-/* Radians per arcsecond (from SE sweph.h) */
+/* Radians per arcsecond */
 #define STR 4.8481368110953599359e-6
 
 /* VSOP87 timescale: 10000 Julian years in days */
@@ -30,7 +30,7 @@
 /* J1900.0 epoch */
 #define J1900_JD 2415020.0
 
-/* Earth/Moon mass ratio (AA 2006, K7) — same as SE for MOSEPH */
+/* Earth/Moon mass ratio (Astronomical Almanac 2006, K7) */
 #define EARTH_MOON_MRAT (1.0 / 0.0123000383)
 
 /* Reduce x to range [0, 1296000) arcseconds (= 360°) */
@@ -39,7 +39,7 @@ static double mods3600(double x)
     return x - 1.296e6 * floor(x / 1.296e6);
 }
 
-/* ===== VSOP87 data tables for Earth (from SE swemptab.h) ===== */
+/* ===== VSOP87 data tables for Earth (Bretagnon & Francou 1988) ===== */
 
 /* Fundamental planetary frequencies in arcseconds per 10000 Julian years
  * (Simon et al 1994) */
@@ -59,7 +59,7 @@ static const double phases[9] = {
 /* Maximum harmonic for each fundamental frequency (for Earth) */
 static const int ear_max_harmonic[9] = {1, 9, 14, 17, 5, 5, 2, 1, 0};
 
-/* Earth longitude coefficients: 460 doubles (from SE eartabl[]) */
+/* Earth longitude coefficients: 460 doubles (VSOP87 series) */
 static const double eartabl[] = {
     -65.54655, -232.74963, 12959774227.57587, 361678.59587,
     2.52679, -4.93511, 2.46852, -8.88928,
@@ -178,7 +178,7 @@ static const double eartabl[] = {
     0.00003, -0.01096, 0.00002, -0.00623,
 };
 
-/* Earth argument table: 819 signed chars (from SE earargs[]) */
+/* Earth argument table: 819 signed chars (VSOP87 series) */
 static const signed char earargs[] = {
     0, 3,
     3, 4, 3,-8, 4, 3, 5, 2,
@@ -343,7 +343,7 @@ static void sscc(int k, double arg, int n)
 }
 
 /* Compute heliocentric ecliptic J2000 longitude of Earth-Moon Barycenter.
- * Returns longitude in arcseconds. Uses VSOP87 series from SE. */
+ * Returns longitude in arcseconds (VSOP87 series). */
 static double vsop87_earth_longitude(double jd_tt)
 {
     double T = (jd_tt - J2000_JD) / TIMESCALE;
@@ -413,7 +413,7 @@ static double vsop87_earth_longitude(double jd_tt)
 
 /* ===== EMB→Earth correction ===== */
 
-/* Simplified Moon series from SE embofs_mosh() — ecliptic of date.
+/* Simplified Moon series for EMB→Earth correction — ecliptic of date.
  * Returns correction to heliocentric ecliptic longitude in radians.
  * L_emb_rad = heliocentric ecliptic longitude of EMB (ecliptic of date, radians). */
 static double emb_earth_correction(double jd_tt, double L_emb_rad)
@@ -490,8 +490,7 @@ static double emb_earth_correction(double jd_tt, double L_emb_rad)
 /* Delta-T approximation: TT - UT in seconds
  * Polynomial fits from Meeus Ch. 10 / USNO tables */
 /* Delta-T lookup table (seconds), yearly from 1900.0 to 2050.0.
- * Values match Swiss Ephemeris swe_deltat_ex() with SEFLG_MOSEPH.
- * Sources: IERS observations (1900-2023), SE extrapolation (2024-2050). */
+ * Sources: IERS observations (1900-2023), polynomial extrapolation (2024-2050). */
 #define DT_TAB_START 1900
 #define DT_TAB_END   2050
 #define DT_TAB_SIZE  (DT_TAB_END - DT_TAB_START + 1) /* 151 entries */

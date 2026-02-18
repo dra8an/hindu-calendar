@@ -1,16 +1,15 @@
 /*
  * moshier_ayanamsa.c — Lahiri ayanamsa
  *
- * Replicates SE_SIDM_LAHIRI using the same algorithm as Swiss Ephemeris:
+ * Computes the Lahiri (Chitrapaksha) ayanamsa using IAU 1976 precession:
  *   1. Take the vernal point at the target date as Cartesian (1, 0, 0)
  *   2. Precess from target date → J2000 using current precession model
  *   3. Precess from J2000 → t0 (reference epoch) using IAU 1976 model
  *   4. Convert to ecliptic of t0, then to polar coordinates
  *   5. Ayanamsa = -longitude + ayan_t0
  *   6. Add correction for precession model difference
- *   7. Add nutation in longitude
  *
- * Constants (from sweph.h ayanamsa[] table, index 1 = SE_SIDM_LAHIRI):
+ * Lahiri ayanamsa constants:
  *   t0 = 2435553.5 JD (1956 September 22.0 TT)
  *   ayan_t0 = 23.250182778 - 0.004658035 = 23.245524743°
  *   prec_offset = SEMOD_PREC_IAU_1976
@@ -35,7 +34,7 @@ extern double moshier_mean_obliquity(double jd_ut);
  * T = Julian centuries from J2000.0 */
 static void iau1976_precession_angles(double T, double *Z, double *z, double *theta)
 {
-    /* Lieske et al. (1977) — same constants as SE's precess_1() */
+    /* Lieske et al. (1977) IAU 1976 precession constants */
     *Z     = ((0.017998*T + 0.30188)*T + 2306.2181)*T * DEG2RAD / 3600.0;
     *z     = ((0.018203*T + 1.09468)*T + 2306.2181)*T * DEG2RAD / 3600.0;
     *theta = ((-0.041833*T - 0.42665)*T + 2004.3109)*T * DEG2RAD / 3600.0;
@@ -74,7 +73,7 @@ static void precess_equatorial(double *x, double J, int direction)
 }
 
 /* Obliquity of the ecliptic at a given JD (TT), in radians.
- * IAU 1976 formula (Lieske 1979), used by SE for this purpose. */
+ * IAU 1976 formula (Lieske 1979). */
 static double obliquity_iau1976(double jd_tt)
 {
     double T = (jd_tt - J2000) / 36525.0;
@@ -105,14 +104,12 @@ static double cart_to_lon(double *x)
     return atan2(x[1], x[0]);
 }
 
-/* Default precession model correction.
- * SE uses Vondrak 2011 as default but Lahiri was defined with IAU 1976.
- * Since we only implement IAU 1976, no correction needed.
- * This function is a no-op but kept for documentation. */
+/* Lahiri ayanamsa was defined with the IAU 1976 precession model.
+ * Since we use IAU 1976 throughout, no model correction is needed. */
 
 double moshier_ayanamsa(double jd_ut)
 {
-    /* Convert UT to TT (SE uses TT internally for ayanamsa) */
+    /* Convert UT to TT (ayanamsa is computed in TT) */
     double jd_tt = jd_ut + moshier_delta_t(jd_ut);
 
     /* Step 1: Vernal point at target date = (1, 0, 0) in equatorial */
@@ -134,10 +131,10 @@ double moshier_ayanamsa(double jd_ut)
     /* Step 6: Ayanamsa = -longitude + initial value */
     double ayan = -lon + LAHIRI_AYAN_T0;
 
-    /* Note: swe_get_ayanamsa_ut() returns the MEAN ayanamsa (without nutation).
-     * Do NOT add nutation here — it would cause a mismatch with SE output.
-     * The nutation in longitude cancels when computing sidereal positions:
-     * sid_lon = (trop_lon + dpsi) - (ayan + dpsi) = trop_lon - ayan */
+    /* Note: This returns the MEAN ayanamsa (without nutation in longitude).
+     * Do NOT add nutation here — it cancels when computing sidereal positions:
+     * sid_lon = (trop_lon + dpsi) - (ayan + dpsi) = trop_lon - ayan
+     * Adding nutation would cause a ~17" oscillating error (18.6-year period). */
 
     /* Normalize to [0, 360) */
     ayan = fmod(ayan, 360.0);

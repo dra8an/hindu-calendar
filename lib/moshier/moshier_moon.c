@@ -1,11 +1,11 @@
 /*
- * moshier_moon.c — Lunar longitude (DE404 Moshier theory)
+ *  — Lunar longitude (DE404 Moshier theory)
  *
- * Ported from Swiss Ephemeris swemmoon.c (Steve Moshier's DE404-fitted
- * analytical lunar ephemeris). Only the longitude pipeline is retained;
- * latitude, radius, and speed computation are omitted.
+ * Implementation of Steve Moshier's DE404-fitted analytical lunar ephemeris.
+ * Only the longitude pipeline is retained; latitude, radius, and speed
+ * computation are omitted.
  *
- * Original: ELP2000-85 adjusted to fit JPL DE404 on -3000 to +3000.
+ * Based on ELP2000-85 adjusted to fit JPL DE404 on -3000 to +3000.
  * Precision: ~3-5 arcseconds (max 7") over -3000 to +3000.
  *
  * References:
@@ -752,7 +752,7 @@ double moshier_lunar_longitude(double jd_ut)
 
     /* Distance-dependent light-time correction for the Moon.
      *
-     * SE applies light-time retardation using actual distance and velocity.
+     * Light-time retardation uses actual distance and velocity.
      * For the Moon-Sun elongation (tithi), annual aberration cancels between
      * Moon and Sun; the residual is the Moon's geocentric light-time shift.
      *
