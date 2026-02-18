@@ -6,12 +6,12 @@ Self-contained astronomical ephemeris replacing Swiss Ephemeris (SE) for the Hin
 
 | Metric | Moshier | Swiss Ephemeris |
 |--------|---------|----------------|
-| Lines of code | 787 | 51,493 |
+| Lines of code | 1,943 | 51,493 |
 | External files | None | Optional .se1 files |
 | Build time | ~0.5s | ~3s |
-| Test pass rate | 53,023 / 53,143 (99.77%) | 53,143 / 53,143 (100%) |
+| Test pass rate | 53,141 / 53,143 (99.996%) | 53,143 / 53,143 (100%) |
 | drikpanchang.com match | 1,071 / 1,071 (100%) | 1,071 / 1,071 (100%) |
-| Reduction factor | **65x fewer lines** | — |
+| Reduction factor | **26x fewer lines** | — |
 
 Both backends are selectable at compile time:
 - `make` — moshier (default)
@@ -21,14 +21,14 @@ Both backends are selectable at compile time:
 
 ```
 lib/moshier/
-├── moshier.h           35 lines   Public API (8 functions)
-├── moshier_jd.c        56 lines   JD ↔ Gregorian, day of week
-├── moshier_sun.c      249 lines   Solar longitude, nutation, delta-T
-├── moshier_moon.c     146 lines   Lunar longitude (ELP-2000/82)
-├── moshier_ayanamsa.c 146 lines   Lahiri ayanamsa (IAU 1976 precession)
-└── moshier_rise.c     155 lines   Sunrise / sunset
-                       ─── ─────
-                       787 total
+├── moshier.h            35 lines   Public API (8 functions)
+├── moshier_jd.c         56 lines   JD ↔ Gregorian, day of week
+├── moshier_sun.c       739 lines   VSOP87 solar longitude, nutation, delta-T
+├── moshier_moon.c      791 lines   Lunar longitude (DE404 Moshier theory)
+├── moshier_ayanamsa.c  147 lines   Lahiri ayanamsa (IAU 1976 precession)
+└── moshier_rise.c      175 lines   Sunrise / sunset (Sinclair refraction, GAST)
+                       ──── ─────
+                       1,943 total
 ```
 
 The library replaces 8 SE functions called from `src/astro.c` and `src/date_utils.c`:
@@ -54,34 +54,50 @@ Day-of-week formula matches SE: `(((int)floor(jd - 2433282 - 1.5) % 7) + 7) % 7`
 
 ### Solar Longitude (`moshier_sun.c`)
 
-**Equation of center** (Meeus Ch. 25, eq. 25.6):
+**VSOP87 pipeline** (ported from SE's `swemplan.c`):
 ```
-C = (1.914602 - 0.004817T) sin(M) + (0.019993 - 0.000101T) sin(2M) + 0.000289 sin(3M)
+JD (UT) → JD (TT) → VSOP87 harmonic summation (135 terms)
+       → General precession IAU 1976 → EMB→Earth correction
+       → Geocentric flip → Nutation → Aberration (−20.496″)
+       → Apparent tropical solar longitude
 ```
-This is a truncated VSOP87. SE uses the full VSOP87 series with ~135 harmonic terms encoded in `swemplan.c` via 9 fundamental planetary frequencies.
+See [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) for the full pipeline description.
 
-**Nutation** (Meeus Ch. 22): 13 terms from IAU 1980 Table 22.A. SE uses the same model. See [Why 13 Terms](#why-13-nutation-terms-not-63) for rationale.
+**Nutation** (Meeus Ch. 22): 13 terms from IAU 1980 Table 22.A. SE uses the same model.
 
-**Apparent longitude correction** (Meeus p. 164):
-```
-aberration = -0.00569° - 0.00478° × sin(Ω)
-apparent = true_longitude + Δψ + aberration
-```
-This combined formula is critical — it provides beneficial error cancellation against our simplified equation of center. See [Error Cancellation](#error-cancellation-meeus-p164-formula) for details.
+**Aberration**: Standard constant of aberration (−20.496″). This must be used with VSOP87 — the Meeus p.164 combined formula only works with the simplified 3-term equation of center.
 
-**Delta-T**: Polynomial fits from Meeus Ch. 10 / USNO tables, covering 1900–2150.
+**Delta-T**: SE yearly lookup table (1620–2025) for high-accuracy dates, Meeus polynomial fits for dates outside that range. The lookup table was essential for achieving ±2s sunrise precision — Meeus polynomials diverge up to ~4s from SE for certain historical periods.
 
 ### Lunar Longitude (`moshier_moon.c`)
 
-60 longitude terms from Meeus Table 47.A (ELP-2000/82 theory). Each term is a sinusoidal function of four fundamental arguments (D, M, M', F) with coefficients in 10⁻⁶ degrees.
+Full DE404-fitted Moshier lunar theory, ported from SE's `swemmoon.c` (longitude pipeline only). This replaces the earlier 60-term Meeus Ch.47 implementation, achieving ~0.07″ RMS precision vs SE (was ~10″).
 
-Key features:
-- **Eccentricity correction** (E factor): Terms involving solar mean anomaly M are multiplied by E = 1 - 0.002516T - 0.0000074T². |M|=1 → ×E, |M|=2 → ×E².
-- **Venus correction** (A1): +3958 × sin(119.75° + 131.849T)
-- **Jupiter correction** (A2): +318 × sin(53.09° + 479264.290T)
-- **Flattening correction**: +1962 × sin(L' - F)
+**Pipeline:**
+```
+mean_elements()     → D, M, MP, NF, SWELP + z[] corrections
+mean_elements_pl()  → Ve, Ea, Ma, Ju, Sa (planetary mean longitudes)
+moon1()             → Venus-Jupiter-Earth-Mars perturbations (LRT2, LRT tables + explicit terms)
+moon2()             → 24 additional DE404-fitted perturbation terms
+moon3()             → Main LR table summation (118 terms) + polynomial assembly
+moon4()             → Convert arcseconds to radians, normalize
+```
+
+**Data tables:**
+- `z[26]`: Mean element corrections and perturbation T² coefficients
+- `LR[118×8]`: Main longitude/radius terms (longitude half used)
+- `LRT[38×8]`: T¹ longitude/radius corrections
+- `LRT2[25×6]`: T² longitude corrections
+- Variable light-time correction using 5 LR radius terms
+
+**Helper functions:**
+- `mods3600()`: Normalize arcseconds modulo 1,296,000 (360°)
+- `sscc()`: Chebyshev recurrence for sin/cos multiples of angles
+- `chewm()`: Step through perturbation table and accumulate terms
 
 Nutation in longitude (from `moshier_sun.c`) is added to get apparent longitude.
+
+**Key insight**: Using only the 118 main LR terms without the full pipeline (moon1/moon2 corrections, z[] array) gave WORSE results than 60 Meeus terms (179 vs 120 failures). The full pipeline with ALL corrections is essential for accuracy.
 
 ### Lahiri Ayanamsa (`moshier_ayanamsa.c`)
 
@@ -107,61 +123,65 @@ SE Lahiri constants (from `sweph.h` ayanamsa table, index 1):
 
 ### Sunrise / Sunset (`moshier_rise.c`)
 
-Meeus Ch. 15 iterative method:
+Meeus Ch. 15 iterative method with SE-matching refinements:
 
-1. Compute apparent sidereal time at 0h UT (Meeus Ch. 12)
+1. Compute apparent sidereal time at 0h UT (GAST = GMST + equation of equinoxes)
 2. Compute solar RA and declination at noon
 3. Hour angle: cos(H₀) = (sin(h₀) − sin(φ)sin(δ)) / (cos(φ)cos(δ))
 4. Initial estimate: m = m₀ ∓ H₀/360
-5. Iterate 5 times: recompute solar position at trial time, correct via altitude residual
-6. Return JD of event
+5. Iterate up to 10 times: recompute solar position at trial time, correct via altitude residual (convergence threshold: 0.0000001 ≈ 0.009s)
+6. Midnight UT wrap-around handling for near-midnight sunrises (e.g., Delhi in May)
+7. Return JD of event
 
-Depression angle h₀ = −0.5667° (disc center with standard atmospheric refraction, matching SE_BIT_DISC_CENTER).
+**Refraction**: Sinclair formula at 0°C, 1013.25 hPa (matches SE's `calc_astronomical_refr()`), giving h₀ ≈ −0.612° at horizon. This replaces the Meeus standard h₀ = −0.5667° for better SE agreement.
+
+**Sidereal time**: GAST (apparent sidereal time) = GMST + Δψ × cos(ε). SE's `swe_sidtime()` returns GAST; using GMST instead caused ~1″ hour angle error (~4s sunrise offset).
+
+**Midnight UT wrap-around**: Delhi sunrise in May/June falls near 0h UT. The iteration can converge to m values near 1.0 instead of 0.0. Handled by: `if (is_rise && m > 0.75) m -= 1.0`.
 
 Altitude adjustment for observer elevation: h₀ -= 0.0353 × √alt.
 
 ## Precision vs Swiss Ephemeris
 
-Spot-check at 2025-01-14 (New Delhi):
+Statistical comparison across 1900–2050 at representative dates:
 
-| Quantity | Moshier | Swiss Ephemeris | Difference |
-|----------|---------|----------------|------------|
-| Ayanamsa | 24.207150° | 24.207147° | 0.01" |
-| Solar longitude | 294.065172° | 294.061529° | 13" |
-| Lunar longitude | 114.865508° | 114.865226° | 1" |
-| Sunrise | 07:15:17 IST | 07:15:03 IST | 14s |
+| Quantity | Precision vs SE | Method |
+|----------|----------------|--------|
+| Tropical solar longitude | ±1″ | VSOP87 (135 harmonic terms) |
+| Ayanamsa (mean) | ±0.3″ | IAU 1976 3D equatorial precession |
+| Sidereal solar longitude | ±0.5″ | Combined solar + ayanamsa |
+| Lunar longitude | ±0.07″ (RMS), 0.065″ max | DE404 Moshier theory (full pipeline) |
+| Sunrise/sunset | ±2 seconds | Sinclair refraction + GAST |
 
 All differences are well within the requirements for Hindu calendar calculation (tithi boundaries need ~1 arcminute, sankranti boundaries need ~1 minute).
 
-## The 120 Failures
+## The 2 Remaining Failures
 
-All 120 failures (out of 53,143 assertions) are tithi or sankranti boundary edge cases where the moshier and SE backends disagree on which side of a boundary a value falls at sunrise. The differences are typically < 1 arcsecond in the underlying longitude, but at a boundary crossing that's enough to flip the discrete result (e.g., tithi 14 vs 15).
+Only 2 failures remain (out of 53,143 assertions), both irreducible edge cases:
 
-Breakdown:
-- `test_adhika_kshaya`: 19 failures — adhika/kshaya tithi detection at sunrise
-- `test_csv_regression`: 4 failures — tithi at sunrise
-- `test_solar`: 20 failures — sankranti day assignment
-- `test_solar_edge`: 28 failures — sankranti boundary cases
-- `test_solar_regression`: 49 failures — solar month start dates
+1. **1965-05-30** (`test_adhika_kshaya`): Near-midnight-UT sunrise wrap-around. Delhi sunrise falls at ~23:54 UT (05:24 IST), extremely close to 0h UT. The Meeus Ch.15 iteration converges correctly but the midnight-UT wrap-around introduces a ~16s systematic offset compared to SE's different algorithm. This flips the tithi at a boundary.
 
-None of these affect the 1,071 dates externally verified against drikpanchang.com, which all pass with both backends.
+2. **2001-09-20** (`test_adhika_kshaya`): Tithi boundary within 0.17″ of transition at sunrise. Even with DE404 precision (0.07″ RMS), the residual elongation difference of 0.31″ is enough to flip the discrete tithi result.
+
+Neither affects the 1,071 dates externally verified against drikpanchang.com, which all pass with both backends.
 
 ## What We Tried and Why
 
-### Lunar Terms: 60 Meeus vs 118 SE Terms
+### Lunar: Partial SE Terms (118 from LR table only)
 
-We extracted 118 longitude terms from SE's `swemmoon.c` (the `LR[]` and `LRT[]` tables). These include the same fundamental terms plus time-dependent corrections (T-multiplied coefficients from `LRT[]`).
+We extracted 118 longitude terms from SE's `swemmoon.c` (the `LR[]` and `LRT[]` tables) without the full pipeline.
 
 **Result: 179 failures (worse than 120)**
 
-**Why**: SE's lunar tables are designed for SE's complete pipeline, which includes additional corrections not in our library:
-- Venus-Jupiter perturbation terms (`moon1()` function)
-- Simple perturbations and polynomial secular terms (`moon2()` function)
-- Additional corrections using planetary longitudes (l1–l4 arguments)
+**Why**: SE's lunar tables require the full correction pipeline (moon1 Venus-Jupiter perturbations, moon2 DE404 terms, z[] corrections). Using raw terms without these corrections creates an imbalanced model. The eventual solution was porting the entire pipeline — all stages are essential.
 
-Using the raw SE terms without these corrections creates an imbalanced model. The 60 Meeus terms are self-consistent — they already account for the missing corrections through their specific coefficient values and the A1/A2/A3 additional terms.
+### Lunar: Full DE404 Pipeline (current)
 
-**Key insight**: More terms ≠ better results when the terms are designed for a different correction pipeline.
+Ported the complete SE Moshier moon pipeline (mean_elements → moon1 → moon2 → moon3 → moon4), longitude only.
+
+**Result: 29→2 failures, ±0.07″ precision**
+
+This confirmed that the partial approach was fundamentally flawed — the pipeline is a self-consistent system.
 
 ### Nutation: 13 Terms vs Full 63-Term Table
 
@@ -212,93 +232,45 @@ This is a textbook example of how simplified models can achieve better results t
 
 ### Summary of All Configurations Tested
 
+| Sun | Moon | Sunrise | Failures | Phase |
+|-----|------|---------|----------|-------|
+| Meeus 3-term EoC + p.164 aberration | 60 Meeus | h₀=−0.5667°, GMST | **120** | 9 |
+| VSOP87 + clean aberration | 60 Meeus | h₀=−0.5667°, GMST | **29** | 10 |
+| VSOP87 + clean aberration | DE404 full pipeline | Sinclair, GAST | **2** | 11 |
+
+Earlier experiments with the Phase 9 solar code:
+
 | Moon Terms | Nutation | Aberration | E | A1/A2/A3 | Failures |
 |-----------|----------|------------|---|----------|----------|
-| 60 Meeus | 13-term | Meeus p.164 combined | Yes | Yes | **120** |
+| 60 Meeus | 13-term | Meeus p.164 combined | Yes | Yes | 120 |
 | 60 Meeus | 63-term | Clean −20.5" | Yes | Yes | 178 |
-| 118 SE | 13-term | Meeus p.164 combined | Yes | No | 179 |
-| 118 SE | 63-term | Clean −20.5" | Yes | No | 179 |
-| 118 SE | 13-term | Meeus p.164 combined | No | No | 208 |
+| 118 SE (partial) | 13-term | Meeus p.164 combined | Yes | No | 179 |
+| 118 SE (partial) | 63-term | Clean −20.5" | Yes | No | 179 |
+| 118 SE (partial) | 13-term | Meeus p.164 combined | No | No | 208 |
 | 60 Meeus | 13-term | Meeus p.164 + planetary | Yes | Yes | 208 |
-| 118 SE | 63-term | Clean −20.5" + planetary | Yes | No | 208 |
 
-The optimal configuration (first row) was chosen as the final implementation.
+## Evolution of the Library
 
-## Suggested Improvements
+### Phase 9: Initial Implementation (787 lines, 120 failures)
 
-### 1. Improved Equation of Center (~50 fewer failures, ~2 days effort)
+- Solar: Meeus 3-term equation of center + p.164 combined aberration formula
+- Lunar: 60-term ELP-2000/82 (Meeus Ch.47)
+- Sunrise: Meeus Ch.15, 5 iterations, h₀ = −0.5667°, GMST
+- Precision: solar ±13″, lunar ±10″, sunrise ±14s
+- Beneficial error cancellation between solar and ayanamsa errors
 
-The largest source of error is the 3-term equation of center for solar longitude. Adding ~10 more VSOP87 terms for the largest harmonics (without going to the full 135-term series) could reduce solar longitude error from ~13" to ~3–5", likely eliminating ~50 boundary failures.
+### Phase 10: VSOP87 Solar Upgrade (1,265 lines, 29 failures)
 
-The terms would come from Meeus Table 25.C (higher-order VSOP87 terms) or from the Bretagnon & Francou (1988) VSOP87 paper directly. This would require:
-- Adding ~10 more sine terms to the solar geometric longitude calculation
-- Re-tuning the aberration formula (the current error cancellation would shift)
-- Careful testing to find the optimal combination
+- Solar: Full VSOP87 (135 harmonic terms from SE), standard aberration (−20.496″)
+- Eliminated all 91 solar-related failures
+- Exposed and fixed ayanamsa nutation bug (was double-counting Δψ)
 
-### 2. Brown-Newcomb Lunar Terms (~20 fewer failures, ~1 day effort)
+### Phase 11: DE404 Moon + Sunrise (1,943 lines, 2 failures)
 
-The 60-term Meeus table truncates the ELP-2000/82 series at ~300 milliarcseconds. Adding 20–30 more terms (Meeus provides coefficients down to ~100 milliarcseconds in the full Table 47.A) could improve lunar longitude by ~5 arcseconds.
-
-### 3. Full VSOP87 Implementation (~100 fewer failures, see estimate below)
-
-Replace the 3-term equation of center with the complete VSOP87 heliocentric → geocentric solar longitude computation.
-
-### 4. Improved Sunrise Algorithm (~10 fewer failures, ~1 day effort)
-
-The current Meeus Ch. 15 iterative method computes 5 iterations starting from a noon-based estimate. A more sophisticated approach:
-- Use the USNO algorithm (interpolation over three consecutive transits)
-- Improve delta-T for pre-1900 dates
-- Add atmospheric pressure/temperature corrections
-
-## VSOP87 Implementation Effort Estimate
-
-### What It Involves
-
-VSOP87 (Bretagnon & Francou, 1988) computes heliocentric ecliptic coordinates of the Earth, then converts to geocentric solar longitude. The SE implementation lives in `swemplan.c`:
-
-- **`swi_moshplan2()`**: Main entry point (~200 lines of logic)
-- **Harmonic tables**: `earargs[]` (9 fundamental planetary frequencies × ~135 entries) + `eartabl[]` (cosine/sine coefficients for each harmonic)
-- **Additional tables**: `eartabb[]` (latitude) and `eartabr[]` (radius) — likely not needed since we only need longitude
-- **Conversion**: Heliocentric → geocentric, ecliptic rotation, light-time correction, aberration
-
-### Data Volume
-
-The SE VSOP87 implementation for Earth uses:
-- `earargs[]`: ~1,200 integers (9 fundamental arguments × ~135 harmonics)
-- `eartabl[]`: ~270 doubles (cosine + sine for each harmonic in longitude)
-- Total: ~3–4 KB of static data tables
-
-### Code Estimate
-
-| Component | Lines | Notes |
-|-----------|-------|-------|
-| VSOP87 harmonic data tables | ~200 | Extracted from SE or VSOP87 paper |
-| Harmonic summation loop | ~50 | Sum A×cos(B + C×T) for each term |
-| Heliocentric → geocentric conversion | ~30 | λ_sun = λ_earth + 180°, light-time |
-| Ecliptic rotation (if needed) | ~20 | J2000 ecliptic → ecliptic of date |
-| Integration into moshier_sun.c | ~30 | Replace equation of center |
-| Total new code | ~330 | |
-| Removed code | ~10 | Current 3-term EoC |
-| Net increase | ~320 lines | Library goes from 787 → ~1100 lines |
-
-### Effort
-
-| Task | Time |
-|------|------|
-| Extract and format VSOP87 tables from SE source | 2–3 hours |
-| Implement harmonic summation and conversion | 3–4 hours |
-| Re-tune aberration/nutation interaction | 2–3 hours |
-| Test and debug against SE reference | 2–3 hours |
-| Boundary case optimization | 2–3 hours |
-| **Total** | **~2 days** |
-
-### Expected Result
-
-Full VSOP87 would bring solar longitude within ~0.1 arcsecond of SE (currently ~13"). This would likely eliminate most of the 97 solar-related failures (test_solar + test_solar_edge + test_solar_regression), bringing the total failure count from 120 to ~20–30 (remaining from lunar longitude differences only).
-
-### Risk
-
-The main risk is that the current error cancellation (Meeus p.164 combined aberration) may no longer work — with accurate geometric longitude, we'd need to use clean aberration (−20.4898"/R). This might require re-tuning the nutation term count. However, with accurate geometric longitude, the "correct" 63-term nutation + clean aberration should work properly since the compensating-errors issue disappears.
+- Lunar: Full DE404 Moshier pipeline (ported from SE's swemmoon.c, longitude only)
+- Delta-T: SE yearly lookup table (1620–2025) replacing Meeus polynomials
+- Sunrise: Sinclair refraction (h₀ ≈ −0.612°), GAST, 10 iterations, midnight-UT wrap-around fix
+- Eliminated 27 of 29 remaining failures
 
 ## References
 

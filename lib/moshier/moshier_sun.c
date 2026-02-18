@@ -489,6 +489,31 @@ static double emb_earth_correction(double jd_tt, double L_emb_rad)
 
 /* Delta-T approximation: TT - UT in seconds
  * Polynomial fits from Meeus Ch. 10 / USNO tables */
+/* Delta-T lookup table (seconds), yearly from 1900.0 to 2050.0.
+ * Values match Swiss Ephemeris swe_deltat_ex() with SEFLG_MOSEPH.
+ * Sources: IERS observations (1900-2023), SE extrapolation (2024-2050). */
+#define DT_TAB_START 1900
+#define DT_TAB_END   2050
+#define DT_TAB_SIZE  (DT_TAB_END - DT_TAB_START + 1) /* 151 entries */
+static const double dt_tab[DT_TAB_SIZE] = {
+ -2.053, -0.820,  0.549,  1.992,  3.450,  4.862,  6.182,  7.431,  8.642,  9.851,
+ 11.092, 12.387, 13.709, 15.018, 16.275, 17.440, 18.482, 19.405, 20.222, 20.945,
+ 21.588, 22.159, 22.662, 23.097, 23.466, 23.767, 24.003, 24.178, 24.299, 24.372,
+ 24.403, 24.397, 24.363, 24.306, 24.234, 24.154, 24.076, 24.030, 24.049, 24.168,
+ 24.421, 24.825, 25.343, 25.922, 26.508, 27.048, 27.503, 27.890, 28.237, 28.574,
+ 28.931, 29.321, 29.699, 30.180, 30.623, 31.070, 31.350, 31.681, 32.181, 32.681,
+ 33.151, 33.591, 34.001, 34.471, 35.031, 35.731, 36.541, 37.431, 38.291, 39.201,
+ 40.181, 41.171, 42.232, 43.372, 44.486, 45.477, 46.458, 47.523, 48.536, 49.588,
+ 50.540, 51.382, 52.168, 52.958, 53.789, 54.343, 54.872, 55.323, 55.820, 56.301,
+ 56.856, 57.566, 58.310, 59.123, 59.986, 60.787, 61.630, 62.296, 62.967, 63.468,
+ 63.829, 64.091, 64.300, 64.474, 64.574, 64.688, 64.846, 65.147, 65.458, 65.777,
+ 66.070, 66.325, 66.603, 66.907, 67.281, 67.644, 68.103, 68.593, 68.968, 69.220,
+ 69.361, 69.359, 69.294, 69.183, 69.100, 69.000, 68.900, 68.800, 68.800, 69.037,
+ 69.276, 69.518, 69.762, 70.008, 70.257, 70.508, 70.761, 71.017, 71.276, 71.537,
+ 71.800, 72.066, 72.335, 72.606, 72.880, 73.157, 73.436, 73.718, 74.003, 74.290,
+ 74.581,
+};
+
 static double delta_t_seconds(double jd)
 {
     double y, dt;
@@ -497,28 +522,16 @@ static double delta_t_seconds(double jd)
     moshier_revjul(jd, &yr, &mo, &dy, &hr);
     y = yr + (mo - 0.5) / 12.0;
 
-    if (y < 1900) {
+    if (y >= DT_TAB_START && y < DT_TAB_END + 1) {
+        /* Lookup table with linear interpolation (1900-2050) */
+        double idx = y - DT_TAB_START;
+        int i = (int)idx;
+        if (i >= DT_TAB_SIZE - 1) i = DT_TAB_SIZE - 2;
+        double frac = idx - i;
+        dt = dt_tab[i] + frac * (dt_tab[i + 1] - dt_tab[i]);
+    } else if (y < DT_TAB_START) {
         double t = (y - 1820.0) / 100.0;
         dt = -20 + 32 * t * t;
-    } else if (y < 1920) {
-        double t = y - 1900;
-        dt = -2.79 + 1.494119*t - 0.0598939*t*t + 0.0061966*t*t*t - 0.000197*t*t*t*t;
-    } else if (y < 1941) {
-        double t = y - 1920;
-        dt = 21.20 + 0.84493*t - 0.076100*t*t + 0.0020936*t*t*t;
-    } else if (y < 1961) {
-        double t = y - 1950;
-        dt = 29.07 + 0.407*t - t*t/233.0 + t*t*t/2547.0;
-    } else if (y < 1986) {
-        double t = y - 1975;
-        dt = 45.45 + 1.067*t - t*t/260.0 - t*t*t/718.0;
-    } else if (y < 2005) {
-        double t = y - 2000;
-        dt = 63.86 + 0.3345*t - 0.060374*t*t + 0.0017275*t*t*t
-             + 0.000651814*t*t*t*t + 0.00002373599*t*t*t*t*t;
-    } else if (y < 2050) {
-        double t = y - 2000;
-        dt = 62.92 + 0.32217*t + 0.005589*t*t;
     } else if (y < 2150) {
         dt = -20 + 32 * ((y - 1820.0)/100.0) * ((y - 1820.0)/100.0)
              - 0.5628 * (2150 - y);

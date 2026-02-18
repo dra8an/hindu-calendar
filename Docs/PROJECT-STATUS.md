@@ -1,6 +1,6 @@
 # Project Status
 
-## Current Version: 0.5.0
+## Current Version: 0.6.0
 
 ## Phase Completion
 
@@ -14,14 +14,15 @@
 | 6 | Validation web page | Done | Month-by-month visual comparison tool |
 | 7 | Reingold diff overlay | Done | HL diffs shown on web page (89.2% match) |
 | 8 | Hindu solar calendars | Done | Tamil, Bengali, Odia, Malayalam — all verified against drikpanchang.com |
-| 9 | Self-contained Moshier ephemeris | Done | 1,265-line replacement for 51K-line Swiss Ephemeris |
+| 9 | Self-contained Moshier ephemeris | Done | 787-line replacement for 51K-line Swiss Ephemeris |
 | 10 | VSOP87 solar longitude upgrade | Done | ±1″ solar, all solar tests 100%, 120→29 total failures |
+| 11 | DE404 moon pipeline + sunrise | Done | ±0.07″ lunar, ±2s sunrise, 29→2 total failures |
 
 ## Test Results
 
 **With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 53,143/53,143 assertions pass (100%).
 
-**With Moshier backend** (default `make`): 53,114/53,143 assertions pass (99.95%). 29 failures are tithi boundary edge cases caused by ~10 arcsecond lunar longitude precision (Meeus Ch.47, 60-term ELP-2000/82). All solar calendar tests pass 100%.
+**With Moshier backend** (default `make`): 53,141/53,143 assertions pass (99.996%). 2 remaining failures are irreducible edge cases: 1 near-midnight-UT sunrise wrap-around (~16s offset), 1 tithi boundary within 0.17″ of transition. All solar calendar tests pass 100%.
 
 53,143 assertions across 10 test suites:
 
@@ -96,8 +97,8 @@ The buffer is subtracted from `critical_time_jd()` in `src/solar.c`. This single
 
 ## Known Limitations
 
-- Default Moshier backend has 29 tithi boundary edge-case failures (99.95% pass rate) due to ~10 arcsecond lunar longitude precision. Use `make USE_SWISSEPH=1` for 100% pass rate
-- Moshier backend uses analytical planetary theories (VSOP87 for Sun, ELP-2000/82 for Moon) rather than Swiss Ephemeris data files
+- Default Moshier backend has 2 irreducible edge-case failures (99.996% pass rate): 1965-05-30 (near-midnight-UT sunrise wrap-around, ~16s offset) and 2001-09-20 (tithi boundary within 0.17″ of transition). Use `make USE_SWISSEPH=1` for 100% pass rate
+- Moshier backend uses analytical planetary theories (VSOP87 for Sun, DE404-fitted Moshier theory for Moon) rather than Swiss Ephemeris data files
 - Amanta scheme only (no Purnimanta support)
 - No nakshatra, yoga, or karana calculations
 - No kshaya masa detection (extremely rare edge case)
@@ -110,16 +111,16 @@ The buffer is subtracted from `critical_time_jd()` in `src/solar.c`. This single
 
 The project supports two astronomical backends, selectable at compile time:
 
-| Backend | Build command | Lines | Precision (solar) | Precision (lunar) | Test pass rate |
-|---------|---------------|-------|--------------------|--------------------|----------------|
-| **Moshier** (default) | `make` | 1,265 | ±1″ (VSOP87) | ±10″ (ELP-2000/82) | 99.95% (53,114/53,143) |
-| **Swiss Ephemeris** | `make USE_SWISSEPH=1` | 51,493 | ±0.001″ | ±0.003″ | 100% (53,143/53,143) |
+| Backend | Build command | Lines | Precision (solar) | Precision (lunar) | Sunrise | Test pass rate |
+|---------|---------------|-------|--------------------|--------------------|---------|----------------|
+| **Moshier** (default) | `make` | 1,943 | ±1″ (VSOP87) | ±0.07″ (DE404) | ±2s | 99.996% (53,141/53,143) |
+| **Swiss Ephemeris** | `make USE_SWISSEPH=1` | 51,493 | ±0.001″ | ±0.003″ | ref | 100% (53,143/53,143) |
 
-The Moshier library (`lib/moshier/`) implements the same 8 SE functions used by the project. See [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) for the solar longitude pipeline and precision analysis.
+The Moshier library (`lib/moshier/`) implements the same 8 SE functions used by the project. See [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) for the solar longitude pipeline and [MOSHIER_IMPLEMENTATION.md](MOSHIER_IMPLEMENTATION.md) for the full library architecture.
 
 ## Source Statistics
 
-- Application code: ~1,550 lines across 16 files (8 .c + 8 .h)
-- Moshier ephemeris library: 1,265 lines across 6 files (5 .c + 1 .h)
+- Application code: ~1,550 lines across 14 files (7 .c + 7 .h)
+- Moshier ephemeris library: 1,943 lines across 6 files (5 .c + 1 .h)
 - Test code: ~2,140 lines across 10 files
 - Vendored Swiss Ephemeris: ~51,500 lines (11 .c + 12 .h)

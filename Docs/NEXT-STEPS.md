@@ -29,7 +29,8 @@ Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshie
 - [x] Dual backend: `make` = moshier, `make USE_SWISSEPH=1` = SE
 - [x] All solar calendar tests 100% pass with moshier (91 failures eliminated by VSOP87)
 - [x] 53,114/53,143 (99.95%) pass with moshier; 29 remaining failures are tithi boundary edge cases from ~10″ lunar precision
-- [ ] Optionally improve lunar longitude precision to eliminate remaining 29 failures (would require more ELP-2000/82 terms or a different approach)
+- [ ] Improve lunar longitude precision to eliminate remaining 29 tithi boundary failures
+- [ ] Calibrate Lahiri ayanamsa to match drikpanchang.com (close the ~24″ gap with SE_SIDM_LAHIRI), eliminating the need for Tamil (−8.0 min) and Malayalam (−9.5 min) empirical buffers
 
 ## Priority 2: Sunrise Accuracy
 

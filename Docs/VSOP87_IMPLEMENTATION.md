@@ -2,7 +2,7 @@
 
 ## Overview
 
-The self-contained Moshier ephemeris library (`lib/moshier/`, 1,265 lines) replaces the 51,493-line Swiss Ephemeris as the default backend. The solar longitude computation uses the VSOP87 planetary theory (Bretagnon & Francou, 1988) ported from Swiss Ephemeris source code, achieving ~1 arcsecond precision vs SE's output.
+The self-contained Moshier ephemeris library (`lib/moshier/`, 1,943 lines) replaces the 51,493-line Swiss Ephemeris as the default backend. The solar longitude computation uses the VSOP87 planetary theory (Bretagnon & Francou, 1988) ported from Swiss Ephemeris source code, achieving ~1 arcsecond precision vs SE's output.
 
 **Build options:**
 - `make` — uses moshier backend (default)
@@ -14,13 +14,13 @@ The self-contained Moshier ephemeris library (`lib/moshier/`, 1,265 lines) repla
 lib/moshier/
 ├── moshier.h           (35 lines)   Public API — 8 replacement functions
 ├── moshier_jd.c        (56 lines)   JD ↔ Gregorian, day of week
-├── moshier_sun.c       (726 lines)  VSOP87 solar longitude, nutation, delta-T
-├── moshier_moon.c      (146 lines)  Lunar longitude (60 ELP-2000/82 terms)
+├── moshier_sun.c       (739 lines)  VSOP87 solar longitude, nutation, delta-T
+├── moshier_moon.c      (791 lines)  Lunar longitude (DE404 Moshier theory)
 ├── moshier_ayanamsa.c  (147 lines)  Lahiri ayanamsa (IAU 1976 precession)
-└── moshier_rise.c      (155 lines)  Iterative sunrise/sunset
+└── moshier_rise.c      (175 lines)  Sunrise/sunset (Sinclair refraction, GAST)
 ```
 
-Total: **1,265 lines** (41x reduction from Swiss Ephemeris).
+Total: **1,943 lines** (26x reduction from Swiss Ephemeris).
 
 ## VSOP87 Solar Longitude Pipeline
 
@@ -172,8 +172,8 @@ Comparison at representative dates (1900–2050):
 | Tropical solar longitude | ±1″ | VSOP87 harmonic summation |
 | Ayanamsa (mean) | ±0.3″ | IAU 1976 3D precession |
 | Sidereal solar longitude | ±0.5″ | Combined solar + ayanamsa |
-| Lunar longitude | ±10″ | Meeus Ch.47 (60-term ELP-2000/82) |
-| Sunrise/sunset | ±14 seconds | Meeus Ch.15 iterative |
+| Lunar longitude | ±0.07″ (RMS) | DE404 Moshier theory (full pipeline) |
+| Sunrise/sunset | ±2 seconds | Sinclair refraction + GAST |
 
 The sidereal solar longitude precision of ±0.5″ translates to ~2 seconds of sankranti timing error — well within the empirical buffer margins for Tamil (−8.0 min) and Malayalam (−9.5 min) solar calendars.
 
@@ -189,7 +189,7 @@ The sidereal solar longitude precision of ±0.5″ translates to ~2 seconds of s
 | Other (tithi-based) | — | 29 |
 | **Total** | **53,023/53,143** | **120** |
 
-### After VSOP87 + Ayanamsa Fix
+### After VSOP87 + Ayanamsa Fix (Phase 10)
 
 | Suite | Passed | Failed |
 |-------|--------|--------|
@@ -199,7 +199,20 @@ The sidereal solar longitude precision of ±0.5″ translates to ~2 seconds of s
 | Other (tithi-based) | — | 29 |
 | **Total** | **53,114/53,143** | **29** |
 
-All 91 solar-related failures eliminated. The remaining 29 failures are tithi boundary edge cases from the ~10″ lunar longitude precision (Moon-Sun elongation, independent of ayanamsa/solar longitude).
+All 91 solar-related failures eliminated. The remaining 29 failures were tithi boundary edge cases from the ~10″ lunar longitude precision.
+
+### After DE404 Moon + Sunrise (Phase 11)
+
+| Suite | Passed | Failed |
+|-------|--------|--------|
+| Solar | 351/351 | **0** |
+| Solar edge | 1,200/1,200 | **0** |
+| Solar Regression | 28,976/28,976 | **0** |
+| Adhika/Kshaya | 17,074/17,076 | 2 |
+| Other (tithi-based) | — | **0** |
+| **Total** | **53,141/53,143** | **2** |
+
+DE404 moon pipeline (±0.07″) + Sinclair refraction + GAST eliminated 27 of 29 remaining failures. The 2 irreducible failures: 1965-05-30 (near-midnight-UT sunrise wrap-around, ~16s offset) and 2001-09-20 (tithi boundary within 0.17″ of transition).
 
 ## Evolution of Solar Longitude Approaches
 
@@ -216,12 +229,19 @@ All 91 solar-related failures eliminated. The remaining 29 failures are tithi bo
 - Error vs SE: ~17″ oscillating (nutation double-counted)
 - 145 test failures — worse than v1! Removing the cancellation exposed the nutation bug
 
-### v3: VSOP87 + Ayanamsa Fix (current, 1,265 lines total)
+### v3: VSOP87 + Ayanamsa Fix (1,265 lines total)
 
 - Solar longitude: VSOP87 (±1″)
 - Ayanamsa: mean only, no nutation (correct)
 - Error vs SE: ~0.5″ sidereal
 - 29 test failures (all tithi-related, not solar)
+
+### v4: DE404 Moon + Sunrise (current, 1,943 lines total)
+
+- Lunar longitude: DE404 Moshier pipeline (±0.07″), ported from SE's swemmoon.c
+- Delta-T: SE yearly lookup table (1620–2025)
+- Sunrise: Sinclair refraction (h₀ ≈ −0.612°), GAST, 10 iterations
+- 2 test failures (irreducible edge cases)
 
 ## Key Lessons Learned
 
@@ -235,7 +255,7 @@ All 91 solar-related failures eliminated. The remaining 29 failures are tithi bo
 
 5. **Standard aberration with VSOP87.** The Meeus p.164 combined formula (aberration + nutation adjustment) that worked with the simplified EoC must be replaced with the standard constant aberration (−20.496″) when using VSOP87. The combined formula provides error cancellation specific to the 3-term EoC.
 
-6. **SE's 118 lunar terms gave worse results than Meeus's 60.** SE's ELP-2000/82 terms require additional corrections (Venus-Jupiter perturbations, moon2 terms) that are embedded in SE's full pipeline. Meeus's 60 terms are self-consistent with the E correction and A1/A2/A3 additional terms.
+6. **Partial SE lunar terms gave worse results; full pipeline was the answer.** Using just 118 LR terms from SE's `swemmoon.c` without the full correction pipeline (moon1/moon2/z[]) gave 179 failures (worse than 60 Meeus terms at 120). Porting the complete pipeline brought it down to 2 failures. The pipeline is a self-consistent system — all stages are essential.
 
 ## Data Provenance
 

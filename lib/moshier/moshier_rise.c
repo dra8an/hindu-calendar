@@ -5,9 +5,10 @@
  * Iterative method using hour angle computation.
  *
  * Configuration: disc center with atmospheric refraction (SE_BIT_DISC_CENTER)
- *   h₀ = -0.5667° (center of disc at geometric horizon, standard refraction)
+ *   h₀ = Sinclair refraction at horizon (matches Swiss Ephemeris behavior)
+ *   Sidereal time = GAST (apparent, with equation of equinoxes)
  *
- * Precision: ~1 minute (sufficient for Hindu calendar)
+ * Precision: ~2 seconds vs Swiss Ephemeris (sufficient for Hindu calendar)
  */
 #include "moshier.h"
 #include <math.h>
@@ -18,6 +19,8 @@
 /* Forward declarations for helpers in moshier_sun.c */
 extern double moshier_solar_declination(double jd_ut);
 extern double moshier_solar_ra(double jd_ut);
+extern double moshier_nutation_longitude(double jd_ut);
+extern double moshier_mean_obliquity(double jd_ut);
 
 static double normalize_deg(double d)
 {
@@ -26,16 +29,22 @@ static double normalize_deg(double d)
     return d;
 }
 
-/* Depression angle for disc center with standard atmospheric refraction */
-static const double H0_CENTER = -0.5667;  /* degrees */
+/* Sinclair refraction at apparent altitude 0° (horizon).
+ * Returns refraction in degrees. Matches SE's calc_astronomical_refr().
+ * Parameters: atpress in hPa, attemp in °C. */
+static double sinclair_refraction_horizon(double atpress, double attemp)
+{
+    double r = 34.46;  /* arcminutes at horizon */
+    r = ((atpress - 80.0) / 930.0 / (1.0 + 0.00008 * (r + 39.0) * (attemp - 10.0)) * r) / 60.0;
+    return r;
+}
 
-/* Apparent sidereal time at Greenwich at 0h UT, in degrees (Meeus Ch. 12) */
+/* Mean sidereal time at Greenwich at 0h UT, in degrees (Meeus eq. 12.4) */
 static double sidereal_time_0h(double jd_0h)
 {
     double T = (jd_0h - 2451545.0) / 36525.0;
     double T2 = T * T;
     double T3 = T2 * T;
-    /* Meeus eq. 12.4 — θ₀ in degrees */
     double theta = 100.46061837 + 36000.770053608*T + 0.000387933*T2 - T3/38710000.0;
     return normalize_deg(theta);
 }
@@ -46,11 +55,14 @@ static double rise_set_for_date(double jd_0h, double lon, double lat, double h0,
 {
     double phi = lat * DEG2RAD;
 
-    /* Compute apparent sidereal time at 0h UT */
+    /* Compute apparent sidereal time at 0h UT (GAST = GMST + eq. equinoxes) */
     double theta0 = sidereal_time_0h(jd_0h);
+    double jd_noon = jd_0h + 0.5;
+    double dpsi = moshier_nutation_longitude(jd_noon);  /* degrees */
+    double eps = moshier_mean_obliquity(jd_noon);        /* degrees */
+    theta0 += dpsi * cos(eps * DEG2RAD);  /* equation of equinoxes */
 
     /* Initial estimate using noon position */
-    double jd_noon = jd_0h + 0.5;
     double ra = moshier_solar_ra(jd_noon);
     double decl = moshier_solar_declination(jd_noon);
 
@@ -82,7 +94,7 @@ static double rise_set_for_date(double jd_0h, double lon, double lat, double h0,
     m = m - floor(m);
 
     /* Iterate to refine (Meeus p. 103) */
-    for (int iter = 0; iter < 5; iter++) {
+    for (int iter = 0; iter < 10; iter++) {
         double jd_trial = jd_0h + m;
 
         /* Recompute solar position at trial time */
@@ -107,12 +119,17 @@ static double rise_set_for_date(double jd_0h, double lon, double lat, double h0,
         double dm = (h - h0) / denom;
         m += dm;
 
-        if (fabs(dm) < 0.00001) break;  /* ~0.9 seconds */
+        if (fabs(dm) < 0.0000001) break;  /* ~0.009 seconds */
     }
 
-    /* Clamp to reasonable range */
-    if (m < 0) m += 1.0;
-    if (m > 1) m -= 1.0;
+    /* Handle midnight UT wrap-around.
+     * For sunrise, m should be in the first ~18 hours (m < 0.75).
+     * If m > 0.75, the iteration crossed midnight UT backward (e.g.,
+     * Delhi sunrise in May at ~00:00 UT can converge to m=0.999
+     * instead of m=-0.001). Unwrap by subtracting 1.0.
+     * Similarly for sunset: m should be in the second half of the day. */
+    if (is_rise && m > 0.75) m -= 1.0;
+    if (!is_rise && m < 0.25) m += 1.0;
 
     return jd_0h + m;
 }
@@ -121,11 +138,14 @@ static double rise_set_for_date(double jd_0h, double lon, double lat, double h0,
  * Matches SE behavior: finds the next event after the given JD. */
 static double rise_set(double jd_ut, double lon, double lat, double alt, int is_rise)
 {
-    /* Adjust h0 for altitude above sea level (Meeus p. 102) */
-    double h0 = H0_CENTER;
-    if (alt > 0) {
-        h0 -= 0.0353 * sqrt(alt);
-    }
+    /* Compute h0 using Sinclair refraction formula (matches SE behavior).
+     * SE uses attemp=0°C and estimates atpress from observer altitude. */
+    double atpress = 1013.25;
+    if (alt > 0)
+        atpress = 1013.25 * pow(1.0 - 0.0065 * alt / 288.0, 5.255);
+    double h0 = -sinclair_refraction_horizon(atpress, 0.0);
+    if (alt > 0)
+        h0 -= 0.0353 * sqrt(alt);  /* dip of horizon */
 
     /* Get 0h UT of the UT date containing jd_ut */
     int yr, mo, dy;
