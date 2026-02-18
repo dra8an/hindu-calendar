@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.7.0 — 2026-02-18
+
+### Added
+
+- **Dual-backend validation data**: Both Swiss Ephemeris and Moshier backends now have their own complete set of reference CSVs and web JSON files, enabling side-by-side comparison on the validation web page
+- **Backend selector** in validation web page: dropdown to switch between SE and Moshier data. Title bar shows active backend. URL hash format: `#backend/calendar/YYYY-MM` (e.g., `#se/lunisolar/2025-03`, `#moshier/tamil/1950-06`), with backward compatibility for bare `#YYYY-MM` and `#calendar/YYYY-MM`
+- **`tools/extract_adhika_kshaya.py`**: Standalone script to derive adhika/kshaya tithi CSV from any `ref_1900_2050.csv`. Usage: `python3 tools/extract_adhika_kshaya.py INPUT OUTPUT`
+- **`tools/generate_all_validation.sh`**: Master script that regenerates all validation data for both backends (builds each backend, runs C generators, extracts adhika/kshaya, produces JSON)
+- **Makefile targets**: `make gen-ref` (build C generators + produce CSVs + extract adhika/kshaya for current backend), `make gen-json` (produce web JSON for current backend)
+- **`-o DIR` flag** on C generators: `generate_ref_data.c` and `gen_solar_ref.c` now accept `-o DIR` to write output to a specified directory instead of hardcoded paths
+
+### Changed
+
+- **Validation directory reorganized**: Backend-specific data moved under `validation/{se,moshier}/` (CSVs) and `validation/web/data/{se,moshier}/` (JSON). Old directories `validation/drikpanchang_data/` and `validation/solar/` removed
+- **Python generators accept `--backend`**: `csv_to_json.py` and `csv_to_solar_json.py` now take `--backend {se,moshier}` (default: `se`) to read/write the correct backend subdirectories
+- **Test CSV paths updated**: `test_csv_regression.c`, `test_adhika_kshaya.c`, `test_solar_regression.c` now reference `validation/se/` paths
+- **Web page URL hash format**: Changed from `#YYYY-MM` to `#backend/calendar/YYYY-MM` (backward compatible)
+
+### Verified
+
+- SE vs Moshier lunisolar diff: exactly 2 known differences (1965-05-30, 2001-09-20)
+- SE vs Moshier solar calendars: identical for all 4 calendars (Tamil, Bengali, Odia, Malayalam)
+- 9,060 JSON files generated per backend (1,812 lunisolar + 7,248 solar)
+- All existing tests pass unchanged (53,141/53,143 moshier, 53,143/53,143 SE)
+
 ## 0.5.0 — 2026-02-16
 
 ### Added

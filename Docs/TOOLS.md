@@ -4,29 +4,36 @@ Utility programs in the `tools/` directory. These are standalone C programs and 
 
 ## Data Generators
 
-These produce reference data consumed by test suites and the validation web page. Re-run them after any code change that affects calendar output.
+These produce reference data consumed by test suites and the validation web page. Re-run them after any code change that affects calendar output. Data is stored per-backend under `validation/{se,moshier}/` (CSVs) and `validation/web/data/{se,moshier}/` (JSON).
 
 | Tool | Language | Purpose | Output |
 |------|----------|---------|--------|
-| `generate_ref_data.c` | C | Generates the lunisolar 55,152-day reference CSV (1900–2050). Each row: Gregorian date, tithi, masa, adhika flag, Saka year | `validation/ref_1900_2050.csv` |
-| `gen_solar_ref.c` | C | Generates 4 solar calendar CSVs with month boundaries (1,811 months each, 1900–2050). Each row: month, year, length, Gregorian start date, month name | `validation/solar/{tamil,bengali,odia,malayalam}_months_1900_2050.csv` |
-| `csv_to_json.py` | Python | Converts lunisolar CSV + Reingold CSV into 1,812 per-month JSON files for the validation web page. Embeds Reingold diff fields and adhika/kshaya flags | `validation/web/data/YYYY-MM.json` |
-| `csv_to_solar_json.py` | Python | Converts 4 solar CSVs into 7,248 per-month JSON files (1,812 per calendar) for the validation web page | `validation/web/data/{tamil,bengali,odia,malayalam}/YYYY-MM.json` |
+| `generate_ref_data.c` | C | Generates the lunisolar 55,152-day reference CSV (1900–2050). Each row: Gregorian date, tithi, masa, adhika flag, Saka year. Accepts `-o DIR` to write to a directory | `validation/{backend}/ref_1900_2050.csv` |
+| `gen_solar_ref.c` | C | Generates 4 solar calendar CSVs with month boundaries (1,811 months each, 1900–2050). Each row: month, year, length, Gregorian start date, month name. Accepts `-o DIR` | `validation/{backend}/solar/{calendar}_months_1900_2050.csv` |
+| `extract_adhika_kshaya.py` | Python | Derives adhika/kshaya tithi edge-case CSV from a reference CSV by comparing consecutive days. Same logic as `csv_to_json.py` uses internally | `validation/{backend}/adhika_kshaya_tithis.csv` |
+| `csv_to_json.py` | Python | Converts lunisolar CSV + Reingold CSV into 1,812 per-month JSON files for the validation web page. Embeds Reingold diff fields and adhika/kshaya flags. Accepts `--backend {se,moshier}` | `validation/web/data/{backend}/YYYY-MM.json` |
+| `csv_to_solar_json.py` | Python | Converts 4 solar CSVs into 7,248 per-month JSON files (1,812 per calendar) for the validation web page. Accepts `--backend {se,moshier}` | `validation/web/data/{backend}/{calendar}/YYYY-MM.json` |
+| `generate_all_validation.sh` | Bash | Master script: builds each backend, runs all C generators, extracts adhika/kshaya, produces JSON for both SE and Moshier. Run from project root | All of the above, for both backends |
 
 ### Build and run
 
 ```bash
-# Lunisolar reference CSV
-cc -O2 -Isrc -Ilib/swisseph tools/generate_ref_data.c build/*.o build/swe/*.o -lm -o build/generate_ref_data
-./build/generate_ref_data > validation/ref_1900_2050.csv
+# Using Makefile targets (recommended)
+make gen-ref                      # Build generators + produce CSVs for current backend (moshier by default)
+make gen-json                     # Produce web JSON for current backend
+make USE_SWISSEPH=1 gen-ref       # Same, but for Swiss Ephemeris backend
+make USE_SWISSEPH=1 gen-json
 
-# Solar reference CSVs
-cc -O2 -Isrc -Ilib/swisseph tools/gen_solar_ref.c build/astro.o build/date_utils.o build/tithi.o build/masa.o build/panchang.o build/solar.o build/swe/*.o -lm -o build/gen_solar_ref
-./build/gen_solar_ref
+# Or regenerate everything for both backends at once
+bash tools/generate_all_validation.sh
 
-# Validation web page JSON
-python3 tools/csv_to_json.py
-python3 tools/csv_to_solar_json.py
+# Manual invocation with -o flag
+make && make build/gen_ref build/gen_solar_ref
+./build/gen_ref -o validation/moshier
+./build/gen_solar_ref -o validation/moshier
+python3 tools/extract_adhika_kshaya.py validation/moshier/ref_1900_2050.csv validation/moshier/adhika_kshaya_tithis.csv
+python3 tools/csv_to_json.py --backend moshier
+python3 tools/csv_to_solar_json.py --backend moshier
 ```
 
 ## Edge Case Scanner

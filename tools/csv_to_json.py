@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """Convert ref_1900_2050.csv into per-month JSON files for the validation web page."""
 
+import argparse
 import csv
 import json
 import os
 from datetime import date
 
-CSV_PATH = os.path.join(os.path.dirname(__file__),
-                        '..', 'validation', 'drikpanchang_data', 'ref_1900_2050.csv')
-REINGOLD_CSV_PATH = os.path.join(os.path.dirname(__file__),
-                        '..', 'validation', 'reingold', 'reingold_1900_2050.csv')
-OUT_DIR = os.path.join(os.path.dirname(__file__), '..', 'validation', 'web', 'data')
+SCRIPT_DIR = os.path.dirname(__file__)
+PROJECT_ROOT = os.path.join(SCRIPT_DIR, '..')
 
 TITHI_NAMES = [
     '',            # 0 - unused
@@ -65,13 +63,13 @@ def paksha_str(t):
     return 'Krishna'
 
 
-def load_reingold():
+def load_reingold(reingold_path):
     """Load Reingold CSV keyed by (year, month, day). Returns empty dict if file missing."""
-    if not os.path.exists(REINGOLD_CSV_PATH):
-        print(f'Warning: Reingold CSV not found at {REINGOLD_CSV_PATH}, skipping diffs')
+    if not os.path.exists(reingold_path):
+        print(f'Warning: Reingold CSV not found at {reingold_path}, skipping diffs')
         return {}
     data = {}
-    with open(REINGOLD_CSV_PATH, newline='') as f:
+    with open(reingold_path, newline='') as f:
         reader = csv.DictReader(f)
         for r in reader:
             key = (int(r['year']), int(r['month']), int(r['day']))
@@ -85,13 +83,22 @@ def load_reingold():
 
 
 def main():
-    os.makedirs(OUT_DIR, exist_ok=True)
+    parser = argparse.ArgumentParser(description='Convert ref CSV to per-month JSON')
+    parser.add_argument('--backend', choices=['se', 'moshier'], default='se',
+                        help='Backend whose CSV to read (default: se)')
+    args = parser.parse_args()
 
-    reingold = load_reingold()
+    csv_path = os.path.join(PROJECT_ROOT, 'validation', args.backend, 'ref_1900_2050.csv')
+    reingold_path = os.path.join(PROJECT_ROOT, 'validation', 'reingold', 'reingold_1900_2050.csv')
+    out_dir = os.path.join(PROJECT_ROOT, 'validation', 'web', 'data', args.backend)
+
+    os.makedirs(out_dir, exist_ok=True)
+
+    reingold = load_reingold(reingold_path)
 
     # Read all rows
     rows = []
-    with open(CSV_PATH, newline='') as f:
+    with open(csv_path, newline='') as f:
         reader = csv.DictReader(f)
         for r in reader:
             rows.append({
@@ -125,7 +132,7 @@ def main():
 
     def write_month(key, days):
         nonlocal files_written
-        path = os.path.join(OUT_DIR, f'{key}.json')
+        path = os.path.join(out_dir, f'{key}.json')
         with open(path, 'w') as f:
             json.dump(days, f, separators=(',', ':'))
         files_written += 1
@@ -178,7 +185,7 @@ def main():
     if current_key is not None:
         write_month(current_key, current_days)
 
-    print(f'Wrote {files_written} JSON files to {os.path.abspath(OUT_DIR)}')
+    print(f'[{args.backend}] Wrote {files_written} JSON files to {os.path.abspath(out_dir)}')
 
 
 if __name__ == '__main__':

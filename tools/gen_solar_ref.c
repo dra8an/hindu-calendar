@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 /* Days in a Gregorian month */
 static int days_in_month(int year, int month)
@@ -85,18 +86,35 @@ static void generate_csv(SolarCalendarType type, const char *filename)
             cal_names[type], months_written, filename);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    const char *out_dir = NULL;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
+            out_dir = argv[++i];
+        }
+    }
+
+    const char *prefix = out_dir ? out_dir : "validation/se";
+    char solar_dir[512];
+    snprintf(solar_dir, sizeof(solar_dir), "%s/solar", prefix);
+    mkdir(solar_dir, 0755);
+
     astro_init(NULL);
 
-    generate_csv(SOLAR_CAL_TAMIL,
-                 "validation/solar/tamil_months_1900_2050.csv");
-    generate_csv(SOLAR_CAL_BENGALI,
-                 "validation/solar/bengali_months_1900_2050.csv");
-    generate_csv(SOLAR_CAL_ODIA,
-                 "validation/solar/odia_months_1900_2050.csv");
-    generate_csv(SOLAR_CAL_MALAYALAM,
-                 "validation/solar/malayalam_months_1900_2050.csv");
+    char path[512];
+    snprintf(path, sizeof(path), "%s/solar/tamil_months_1900_2050.csv", prefix);
+    generate_csv(SOLAR_CAL_TAMIL, path);
+
+    snprintf(path, sizeof(path), "%s/solar/bengali_months_1900_2050.csv", prefix);
+    generate_csv(SOLAR_CAL_BENGALI, path);
+
+    snprintf(path, sizeof(path), "%s/solar/odia_months_1900_2050.csv", prefix);
+    generate_csv(SOLAR_CAL_ODIA, path);
+
+    snprintf(path, sizeof(path), "%s/solar/malayalam_months_1900_2050.csv", prefix);
+    generate_csv(SOLAR_CAL_MALAYALAM, path);
 
     astro_close();
     fprintf(stderr, "Done.\n");

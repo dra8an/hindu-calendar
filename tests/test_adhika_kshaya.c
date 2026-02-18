@@ -28,8 +28,8 @@ static void check(int condition, const char *msg)
 static const char *find_csv(void)
 {
     static const char *paths[] = {
-        "validation/drikpanchang_data/adhika_kshaya_tithis.csv",
-        "../validation/drikpanchang_data/adhika_kshaya_tithis.csv",
+        "validation/se/adhika_kshaya_tithis.csv",
+        "../validation/se/adhika_kshaya_tithis.csv",
         NULL
     };
     for (int i = 0; paths[i]; i++) {

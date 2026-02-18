@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Convert solar calendar CSVs into per-Gregorian-month JSON files for the validation web page."""
 
+import argparse
 import csv
 import json
 import os
 from datetime import date, timedelta
 
 SCRIPT_DIR = os.path.dirname(__file__)
-SOLAR_DIR = os.path.join(SCRIPT_DIR, '..', 'validation', 'solar')
-OUT_BASE = os.path.join(SCRIPT_DIR, '..', 'validation', 'web', 'data')
+PROJECT_ROOT = os.path.join(SCRIPT_DIR, '..')
 
 CALENDARS = {
     'tamil': {
@@ -74,10 +74,10 @@ def build_day_lookup(months):
     return lookup
 
 
-def generate_calendar(cal_name, cal_info):
+def generate_calendar(cal_name, cal_info, solar_dir, out_base):
     """Generate all per-Gregorian-month JSON files for one solar calendar."""
-    csv_path = os.path.join(SOLAR_DIR, cal_info['csv'])
-    out_dir = os.path.join(OUT_BASE, cal_name)
+    csv_path = os.path.join(solar_dir, cal_info['csv'])
+    out_dir = os.path.join(out_base, cal_name)
     os.makedirs(out_dir, exist_ok=True)
 
     months = load_solar_months(csv_path)
@@ -128,16 +128,24 @@ def generate_calendar(cal_name, cal_info):
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Convert solar CSVs to per-month JSON')
+    parser.add_argument('--backend', choices=['se', 'moshier'], default='se',
+                        help='Backend whose CSVs to read (default: se)')
+    args = parser.parse_args()
+
+    solar_dir = os.path.join(PROJECT_ROOT, 'validation', args.backend, 'solar')
+    out_base = os.path.join(PROJECT_ROOT, 'validation', 'web', 'data', args.backend)
+
     total_files = 0
     for cal_name, cal_info in CALENDARS.items():
-        files, missing = generate_calendar(cal_name, cal_info)
+        files, missing = generate_calendar(cal_name, cal_info, solar_dir, out_base)
         total_files += files
         status = f'  {cal_name}: {files} files'
         if missing > 0:
             status += f' ({missing} days without solar data)'
         print(status)
 
-    print(f'Total: {total_files} solar JSON files written to {os.path.abspath(OUT_BASE)}')
+    print(f'[{args.backend}] Total: {total_files} solar JSON files written to {os.path.abspath(out_base)}')
 
 
 if __name__ == '__main__':

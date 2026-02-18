@@ -40,7 +40,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | File | Purpose |
 |------|---------|
 | [CHANGELOG.md](../CHANGELOG.md) | Version history. Tracks what changed in each release. |
-| [Makefile](../Makefile) | Build system. Targets: `make` (build), `make test` (run tests), `make clean` (remove artifacts). |
+| [Makefile](../Makefile) | Build system. Targets: `make` (build), `make test` (run tests), `make gen-ref` (generate validation CSVs), `make gen-json` (generate web JSON), `make clean` (remove artifacts). |
 
 ## Reading Order
 

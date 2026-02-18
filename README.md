@@ -9,6 +9,8 @@ A Hindu lunisolar and solar calendar implementation in C. Computes tithi, lunar 
 ```
 make                    # Default: self-contained Moshier ephemeris
 make USE_SWISSEPH=1     # Optional: Swiss Ephemeris backend
+make gen-ref            # Generate validation CSVs for current backend
+make gen-json           # Generate web JSON for current backend
 ```
 
 ## Usage
@@ -77,6 +79,17 @@ make test
 ```
 
 Runs 53,143 assertions across 10 test suites: unit tests for astronomical calculations, tithi, month determination, and solar calendars; 186 lunisolar dates validated against drikpanchang.com (1900-2050, including 132 adhika/kshaya edge cases); 327 solar calendar month-start dates validated against drikpanchang.com/prokerala.com across all four regional variants; 1,200 solar edge case assertions covering the 100 closest-to-critical-time sankrantis per calendar (21 corrected from drikpanchang.com verification); and regression tests covering 1,104 sampled lunisolar days, all 4,269 adhika/kshaya tithi edge cases, and 7,244 solar month boundaries (1900-2050).
+
+## Validation Web Page
+
+Browser-based month-by-month comparison against drikpanchang.com for both SE and Moshier backends:
+
+```
+bash validation/web/serve.sh     # → http://localhost:8082
+bash tools/generate_all_validation.sh  # Regenerate all data for both backends
+```
+
+Backend selector (SE/Moshier), calendar selector (Lunisolar + 4 solar), Reingold/Dershowitz diff overlay. 9,060 JSON files per backend covering 1900-2050.
 
 ## Documentation
 

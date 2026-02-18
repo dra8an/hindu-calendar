@@ -14,10 +14,11 @@
 - [x] Ayanamsa buffer adjustments: Tamil −8.0 min, Malayalam −9.5 min (fixes 6 + 15 boundary dates)
 - [x] Validation web page extended for solar calendar comparison (dropdown for all 4 calendars)
 - [x] Resolve Bengali solar calendar edge cases — implemented tithi-based rule from Sewell & Dikshit (1896): 36/37 verified edge cases correct (1 known failure: 1976-10-17)
+- [x] Dual-backend validation data: SE + Moshier reference CSVs, JSON, web backend selector, `make gen-ref`/`gen-json` targets, `tools/generate_all_validation.sh` master script
 - [ ] Continue manual validation of remaining lunisolar months via web page against drikpanchang.com
 - [ ] Document any edge-case discrepancies (midnight new moons, polar regions)
 
-## Priority 1.5: Self-Contained Ephemeris (Phase 9+10 — Complete)
+## Priority 1.5: Self-Contained Ephemeris (Phase 9+10+11 — Complete)
 
 Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshier library as the default backend. Both backends remain available via compile-time selection.
 

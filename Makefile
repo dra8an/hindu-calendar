@@ -36,10 +36,14 @@ MAIN_OBJ = $(BUILDDIR)/main.o
 TEST_SRCS = $(wildcard $(TESTDIR)/test_*.c)
 TEST_BINS = $(patsubst $(TESTDIR)/%.c,$(BUILDDIR)/%,$(TEST_SRCS))
 
+# Generator sources
+GEN_REF_SRC = tools/generate_ref_data.c
+GEN_SOLAR_SRC = tools/gen_solar_ref.c
+
 # Target binary
 TARGET = hindu-calendar
 
-.PHONY: all clean test
+.PHONY: all clean test gen-ref gen-json
 
 all: $(BUILDDIR) $(TARGET)
 
@@ -77,6 +81,29 @@ test: $(TEST_BINS)
 		./$$t || exit 1; \
 		echo ""; \
 	done
+
+# Generator binaries
+$(BUILDDIR)/gen_ref: $(GEN_REF_SRC) $(EPH_OBJS) $(APP_OBJS) | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(LDFLAGS)
+
+$(BUILDDIR)/gen_solar_ref: $(GEN_SOLAR_SRC) $(EPH_OBJS) $(APP_OBJS) | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(LDFLAGS)
+
+ifdef USE_SWISSEPH
+  GEN_BACKEND = se
+else
+  GEN_BACKEND = moshier
+endif
+
+gen-ref: $(BUILDDIR)/gen_ref $(BUILDDIR)/gen_solar_ref
+	mkdir -p validation/$(GEN_BACKEND)
+	./$(BUILDDIR)/gen_ref -o validation/$(GEN_BACKEND)
+	./$(BUILDDIR)/gen_solar_ref -o validation/$(GEN_BACKEND)
+	python3 tools/extract_adhika_kshaya.py validation/$(GEN_BACKEND)/ref_1900_2050.csv validation/$(GEN_BACKEND)/adhika_kshaya_tithis.csv
+
+gen-json:
+	python3 tools/csv_to_json.py --backend $(GEN_BACKEND)
+	python3 tools/csv_to_solar_json.py --backend $(GEN_BACKEND)
 
 clean:
 	rm -rf $(BUILDDIR) $(TARGET)

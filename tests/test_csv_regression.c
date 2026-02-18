@@ -31,8 +31,8 @@ static const char *find_csv(void)
 {
     /* Try common locations relative to where the test might run */
     static const char *paths[] = {
-        "validation/drikpanchang_data/ref_1900_2050.csv",
-        "../validation/drikpanchang_data/ref_1900_2050.csv",
+        "validation/se/ref_1900_2050.csv",
+        "../validation/se/ref_1900_2050.csv",
         NULL
     };
     for (int i = 0; paths[i]; i++) {

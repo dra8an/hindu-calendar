@@ -119,6 +119,10 @@ td.solar-month-start { border-left: 4px solid #4caf50 !important; }
 <header>
     <h1>Hindu Calendar Validation</h1>
     <div class="nav">
+        <select id="sel-backend">
+            <option value="se">SE</option>
+            <option value="moshier">Moshier</option>
+        </select>
         <select id="sel-calendar">
             <option value="lunisolar">Lunisolar</option>
             <option value="tamil">Tamil</option>
@@ -170,6 +174,11 @@ const CALENDAR_LABELS = {
     malayalam: 'Malayalam Solar',
 };
 
+const BACKEND_LABELS = {
+    se: 'Swiss Ephemeris',
+    moshier: 'Moshier',
+};
+
 function fmtTithi(t) {
     if (t === 15) return 'Purnima';
     if (t === 30) return 'Amavasya';
@@ -179,12 +188,13 @@ function fmtTithi(t) {
     return `${p}-${n} ${name}`;
 }
 
-let curYear, curMonth, curCalendar = 'lunisolar';
+let curYear, curMonth, curCalendar = 'lunisolar', curBackend = 'se';
 
 function init() {
     const selMonth = document.getElementById('sel-month');
     const selYear = document.getElementById('sel-year');
     const selCalendar = document.getElementById('sel-calendar');
+    const selBackend = document.getElementById('sel-backend');
 
     MONTHS.forEach((m, i) => {
         const opt = document.createElement('option');
@@ -205,10 +215,18 @@ function init() {
         curYear = 2025; curMonth = 1;
     }
 
-    // Parse hash: #YYYY-MM or #calendar/YYYY-MM
+    // Parse hash: #backend/calendar/YYYY-MM, #calendar/YYYY-MM, or #YYYY-MM
     const hash = window.location.hash.replace('#', '');
+    const fullMatch = hash.match(/^(se|moshier)\/(lunisolar|tamil|bengali|odia|malayalam)\/(\d{4})-(\d{2})$/);
     const calMatch = hash.match(/^(tamil|bengali|odia|malayalam)\/(\d{4})-(\d{2})$/);
-    if (calMatch) {
+    if (fullMatch) {
+        curBackend = fullMatch[1];
+        curCalendar = fullMatch[2];
+        const hy = +fullMatch[3], hm = +fullMatch[4];
+        if (hy >= MIN_YEAR && hy <= MAX_YEAR && hm >= 1 && hm <= 12) {
+            curYear = hy; curMonth = hm;
+        }
+    } else if (calMatch) {
         curCalendar = calMatch[1];
         const hy = +calMatch[2], hm = +calMatch[3];
         if (hy >= MIN_YEAR && hy <= MAX_YEAR && hm >= 1 && hm <= 12) {
@@ -224,11 +242,17 @@ function init() {
     selMonth.value = curMonth;
     selYear.value = curYear;
     selCalendar.value = curCalendar;
+    selBackend.value = curBackend;
 
     selMonth.addEventListener('change', () => { curMonth = +selMonth.value; loadMonth(); });
     selYear.addEventListener('change', () => { curYear = +selYear.value; loadMonth(); });
     selCalendar.addEventListener('change', () => {
         curCalendar = selCalendar.value;
+        updateUIForCalendar();
+        loadMonth();
+    });
+    selBackend.addEventListener('change', () => {
+        curBackend = selBackend.value;
         updateUIForCalendar();
         loadMonth();
     });
@@ -250,8 +274,10 @@ function init() {
 function updateUIForCalendar() {
     const isLunisolar = curCalendar === 'lunisolar';
     document.getElementById('lbl-reingold').style.display = isLunisolar ? 'flex' : 'none';
-    document.querySelector('header h1').textContent =
-        'Hindu Calendar Validation' + (isLunisolar ? '' : ` \u2014 ${CALENDAR_LABELS[curCalendar]}`);
+    let title = 'Hindu Calendar Validation';
+    if (!isLunisolar) title += ` \u2014 ${CALENDAR_LABELS[curCalendar]}`;
+    title += ` [${BACKEND_LABELS[curBackend]}]`;
+    document.querySelector('header h1').textContent = title;
     updateLegend();
 }
 
@@ -292,11 +318,7 @@ function syncSelectors() {
 
 function updateHash() {
     const ym = `${String(curYear).padStart(4,'0')}-${String(curMonth).padStart(2,'0')}`;
-    if (curCalendar === 'lunisolar') {
-        window.location.hash = ym;
-    } else {
-        window.location.hash = `${curCalendar}/${ym}`;
-    }
+    window.location.hash = `${curBackend}/${curCalendar}/${ym}`;
 }
 
 async function loadMonth() {
@@ -306,9 +328,9 @@ async function loadMonth() {
 
     let file;
     if (curCalendar === 'lunisolar') {
-        file = `data/${ym}.json`;
+        file = `data/${curBackend}/${ym}.json`;
     } else {
-        file = `data/${curCalendar}/${ym}.json`;
+        file = `data/${curBackend}/${curCalendar}/${ym}.json`;
     }
 
     label.textContent = `${MONTHS[curMonth - 1]} ${curYear}`;
