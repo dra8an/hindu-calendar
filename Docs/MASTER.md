@@ -32,7 +32,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [SOLAR_VERIFICATION_WEB.md](SOLAR_VERIFICATION_WEB.md) | Plan for adding solar calendar support to the validation web page. |
 | [REINGOLD_VALIDATION.md](REINGOLD_VALIDATION.md) | Approach for comparing our Drik Siddhanta output against Reingold/Dershowitz Surya Siddhanta (HL function via SBCL). |
 | [REINGOLD_VALIDATION_WEB_PAGE.md](REINGOLD_VALIDATION_WEB_PAGE.md) | Design for embedding Reingold diff overlay into the validation web page. |
-| [HINDU_CALENDAR_GUIDE.md](HINDU_CALENDAR_GUIDE.md) | Comprehensive guide to reimplementing the Hindu calendar. Covers astronomical background, step-by-step algorithms, critical time rules, pitfalls, validation strategies, and reference tables. |
+| [HINDU_CALENDAR_GUIDE.md](HINDU_CALENDAR_GUIDE.md) | Comprehensive guide to reimplementing the Hindu calendar. Covers astronomical background, step-by-step algorithms, critical time rules, pitfalls, validation strategies, reference tables, self-contained ephemeris alternative (Section 5.15), and a case study of 2 dates where panchang sources disagree due to sub-second tithi boundary precision (Appendix C). |
 | calendrical-calculations.pdf | Reference book by Reingold & Dershowitz. Chapter 20 covers Hindu calendar mathematics. |
 
 ## Root Directory

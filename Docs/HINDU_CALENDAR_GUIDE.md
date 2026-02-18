@@ -17,6 +17,7 @@ This guide documents everything needed to reimplement the Hindu calendar system 
 7. [Reference Tables](#7-reference-tables)
 - [Appendix A: Complete Pseudocode Reference](#appendix-a-complete-pseudocode-reference)
 - [Appendix B: Worked Examples](#appendix-b-worked-examples)
+- [Appendix C: Case Study — When the Tithi Transition Falls at Sunrise](#appendix-c-case-study--when-the-tithi-transition-falls-at-sunrise)
 - [References](#references)
 
 ---
@@ -2293,3 +2294,78 @@ Year: Simha sankranti date, on/after → Kollam = 2025 - 824 = 1201
 
 42. **Rao, S. Balachandra** (2000). *Indian Astronomy: An Introduction*. Universities Press India.
     - Accessible introduction to Indian positional astronomy and calendar mathematics
+
+---
+
+## Appendix C: Case Study — When the Tithi Transition Falls at Sunrise
+
+This appendix documents two dates where major Hindu panchang sources disagree, illustrating why ephemeris precision matters and how a few arcseconds of lunar longitude can change the answer for an entire civil day.
+
+### C.1 The Two Disputed Dates
+
+Out of 55,152 days in the 1900–2050 range, exactly 2 dates produce different answers depending on which ephemeris engine is used:
+
+| Date | drikpanchang.com | prokerala.com / mpanchang.com / birthastro.com | Moshier (analytical) | Swiss Ephemeris |
+|------|-----------------|-----------------------------------------------|---------------------|-----------------|
+| **1965-05-30** | Krishna Chaturdashi (tithi 29) | Amavasya (tithi 30) | Chaturdashi (29) | Amavasya (30) |
+| **2001-09-20** | Shukla Tritiya (tithi 3) | Shukla Chaturthi (tithi 4) | Tritiya (3) | Chaturthi (4) |
+
+### C.2 Why They Disagree
+
+The Hindu calendar rule is: **the tithi prevailing at the moment of sunrise governs the entire civil day.** The tithi is determined by the moon-sun elongation — each 12° segment is one tithi. When the elongation crosses a 12° boundary, one tithi ends and the next begins.
+
+On these two dates, the tithi transition falls within **seconds** of sunrise:
+
+**1965-05-30 (New Delhi):**
+- The Chaturdashi→Amavasya boundary is at 348° of moon-sun elongation
+- drikpanchang reports: Chaturdashi ends at **05:25 AM** IST
+- Sunrise in Delhi on May 30 is also **~05:25 AM** IST
+- The tithi transition and sunrise are separated by only a few seconds
+
+**2001-09-20 (New Delhi):**
+- The Tritiya→Chaturthi boundary is at 36° of moon-sun elongation
+- drikpanchang reports: Tritiya ends at **06:09 AM** IST
+- Sunrise in Delhi on September 20 is also **~06:09 AM** IST
+- Again, the transition and sunrise are separated by only a few seconds
+
+Different ephemeris engines disagree by a few arcseconds on the moon's ecliptic longitude. Since the moon moves ~0.5 arcseconds per second of time, a difference of a few arcseconds translates to a difference of a few seconds in the computed tithi transition time. They may also disagree by a second or two on the sunrise time itself.
+
+On 55,150 of 55,152 days, these tiny differences do not matter because the nearest tithi transition is hours away from sunrise. On these 2 days, the transition falls within seconds of sunrise, and the tiny ephemeris differences determine which side of the boundary each engine lands on.
+
+### C.3 The Source Split
+
+Two independent "camps" emerge:
+
+**Camp A — tithi 29 and tithi 3 (transition has NOT yet happened at sunrise):**
+- [drikpanchang.com](https://www.drikpanchang.com/) — the most widely used Hindu panchang reference
+- Self-contained Moshier analytical ephemeris (VSOP87 solar + DE404 lunar)
+
+**Camp B — tithi 30 and tithi 4 (transition HAS already happened at sunrise):**
+- [prokerala.com](https://www.prokerala.com/astrology/panchang/) — daily panchang and tithi calendar
+- [mpanchang.com](https://www.mpanchang.com/) — lists May 30, 1965 as Amavasya
+- [birthastro.com](https://www.birthastro.com/) — lists May 30, 1965 as Jyeshtha Amavasya (start 5:25:17 AM)
+- Swiss Ephemeris (the likely common engine behind all Camp B sites)
+
+The Camp A sources use two completely independent code paths (drikpanchang's proprietary engine and our analytical Moshier library) yet arrive at the same answer. The Camp B sources likely all share the Swiss Ephemeris as their underlying engine, so they represent a single computation that happens to land on the other side of the boundary.
+
+### C.4 Implications for Implementers
+
+1. **Neither answer is "wrong."** When the tithi transition falls within seconds of sunrise, the correct answer genuinely depends on sub-arcsecond lunar longitude precision and sub-second sunrise precision. Both camps are computing the astronomy correctly to within their respective error margins.
+
+2. **Choose your reference source and be consistent.** If you validate against drikpanchang.com (as this guide recommends), your implementation should match drikpanchang on these boundary dates. If you validate against prokerala.com, you should match prokerala.
+
+3. **These dates are useful diagnostic tools.** If your implementation disagrees with your reference source on one of these dates, it tells you something about the relative precision of your ephemeris. The Swiss Ephemeris and the self-contained Moshier library give opposite answers on these 2 dates, despite agreeing on the other 55,150.
+
+4. **The affected count is extremely small.** 2 out of 55,152 days = 0.004%. For any practical Hindu calendar application, this is negligible. The chance of a user encountering one of these dates is roughly once per 75 years.
+
+### C.5 Verification Method
+
+To verify these dates against online sources:
+
+1. **drikpanchang.com** — Use the [day panchang page](https://www.drikpanchang.com/panchang/day-panchang.html) with `?date=DD/MM/YYYY` format. The tithi name and transition time are shown directly.
+
+2. **prokerala.com** — Use the [daily panchang page](https://www.prokerala.com/astrology/panchang/) with `?date=YYYY-MM-DD` format, or the [tithi-specific pages](https://www.prokerala.com/astrology/tithi/) which list all dates for a given tithi in a year with exact start/end times.
+
+3. **birthastro.com** — Use the [Amavasya dates page](https://www.birthastro.com/vrats/amavasya-dates-1965) for yearly listings with start/end times.
+
+All sources agree on the astronomical timing to within a few seconds. The disagreement is solely about which side of sunrise that timing falls on.
