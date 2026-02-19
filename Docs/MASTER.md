@@ -34,6 +34,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [REINGOLD_VALIDATION_WEB_PAGE.md](REINGOLD_VALIDATION_WEB_PAGE.md) | Design for embedding Reingold diff overlay into the validation web page. |
 | [HINDU_CALENDAR_GUIDE.md](HINDU_CALENDAR_GUIDE.md) | Comprehensive guide to reimplementing the Hindu calendar. Covers astronomical background, step-by-step algorithms, critical time rules, pitfalls, validation strategies, reference tables, self-contained ephemeris alternative (Section 5.15), and a case study of 2 dates where panchang sources disagree due to sub-second tithi boundary precision (Appendix C). |
 | [LICENSING.md](LICENSING.md) | Intellectual property and licensing analysis for all scientific theories, data tables, and algorithms used in the Moshier ephemeris library. Covers VSOP87, DE404 Moshier, Meeus, IAU 1976, Sinclair, IERS delta-T, and the Swiss Ephemeris AGPL non-applicability. Conclusion: all components freely usable with zero risk. |
+| [DEVELOPMENT_JOURNAL.md](DEVELOPMENT_JOURNAL.md) | Reflections on building the project — the challenges, discoveries, and lessons learned across ~15 sessions. Written by Claude (Opus). |
 | calendrical-calculations.pdf | Reference book by Reingold & Dershowitz. Chapter 20 covers Hindu calendar mathematics. |
 
 ## Root Directory
