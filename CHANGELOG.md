@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.8.0 — 2026-02-21
+
+### Added
+
+- **Java 21 port** (`java/`): Complete port of the Hindu calendar to Java, targeting the Moshier-only backend. Zero external runtime dependencies. Produces identical output to the C implementation for all dates tested
+- **Gradle build system**: Kotlin DSL (`build.gradle.kts`), Java 18 toolchain, JUnit 5.9.3, application plugin with `./gradlew run` support
+- **Moshier ephemeris in Java** (`ephemeris/`): All 5 Moshier modules ported — VSOP87 solar longitude (MoshierSun, 668 lines), DE404 lunar longitude (MoshierMoon, 687 lines), IAU 1976 ayanamsa (MoshierAyanamsa, 120 lines), Sinclair sunrise/sunset (MoshierRise, 150 lines), Julian Day (MoshierJulianDay, 77 lines). Public `Ephemeris` facade (84 lines) wires them together
+- **Calendar logic in Java** (`core/`): Tithi (85 lines), Masa (122 lines), Panchang (154 lines), Solar (214 lines), DateUtils (33 lines) — all ported from C with identical algorithms
+- **Model types** (`model/`): 9 Java records/enums — Location, Paksha, MasaName, TithiInfo, MasaInfo, HinduDate, PanchangDay, SolarCalendarType, SolarDate
+- **CLI** (`cli/HinduCalendarCli.java`): Same flags as C (`-y`, `-m`, `-d`, `-s`, `-l`, `-u`, `-h`), produces identical tabular output
+- **Test suite**: 227 JUnit 5 tests, 0 failures — EphemerisTest (JD, solar/lunar longitude, ayanamsa, sunrise/sunset), TithiTest (7 known dates, kshaya/adhika), MasaTest (9 dates + year determination), SolarTest (4 calendars + Odia boundary cases + round-trips), DrikPanchangValidationTest (186 dates × 4 checks = 744 assertions, ported verbatim from C test_validation.c)
+- **Cross-validation**: Java CLI output verified identical to C CLI output for single-day, month-view, and solar calendar modes
+
+### Documentation
+
+- Created `Docs/JAVA_PORT.md`: Comprehensive document covering project structure, class mapping (C → Java), porting decisions, key technical traps, verification results, and usage instructions
+
 ## 0.7.0 — 2026-02-18
 
 ### Added
