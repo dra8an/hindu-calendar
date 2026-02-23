@@ -6,10 +6,31 @@ We scraped every month panchang page from drikpanchang.com for the full
 1900–2050 range (1,812 Gregorian months, 55,152 days) and compared the
 tithi for each day against our computed reference.
 
-**Result: 55,117 / 55,152 match (99.937%) — 35 mismatches.**
+| Backend | Match | Mismatch | Rate |
+|---------|-------|----------|------|
+| **Moshier** | **55,117** | **35** | **99.937%** |
+| Swiss Ephemeris | 55,115 | 37 | 99.933% |
 
-Both the Moshier and Swiss Ephemeris backends produce identical results
-and disagree with drikpanchang on the same 35 dates.
+### Relationship to the 2 SE-specific mismatches
+
+SE has 37 mismatches = the same 35 as Moshier **plus** 2 dates where SE
+disagrees with both Moshier and drikpanchang:
+
+| Date | Moshier | SE | Drikpanchang |
+|------|---------|-----|-------------|
+| 1965-05-30 | 29 | 30 | 29 |
+| 2001-09-20 | 3 | 4 | 3 |
+
+On these 2 dates, drikpanchang confirms Moshier is correct and SE is wrong.
+These are also tithi boundary edge cases (sub-minute margins).
+
+The full three-way picture:
+
+| Days | Description |
+|------|-------------|
+| 55,115 | All three agree |
+| 35 | Moshier + SE agree, drikpanchang differs (boundary edge cases) |
+| 2 | Moshier + drikpanchang agree, SE differs |
 
 ## Scraper
 
