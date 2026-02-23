@@ -53,6 +53,8 @@ hindu-calendar/
 │   └── csv_to_solar_json.py   # Convert solar CSVs → per-month JSON for web page
 ├── validation/             # Reference data from drikpanchang.com
 ├── ephe/                   # Swiss Ephemeris data files (optional)
+├── java/                   # Java 21 port (Moshier-only, Gradle build)
+├── rust/                   # Rust port (Moshier-only, Cargo build)
 ├── Docs/                   # Documentation
 ├── build/                  # Build artifacts (gitignored)
 ├── Makefile

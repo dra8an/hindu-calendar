@@ -1,6 +1,6 @@
 # Project Status
 
-## Current Version: 0.7.0
+## Current Version: 0.9.0
 
 ## Phase Completion
 
@@ -18,6 +18,8 @@
 | 10 | VSOP87 solar longitude upgrade | Done | ±1″ solar, all solar tests 100%, 120→29 total failures |
 | 11 | DE404 moon pipeline + sunrise | Done | ±0.07″ lunar, ±2s sunrise, 29→2 total failures |
 | 12 | Dual-backend validation data | Done | SE + Moshier CSVs, JSON, web backend selector |
+| 13 | Java 21 port | Done | Moshier-only, 227 tests, identical output to C |
+| 14 | Rust port | Done | Moshier-only, 275,396 assertions, identical output to C |
 
 ## Test Results
 
@@ -129,9 +131,27 @@ The project supports two astronomical backends, selectable at compile time:
 
 The Moshier library (`lib/moshier/`) implements the same 8 SE functions used by the project. See [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) for the solar longitude pipeline and [MOSHIER_IMPLEMENTATION.md](MOSHIER_IMPLEMENTATION.md) for the full library architecture.
 
+## Language Ports
+
+The project has been ported to two additional languages, both targeting the Moshier-only backend:
+
+| | C (original) | Java | Rust |
+|---|---|---|---|
+| Directory | `src/` + `lib/moshier/` | `java/` | `rust/` |
+| Production lines | ~3,500 | 2,718 | 2,784 |
+| Test lines | ~2,140 | 750 | 409 |
+| Test assertions | 53,143 | 744 | 275,396 |
+| External deps | 0 | JUnit 5 (test only) | 0 |
+| Build tool | Make | Gradle | Cargo |
+| Documentation | — | [JAVA_PORT.md](JAVA_PORT.md) | [RUST_PORT.md](RUST_PORT.md) |
+
+All three implementations produce identical output for every tested date.
+
 ## Source Statistics
 
 - Application code: ~1,550 lines across 14 files (7 .c + 7 .h)
 - Moshier ephemeris library: 1,943 lines across 6 files (5 .c + 1 .h)
 - Test code: ~2,140 lines across 10 files
 - Vendored Swiss Ephemeris: ~51,500 lines (11 .c + 12 .h)
+- Java port: 2,718 production + 750 test lines
+- Rust port: 2,784 production + 409 test lines

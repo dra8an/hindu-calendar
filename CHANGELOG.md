@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.9.0 — 2026-02-22
+
+### Added
+
+- **Rust port** (`rust/`): Complete port of the Hindu calendar to Rust, targeting the Moshier-only backend. Zero external runtime dependencies (`std` only). Produces identical output to the C implementation for all 275,396 tested assertions
+- **Moshier ephemeris in Rust** (`ephemeris/`): All 5 Moshier modules ported — VSOP87 solar longitude (`sun.rs`, 676 lines), DE404 lunar longitude (`moon.rs`, 662 lines), IAU 1976 ayanamsa (`ayanamsa.rs`, 104 lines), Sinclair sunrise/sunset (`rise.rs`, 136 lines), Julian Day (`julian_day.rs`, 79 lines). Public `Ephemeris` facade (`mod.rs`, 86 lines) wires them together
+- **Calendar logic in Rust** (`core/`): Tithi (88 lines), Masa (115 lines), Panchang (163 lines), Solar (254 lines) — all ported from C with identical algorithms
+- **Model types** (`model.rs`): Rust structs and enums — `Location` (with `NEW_DELHI` const), `Paksha`, `MasaName` (with `from_number`/`number`/`display_name`), `TithiInfo`, `MasaInfo`, `HinduDate`, `PanchangDay`, `SolarCalendarType`, `SolarDate`, plus const arrays for tithi/masa/rashi/day-of-week names
+- **CLI** (`bin/hindu_calendar.rs`): Same flags as C (`-y`, `-m`, `-d`, `-s`, `-l`, `-u`, `-h`), produces identical tabular output
+- **Test suite**: 9 tests covering 275,396 assertions, 0 failures — 3 unit tests (JD round-trip, day-of-week, J2000), 186-date drikpanchang.com validation (744 assertions), full lunisolar regression (55,152 days × 4 checks), and 4 solar calendar regression tests (~1,811 month-starts each)
+- **Cross-validation**: Rust CLI output verified identical to C CLI output for lunisolar months, single-day views, and all 4 solar calendar variants
+
+### Documentation
+
+- Created `Docs/RUST_PORT.md`: Comprehensive document covering project structure, module mapping (C → Rust), porting decisions, key technical traps, verification results, and usage instructions
+- Updated `Docs/MASTER.md`, `Docs/PROJECT-STATUS.md`, `Docs/ARCHITECTURE.md`, `Docs/DEVELOPMENT_STEPS.md`, `Docs/NEXT-STEPS.md`, and `README.md` to reflect the Rust port
+
 ## 0.8.0 — 2026-02-21
 
 ### Added

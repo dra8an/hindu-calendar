@@ -37,6 +37,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md) | Concise chronological summary of each development phase, from project setup through final verification. |
 | [DEVELOPMENT_JOURNAL.md](DEVELOPMENT_JOURNAL.md) | Reflections on building the project — the challenges, discoveries, and lessons learned across ~15 sessions. Written by Claude (Opus). |
 | [JAVA_PORT.md](JAVA_PORT.md) | Java 21 port documentation. Project structure, class mapping (C → Java), porting decisions, key technical traps, test suite (227 tests), cross-validation results, and build/usage instructions. |
+| [RUST_PORT.md](RUST_PORT.md) | Rust port documentation. Project structure, module mapping (C → Rust), porting decisions (ownership, mutability, `i8` indexing), test suite (9 tests, 275,396 assertions), full regression verification, cross-validation results, and build/usage instructions. |
 | calendrical-calculations.pdf | Reference book by Reingold & Dershowitz. Chapter 20 covers Hindu calendar mathematics. |
 
 ## Root Directory

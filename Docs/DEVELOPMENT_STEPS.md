@@ -117,8 +117,28 @@ them with proper academic citations (Bretagnon & Francou, Moshier, Lieske,
 Meeus, Sinclair, IERS). Researched and documented the IP/licensing status of
 all scientific components — all freely usable with zero risk.
 
+**Phase 13 — Java 21 Port** (v0.8.0)
+
+Ported the entire project to Java 21 with Moshier-only backend. Gradle build
+system with JUnit 5. 227 tests (including 186 drikpanchang.com validation
+dates), 0 failures. CLI output identical to C for all tested dates. 2,718
+production lines + 750 test lines. Zero runtime dependencies.
+
+**Phase 14 — Rust Port** (v0.9.0)
+
+Ported the entire project to Rust with Moshier-only backend. Zero external
+dependencies (std only). Ownership model uses `SunState` and `MoonState`
+structs owned by an `Ephemeris` facade, with `&mut self` on all methods.
+C pointer arithmetic (`*p++`) converted to index variables. Data tables are
+`const` statics — no heap allocation. 9 tests covering 275,396 assertions
+(55,152 lunisolar days + 7,244 solar month-starts + 744 validation checks),
+0 failures. CLI output identical to C for all tested dates. 2,784 production
+lines + 409 test lines.
+
 ---
 
-Final state: 53,143 test assertions across 10 suites, 55,152 dates verified
-against drikpanchang.com (100% match), 1,943 lines of self-contained
-ephemeris code, 4 regional solar calendars, comprehensive documentation.
+Final state: Three implementations (C, Java, Rust) producing identical output.
+C: 53,143 test assertions across 10 suites. Rust: 275,396 assertions across
+9 tests. 55,152 dates verified against drikpanchang.com (100% match), 1,943
+lines of self-contained ephemeris code, 4 regional solar calendars,
+comprehensive documentation.

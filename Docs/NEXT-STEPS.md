@@ -69,6 +69,11 @@ Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshie
 - [ ] JSON output format for programmatic use
 - [ ] Festival/observance calendar overlay
 
+## Completed: Language Ports
+
+- [x] **Java 21 port** (`java/`): Moshier-only, 2,718 lines, 227 tests, Gradle build. See [JAVA_PORT.md](JAVA_PORT.md)
+- [x] **Rust port** (`rust/`): Moshier-only, 2,784 lines, 275,396 assertions, Cargo build. See [RUST_PORT.md](RUST_PORT.md)
+
 ## Future Considerations
 
 - Rashi (zodiac sign of moon) for daily horoscope-style output
@@ -76,3 +81,4 @@ Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshie
 - Eclipse calculations (Swiss Ephemeris supports this)
 - Web interface or API wrapper
 - Performance optimization (caching ephemeris calls for month generation)
+- Additional language ports (Go, Python, etc.)

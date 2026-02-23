@@ -1,0 +1,12 @@
+[package]
+name = "hindu-calendar"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "hindu-calendar"
+path = "src/bin/hindu_calendar.rs"
+
+[lib]
+name = "hindu_calendar"
+path = "src/lib.rs"

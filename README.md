@@ -91,6 +91,18 @@ bash tools/generate_all_validation.sh  # Regenerate all data for both backends
 
 Backend selector (SE/Moshier), calendar selector (Lunisolar + 4 solar), Reingold/Dershowitz diff overlay. 9,060 JSON files per backend covering 1900-2050.
 
+## Language Ports
+
+The project has been ported to Java and Rust, both targeting the Moshier-only backend with identical output:
+
+| | C (original) | Java | Rust |
+|---|---|---|---|
+| Directory | `src/` + `lib/moshier/` | `java/` | `rust/` |
+| Build | `make` | `./gradlew build` | `cargo build` |
+| Test | `make test` | `./gradlew test` | `cargo test` |
+| Run | `./hindu-calendar` | `./gradlew run --args="..."` | `cargo run -- ...` |
+| Docs | — | [Docs/JAVA_PORT.md](Docs/JAVA_PORT.md) | [Docs/RUST_PORT.md](Docs/RUST_PORT.md) |
+
 ## Documentation
 
 See [Docs/MASTER.md](Docs/MASTER.md) for a full index. Key files:
@@ -100,4 +112,6 @@ See [Docs/MASTER.md](Docs/MASTER.md) for a full index. Key files:
 - [Docs/NEXT-STEPS.md](Docs/NEXT-STEPS.md) — roadmap (nakshatra, yoga, Purnimanta, etc.)
 - [Docs/VSOP87_IMPLEMENTATION.md](Docs/VSOP87_IMPLEMENTATION.md) — VSOP87 solar longitude pipeline, ayanamsa, precision analysis
 - [Docs/SOLAR_PLAN.md](Docs/SOLAR_PLAN.md) — solar calendar design document
+- [Docs/JAVA_PORT.md](Docs/JAVA_PORT.md) — Java 21 port (227 tests, Gradle build)
+- [Docs/RUST_PORT.md](Docs/RUST_PORT.md) — Rust port (275,396 assertions, Cargo build)
 - [CHANGELOG.md](CHANGELOG.md) — version history

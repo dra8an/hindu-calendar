@@ -17,6 +17,8 @@ Both backends are selectable at compile time:
 - `make` — moshier (default)
 - `make USE_SWISSEPH=1` — Swiss Ephemeris
 
+The Moshier library has been ported to [Java](JAVA_PORT.md) and [Rust](RUST_PORT.md), producing identical output.
+
 ## Architecture
 
 ```
