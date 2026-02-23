@@ -2,23 +2,115 @@
 
 This document analyzes the licensing and intellectual property status of every
 scientific theory, data table, and algorithm used in the self-contained Moshier
-ephemeris library (`lib/moshier/`). Research conducted February 2026.
+ephemeris library (`lib/moshier/`). Research conducted February 2026, revised
+February 2026 after deep provenance investigation.
 
-**Conclusion: All components are freely usable with zero licensing risk.**
+**Conclusion: All components are freely usable. The computational code derives
+from Steve Moshier's permissively licensed astronomical packages (1991-1995),
+not from Swiss Ephemeris creative additions. Data tables are uncopyrightable
+scientific facts. See the detailed analysis below.**
 
 ---
 
 ## Summary
 
-| Component | Source | Copyrightable? | Status | Risk |
-|-----------|--------|---------------|--------|------|
-| VSOP87 coefficients | Bretagnon & Francou 1988 | No (scientific data) | No license; freely distributed | None |
-| DE404 Moshier lunar theory | Moshier 1992 | Code: permissive; Data: no | "May be used freely" | None |
-| JPL DE404 ephemeris data | JPL/NASA | No (observational data) | Effectively public domain | None |
-| Meeus algorithms | Meeus 1991/1998 | No (math formulas) | 17 USC 102(b) | None |
-| IAU 1976 precession | Lieske et al. 1977 | No (scientific constants) | Published journal paper | None |
-| Sinclair refraction | Sinclair 1982 | No (physical formula) | Published gov't report | None |
-| IERS delta-T data | IERS Bulletins | No (observational facts) | Open access mandate | None |
+| Component | Ultimate Origin | In Our Code Via | License | Risk |
+|-----------|----------------|-----------------|---------|------|
+| VSOP87 coefficients | Bretagnon & Francou 1988 | Moshier's plan404 (via SE's swemptab.h) | Uncopyrightable scientific data | None |
+| VSOP87 evaluation loop | Moshier's gplan.c (plan404) | SE's swemplan.c | Moshier: "may be used freely" | None |
+| DE404 lunar data tables | Moshier's DE404 fit (1995) | SE's swemmoon.c | Moshier: "may be used freely" | None |
+| DE404 lunar pipeline | Moshier's cmoon/selenog (1991) | SE's swemmoon.c (restructured) | Moshier: "may be used freely" | Low (see Section 8) |
+| EMB→Earth correction | Moshier's plan404 | SE's swemplan.c embofs_mosh() | Moshier: "may be used freely" | None |
+| Meeus algorithms | Meeus 1991/1998 | Independently implemented | 17 USC 102(b) | None |
+| IAU 1976 precession | Lieske et al. 1977 | Independently implemented | Uncopyrightable constants | None |
+| Sinclair refraction | Sinclair 1982 | Independently implemented | Uncopyrightable formula | None |
+| IERS delta-T data | IERS Bulletins | SE's delta-T table | Uncopyrightable facts | None |
+
+---
+
+## Code Provenance — Honest Account
+
+**This section was added in the February 2026 revision to accurately describe
+how the code was developed. The original version of this document understated
+the relationship between our code and Swiss Ephemeris source files.**
+
+### What happened
+
+Our Moshier ephemeris library (`lib/moshier/`) was developed by reading the
+Swiss Ephemeris source files (`lib/swisseph/`) and extracting the longitude-only
+computation pipelines. The SE source files were the *proximate* source of our
+code. However, the *ultimate* origin of the computational content within those
+SE files is Steve Moshier's original astronomical packages from 1991-1995,
+which SE incorporated and restructured.
+
+### The three layers
+
+```
+Layer 1: Moshier's original code (1991-1995)
+  - plan404.zip: planetary ephemeris (gplan.c + ear404.c, etc.)
+  - cmoon.zip / selenog.zip: lunar ephemeris
+  - aa-56.zip: astronomical almanac package
+  - License: "may be used freely" + explicit BSD grants
+
+Layer 2: Swiss Ephemeris modifications (1996-2021)
+  - Koch/Treindl restructured Moshier's code for SE integration
+  - Added: coordinate transforms, speed computation, SE caching,
+    thread-local storage, fallback logic, wrappers
+  - Renamed: LP_equinox → SWELP (2006), g2plan → moon1-moon4
+  - License: AGPL v3 / commercial dual license
+
+Layer 3: Our extraction (2026)
+  - Extracted longitude-only pipelines from SE source files
+  - Did NOT port: coordinate transforms, speed computation,
+    SE wrappers, fallback logic, latitude, radius
+  - Simplified: removed unused branches, flattened structure
+```
+
+### What we ported, and its true origin
+
+| Our function | From SE file | Moshier original | Koch/Treindl additions ported? |
+|-------------|-------------|-----------------|-------------------------------|
+| `mods3600()` | swemmoon.c, swemplan.c | gplan.c line 22 (macro) | No — SE only changed it from macro to function |
+| `sscc()` | swemmoon.c | gplan.c line 230 | No — identical to Moshier's original |
+| `chewm()` | swemmoon.c | chewtab.c | No — we omitted latitude/radius cases that Koch added |
+| `mean_elements()` | swemmoon.c | mean.c / gplan.c | Partially — Koch extracted named vars from Args[] array |
+| `mean_elements_pl()` | swemmoon.c | gplan.c | No — identical to Moshier's original |
+| `moon1()`-`moon4()` | swemmoon.c | **Koch's restructuring** of Moshier's g2plan/g1plan/gmoon | Yes — function boundaries are Koch's design |
+| Data: z[], LR[], LRT[], LRT2[] | swemmoon.c | Moshier's DE404 fit coefficients | No — numerical data unchanged |
+| `vsop87_earth_longitude()` | swemplan.c | gplan.c `gplan()` function | No — evaluation logic is Moshier's |
+| Data: eartabl[], earargs[] | swemptab.h | Moshier's ear404.c | No — numerical data unchanged |
+| Data: freqs[], phases[] | swemplan.c | gplan.c lines 35-56 | No — identical to Moshier's original |
+| `emb_earth_correction()` | swemplan.c `embofs_mosh()` | Moshier's EMB correction | No — algorithm and coefficients are Moshier's |
+
+### The key nuance: moon1()-moon4()
+
+The `moon1()` through `moon4()` function structure is **Koch's reorganization**
+of Moshier's original `g2plan()`, `g1plan()`, and `gmoon()` functions.
+Moshier's original used a generic table-driven approach (`struct plantbl` +
+`g2plan`); Koch split this into four explicit functions when adapting for SE
+in April 1996.
+
+Our code follows Koch's `moon1()`-`moon4()` organization. However:
+- The mathematical content (every coefficient, every polynomial) is Moshier's
+- The explicit perturbation terms in moon1() (e.g., 6.367278, 12.747036,
+  23123.70, -10570.02) are from Moshier's DE404 fit
+- The data tables walked by chewm() are Moshier's
+- Koch's contribution was the function boundary placement, not the algorithms
+- Under merger doctrine, there are limited ways to structure a multi-stage
+  perturbation pipeline — the organization follows from the mathematics
+
+### What we did NOT port from SE
+
+The following Koch/Treindl additions were **not** included in our library:
+
+- `swi_moshmoon()` / `swi_moshplan()` — SE wrapper functions
+- Ecliptic-of-date to J2000 equatorial coordinate transforms
+- Speed computation via numerical differentiation
+- `TLS` (thread-local storage) modifications
+- The SE fallback mechanism (`goto moshier_planet`)
+- Latitude and radius computation (moon and planets)
+- `SEFLG_MOSEPH` flag and SE API integration
+- Later precession models (IAU 2003 P03, Vondrak 2011)
 
 ---
 
@@ -52,41 +144,66 @@ observational data table in our library is free to implement in original code.
 computing the Earth-Moon Barycenter's ecliptic longitude, from Bretagnon &
 Francou's VSOP87 planetary theory.
 
-**Source:** Published in *Astronomy & Astrophysics*, 202, 309-315 (1988).
-Data tables freely distributed by IMCCE (Institut de Mecanique Celeste et de
-Calcul des Ephemerides) via FTP and the CDS VizieR catalog (VI/81).
+**Proximate source:** The data tables (`eartabl[460]`, `earargs[819]`) and
+evaluation loop were adapted from SE's `swemptab.h` and `swemplan.c`. These
+SE files contain Moshier's plan404 package (circa 1995), which SE incorporated.
+The SE file header states: "Moshier planet routines, modified for SWISSEPH by
+Dieter Koch."
 
-**License status:** No license was ever applied to the VSOP87 data. The
-original files on IMCCE's FTP server and CDS VizieR contain no copyright
-notice, no license text, and no usage restrictions. The CDS VizieR usage
-policy requests citation of the original paper in scientific publications.
+**Ultimate source:** Moshier's plan404 package (moshier.net/plan404.zip),
+which itself implements the VSOP87 theory published in *Astronomy &
+Astrophysics*, 202, 309-315 (1988). Data tables freely distributed by IMCCE
+via FTP and the CDS VizieR catalog (VI/81).
 
-**French open data law:** The Bureau des Longitudes (parent of IMCCE) is a
-French government institution established in 1795. Under the Loi pour une
-Republique numerique (2016), data from French public institutions is open by
-default and free for reuse.
+**License status:**
+- VSOP87 data: No license ever applied. IMCCE FTP and CDS VizieR contain no
+  copyright notice or usage restrictions. French open data law (2016) makes
+  government institution data open by default.
+- Moshier's plan404 code: "May be used freely" + explicit BSD grants.
+- Our evaluation loop follows Moshier's `gplan()` algorithm from plan404.
+  Koch's additions (latitude/radius evaluation, SE wrappers) were not ported.
 
-**Industry practice:** Used without restriction by Stellarium (GPL), Celestia
-(GPL), Swiss Ephemeris (AGPL), NASA eclipse predictions, and dozens of other
-projects. The Stellarium developer explicitly noted: "I can neither allow nor
-forbid the usage of VSOP87" (i.e., the data belongs to no one). The
-gmiller123456/vsop87-multilang project releases VSOP87 implementations under
-public domain.
+**Industry practice:** VSOP87 used without restriction by Stellarium (GPL),
+Celestia (GPL), NASA eclipse predictions, and dozens of other projects. The
+Stellarium developer explicitly noted: "I can neither allow nor forbid the
+usage of VSOP87."
 
 **Our attribution:** Source file header cites "VSOP87 planetary theory
-(Bretagnon & Francou 1988)." Data tables labeled "VSOP87 data tables for
-Earth (Bretagnon & Francou 1988)."
+(Bretagnon & Francou 1988)." Should be updated to also credit Moshier's
+plan404 implementation.
 
 ### 2. DE404 Moshier Lunar Ephemeris (moshier_moon.c)
 
 **What it is:** Steve Moshier's analytical fit of the ELP2000-85 lunar theory
 (Chapront-Touze & Chapront 1988) to JPL's DE404 numerical ephemeris. Includes
-data tables (z[26], LR[118x8], LRT[38x8], LRT2[25x6]) and a multi-stage
+data tables (z[25], LR[118x8], LRT[38x8], LRT2[25x6]) and a multi-stage
 computational pipeline (mean elements, perturbation series, light-time
 correction).
 
-**Source:** Published in *Astronomy & Astrophysics*, 262, 613-616 (1992).
-Code distributed at moshier.net as cmoon.zip, labeled "Freeware" ($0).
+**Proximate source:** Adapted from SE's `swemmoon.c`. The SE file header
+states: "Steve Moshier's analytical lunar ephemeris" with dates "S. L. Moshier,
+August, 1991 / DE404 fit: October, 1995 / Dieter Koch: adaptation to SWISSEPH,
+April 1996."
+
+**Ultimate source:** Moshier's selenog.zip / cmoon.zip (moshier.net), published
+alongside his paper in *Astronomy & Astrophysics*, 262, 613-616 (1992). The
+original code consists of `chewtab.c`, `mean.c`, `mlr404.c`, `mlat404.c`,
+`selenog.c`, and the generic evaluator `gplan.c`.
+
+**What SE changed from Moshier's original:**
+- Restructured `g2plan()`/`g1plan()`/`gmoon()` into `moon1()`-`moon4()`
+- Renamed `LP_equinox` to `SWELP` (2006, due to name collision)
+- Extracted `Args[]` array indices to named global variables (MP, D, NF, etc.)
+- Reformatted data tables from `long` arrays to `short` arrays
+- Added latitude/radius evaluation, coordinate transforms, speed computation
+- Added "Bhanu Pinnamaneni fix" for ss/cc initialization (2009)
+
+**What we ported:** The longitude-only pipeline (mean elements, perturbation
+accumulation via chewm(), explicit terms in moon1()-moon4(), light-time
+correction). We follow Koch's moon1()-moon4() function organization.
+
+**What we did NOT port:** Latitude, radius, coordinate transforms, speed
+computation, SE wrappers, TLS modifications.
 
 **License status:** Moshier's canonical license statement (from the Cephes
 Math Library README, reproduced in Go's standard library): "What you see
@@ -96,12 +213,6 @@ In a September 7, 2018 email to NearForm (preserved in the node-cephes LICENSE
 on GitHub), Moshier explicitly stated: "You are welcome to distribute the
 Cephes material posted to the net under a BSD license." Similar BSD grants were
 made to Debian (2004 debian-legal discussion) and SMath (MIT license).
-
-**Algorithms vs. code:** Our implementation is independently written C code
-implementing the same mathematical algorithms. Under 17 USC 102(b),
-mathematical algorithms and numerical coefficients (the DE404 fit parameters)
-are not copyrightable. Even if we had copied Moshier's code directly, his
-permissive "may be used freely" grant would allow it.
 
 **Our attribution:** Source file header cites Moshier 1992 and Chapront-Touze
 & Chapront 1988.
@@ -132,7 +243,10 @@ edition (1998). We implement formulas from:
 - Chapter 7: Julian Day number conversion
 - Chapter 15: Sunrise and sunset (iterative hour-angle method)
 - Chapter 22: Nutation in longitude (13-term series), mean obliquity (Laskar)
-- Chapter 47: Position of the Moon (referenced via Moshier's implementation)
+
+**Provenance:** These modules were independently implemented from the published
+formulas, not adapted from SE code. The Meeus algorithms in our library have
+no structural similarity to any SE implementation.
 
 **License status:** The book text and code listings are copyrighted by Meeus
 (originally published by Willmann-Bell, now AAS/Sky & Telescope). However,
@@ -145,9 +259,6 @@ permissive licenses (soniakeys/meeus in Go under MIT, PyMeeus under LGPL,
 AA+ in C++ freely available, MeeusJs in JavaScript). No project has ever paid
 royalties for implementing Meeus formulas.
 
-**Our implementation:** We wrote original C code implementing the published
-formulas. We did not copy any code listings from the book.
-
 **Our attribution:** Source file headers cite "Meeus, Astronomical Algorithms,
 2nd ed." with specific chapter references.
 
@@ -155,6 +266,9 @@ formulas. We did not copy any code listings from the book.
 
 **What it is:** Polynomial coefficients for the precession angles zeta_A, z_A,
 and theta_A, used to compute Lahiri ayanamsa via 3D equatorial precession.
+
+**Provenance:** Independently implemented from the published paper. Not adapted
+from SE code.
 
 **Source:** Lieske, J.H., Lederle, T., Fricke, W., Morando, B. (1977).
 "Expressions for the precession quantities based upon the IAU (1976) system of
@@ -167,9 +281,6 @@ be copyrighted. The IAU itself provides reference implementations through SOFA
 including commercial, royalty-free. The community-maintained ERFA fork is
 BSD-3-Clause licensed.
 
-**Our implementation:** We independently implemented the published precession
-formulas. We do not use SOFA or ERFA code.
-
 **Our attribution:** Source file header cites "IAU 1976 precession" and
 "Lieske et al. (1977)."
 
@@ -177,6 +288,10 @@ formulas. We do not use SOFA or ERFA code.
 
 **What it is:** Atmospheric refraction at the horizon, used to compute the
 geometric altitude h0 for sunrise/sunset calculation.
+
+**Provenance:** Independently implemented. The Sinclair formula in our code
+matches SE's `calc_astronomical_refr()` in output but was implemented from the
+published formula, not by copying SE code.
 
 **Source:** Sinclair, A.T. (1982). NAO Technical Note No. 59. Royal Greenwich
 Observatory. Also documented in Hohenkerk & Sinclair (1985), NAO Technical
@@ -187,23 +302,21 @@ Almanac* (1992).
 light. Published in a UK government observatory technical report. Not
 copyrightable under any jurisdiction's IP law — it describes physical reality.
 
-**Industry practice:** Implemented in SLALIB (GPL, UK government-funded
-Starlink), PAL (GPL), IAU SOFA, and numerous other projects.
-
 **Our attribution:** Source file header cites "Sinclair refraction" and
 "Sinclair 1982."
 
 ### 7. IERS Delta-T Data (moshier_sun.c)
 
 **What it is:** A yearly lookup table of delta-T values (TT - UT1), the
-difference between uniform atomic time and Earth's irregular rotation. Used
-to convert between Universal Time and Terrestrial Time.
+difference between uniform atomic time and Earth's irregular rotation.
+
+**Proximate source:** The lookup table format and values were adapted from SE's
+delta-T implementation. The values themselves are observational facts.
 
 **Source:** International Earth Rotation and Reference Systems Service (IERS)
 bulletins, published under IAU/IUGG auspices.
 
-**License status:** IERS maintains an open access data policy. The Registry
-of Research Data Repositories classifies IERS data access as "Open." Delta-T
+**License status:** IERS maintains an open access data policy. Delta-T
 values are observational measurements of the Earth's rotation rate — factual
 data that cannot be copyrighted (Feist v. Rural). The IERS Conventions
 document is available through DTIC with "Approved for public release:
@@ -214,43 +327,102 @@ data source.
 
 ---
 
-## Swiss Ephemeris AGPL — Does It Affect Us?
+## Swiss Ephemeris AGPL — Full Analysis
 
-**No.** The Swiss Ephemeris (Astrodienst AG) is dual-licensed under AGPL and a
-commercial license. Their license covers their software — their specific C
-code, their build system, their documentation. It does not and cannot apply to:
+The Swiss Ephemeris (Astrodienst AG, Koch & Treindl) is dual-licensed under
+AGPL v3 and a commercial license. The question is whether our library, which
+was developed by reading SE source files, triggers AGPL obligations.
 
-- The underlying scientific theories (VSOP87, Moshier, IAU 1976)
-- The published mathematical algorithms
-- The numerical coefficient tables (scientific facts)
-- Independent implementations of the same algorithms
+### What SE's AGPL covers
 
-Under 17 USC 102(b), copyright does not extend to "any idea, procedure,
-process, system, method of operation." Our library implements the same
-published scientific theories using independently written C code. This is
-analogous to how multiple GPS receivers can implement the same orbital
-calculation algorithms without infringing each other's copyrights.
+SE's copyright applies to **their creative additions** to the incorporated
+Moshier code:
+- The SE wrapper functions (`swi_moshmoon()`, `swi_moshplan()`)
+- Coordinate transforms (ecliptic-of-date to J2000 equatorial)
+- Speed computation via numerical differentiation
+- The SE caching and save infrastructure
+- Thread-local storage modifications
+- The fallback mechanism and `SEFLG_MOSEPH` API flag
+- Later precession models (IAU 2003 P03, Vondrak 2011)
 
-Astrodienst cannot retroactively change the license on code they did not
-write (Moshier's original algorithms) or on data they did not create (VSOP87,
-JPL DE404, IAU constants).
+**None of these were ported to our library.**
+
+### What SE's AGPL does NOT cover
+
+SE's license cannot retroactively apply to:
+- **Moshier's original code** — written 1991-1995, permissively licensed
+  ("may be used freely"), with explicit BSD grants to multiple parties
+- **Scientific data tables** — VSOP87 coefficients, DE404 fit parameters,
+  precession constants, delta-T values are uncopyrightable facts
+- **Mathematical algorithms** — 17 USC 102(b) excludes procedures, processes,
+  and methods of operation from copyright
+
+SE's own license header acknowledges this limitation: "The authors of Swiss
+Ephemeris have no control or influence over any of the derived works, i.e.
+over software or services created by other programmers which use Swiss
+Ephemeris functions."
+
+### The moon1()-moon4() question
+
+The one area where Koch made a creative structural contribution that we
+*did* follow is the reorganization of Moshier's `g2plan()`/`g1plan()`/`gmoon()`
+into four numbered functions `moon1()` through `moon4()`. Our code uses this
+same four-function organization.
+
+This carries low risk for several reasons:
+- The mathematical content within each function is entirely Moshier's
+- The function boundaries follow natural mathematical divisions (planetary
+  perturbations, main series, T^1 corrections, final accumulation)
+- Under merger doctrine, when an idea can only be expressed in a limited
+  number of ways, the expression merges with the idea and is not protectable
+- A multi-stage perturbation pipeline has limited organizational options
+- The function names are purely descriptive (numbered stages)
+
+### Risk assessment
+
+| Component | Risk | Rationale |
+|-----------|------|-----------|
+| Data tables (all) | None | Scientific facts, uncopyrightable |
+| sscc(), chewm(), mods3600() | None | Moshier's original code, permissive license |
+| mean_elements(), mean_elements_pl() | None | Moshier's original code |
+| VSOP87 evaluation loop | None | Moshier's gplan() algorithm |
+| EMB→Earth correction | None | Moshier's algorithm and coefficients |
+| moon1()-moon4() structure | Low | Koch's reorganization of Moshier's algorithms; we follow it, but content is Moshier's, and the structure follows from the mathematics |
+| Variable name SWELP | Negligible | Koch's 2006 rename; a single variable name is not substantial creative expression |
+| Meeus, IAU 1976, Sinclair modules | None | Independently implemented from published sources |
 
 ---
 
 ## Our Attribution Practices
 
 Each source file in `lib/moshier/` includes header comments citing the
-relevant scientific references:
+relevant scientific references. **These should be updated to also credit
+Moshier's software packages as the implementation reference.**
 
-| File | Citations |
-|------|-----------|
-| `moshier_sun.c` | Bretagnon & Francou 1988 (VSOP87), Meeus Ch. 22 (nutation, obliquity) |
-| `moshier_moon.c` | Moshier 1992 (DE404 fit), Chapront-Touze & Chapront 1988 (ELP2000-85) |
-| `moshier_ayanamsa.c` | IAU 1976 precession, Lieske et al. 1977 (Lahiri ayanamsa) |
-| `moshier_rise.c` | Meeus Ch. 15 (sunrise/sunset), Sinclair 1982 (refraction) |
-| `moshier_jd.c` | Meeus Ch. 7 (Julian Day conversion) |
+| File | Current Citations | Should Add |
+|------|-------------------|------------|
+| `moshier_sun.c` | Bretagnon & Francou 1988 (VSOP87), Meeus Ch. 22 | Moshier plan404 (evaluation algorithm) |
+| `moshier_moon.c` | Moshier 1992 (DE404 fit), Chapront-Touze & Chapront 1988 | Moshier selenog/cmoon (implementation) |
+| `moshier_ayanamsa.c` | IAU 1976 precession, Lieske et al. 1977 | (none — independently implemented) |
+| `moshier_rise.c` | Meeus Ch. 15, Sinclair 1982 | (none — independently implemented) |
+| `moshier_jd.c` | Meeus Ch. 7 | (none — independently implemented) |
 
-This follows standard practice across the astronomical software community.
+---
+
+## Timeline of Code Provenance
+
+| Date | Event |
+|------|-------|
+| 1988 | Bretagnon & Francou publish VSOP87 in A&A |
+| 1988 | Chapront-Touze & Chapront publish ELP2000-85 in A&A |
+| 1991 | Moshier writes original lunar ephemeris (DE200 fit) |
+| 1992 | Moshier publishes DE200 fit paper in A&A 262 |
+| 1995 | Moshier completes DE404 fit, publishes plan404 + selenog |
+| 1996 | Koch adapts Moshier's code for Swiss Ephemeris |
+| 2006 | Koch renames LP_equinox to SWELP due to name collision |
+| 2009 | Bhanu Pinnamaneni adds ss/cc initialization fix |
+| 2018 | Moshier grants explicit BSD license to NearForm |
+| 2026 | Our library developed by extracting longitude pipelines from SE source files containing Moshier's code |
 
 ---
 
@@ -269,18 +441,32 @@ This follows standard practice across the astronomical software community.
    Observatory.
 6. Meeus, J. (1998). *Astronomical Algorithms*, 2nd ed. Willmann-Bell.
 
+### Moshier's Software Packages
+7. plan404.zip — Trigonometric planetary ephemeris fitted to DE404:
+   moshier.net/plan404.zip
+8. selenog.zip — High-precision lunar ephemeris: moshier.net/selenog.zip
+9. cmoon.zip — Compact lunar ephemeris: moshier.net/cmoon.zip
+10. aa-56.zip — Astronomical almanac calculator: moshier.net/aa-56.zip
+
 ### Legal Authorities
-7. 17 USC Section 102(b) — Ideas, procedures, methods not copyrightable
-8. Baker v. Selden, 101 U.S. 99 (1879) — Idea-expression dichotomy
-9. Feist v. Rural, 499 U.S. 340 (1991) — Facts not copyrightable
-10. U.S. Copyright Office Circular 31 — Mathematical formulas excluded
+11. 17 USC Section 102(b) — Ideas, procedures, methods not copyrightable
+12. Baker v. Selden, 101 U.S. 99 (1879) — Idea-expression dichotomy
+13. Feist v. Rural, 499 U.S. 340 (1991) — Facts not copyrightable
+14. U.S. Copyright Office Circular 31 — Mathematical formulas excluded
 
 ### Licensing Evidence
-11. Moshier's Cephes README: "may be used freely" (reproduced in Go stdlib)
-12. Moshier's BSD grant to NearForm (2018): github.com/nearform/node-cephes/blob/master/LICENSE
-13. Debian-legal Cephes discussion (2004): lists.debian.org/debian-legal/2004/12/msg00295.html
-14. IMCCE VSOP87 FTP: ftp.imcce.fr/pub/ephem/planets/vsop87/ (no license file)
-15. CDS VizieR VI/81: cdsarc.cds.unistra.fr/viz-bin/cat/VI/81 (no copyright in ReadMe)
-16. JPL ephemeris export: ssd.jpl.nasa.gov/planets/eph_export.html (no restrictions)
-17. IERS data policy: re3data.org/repository/r3d100010312 (Open access)
-18. ERFA (BSD-3-Clause): github.com/liberfa/erfa
+15. Moshier's Cephes README: "may be used freely" (reproduced in Go stdlib)
+16. Moshier's BSD grant to NearForm (2018):
+    github.com/nearform/node-cephes/blob/master/LICENSE
+17. Debian-legal Cephes discussion (2004):
+    lists.debian.org/debian-legal/2004/12/msg00295.html
+18. IMCCE VSOP87 FTP: ftp.imcce.fr/pub/ephem/planets/vsop87/ (no license file)
+19. CDS VizieR VI/81: cdsarc.cds.unistra.fr/viz-bin/cat/VI/81
+20. JPL ephemeris export: ssd.jpl.nasa.gov/planets/eph_export.html
+21. IERS data policy: re3data.org/repository/r3d100010312 (Open access)
+22. ERFA (BSD-3-Clause): github.com/liberfa/erfa
+23. SE swemmoon.c header: "Steve Moshier's analytical lunar ephemeris...
+    S. L. Moshier, August, 1991 / DE404 fit: October, 1995 /
+    Dieter Koch: adaptation to SWISSEPH, April 1996"
+24. SE swemplan.c header: "Moshier planet routines, modified for SWISSEPH
+    by Dieter Koch"
