@@ -6,3 +6,6 @@ hindu-calendar
 # Java / Gradle
 java/.gradle/
 java/build/
+
+# Rust / Cargo
+rust/target/

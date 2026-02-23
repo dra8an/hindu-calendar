@@ -21,8 +21,6 @@ class MoshierMoon {
     // Mean element variables
     private double SWELP, M_sun, MP, D, NF, T, T2;
     private double Ve, Ea, Ma, Ju, Sa;
-    private double moonpol0, l_acc, l1, l2, l3, l4;
-    private double f_ve, cg, sg;
 
     MoshierMoon(MoshierSun sun) {
         this.sun = sun;
@@ -374,7 +372,14 @@ class MoshierMoon {
         Sa += ((4.475946e-8 * T - 6.874806E-5) * T + 7.56161437443E-1) * T2;
     }
 
-    private void moon1() {
+    /**
+     * Compute all perturbation corrections to mean lunar longitude.
+     * Returns lunar longitude in radians (arcseconds-based).
+     */
+    private double lunarPerturbations() {
+        double moonpol0, l_acc, l1, l2, l3, l4;
+        double f_ve, cg, sg;
+
         // Zero ss/cc arrays
         for (int i = 0; i < 5; i++)
             for (int j = 0; j < 8; j++) {
@@ -387,11 +392,10 @@ class MoshierMoon {
         sscc(2, STR * MP, 4);
         sscc(3, STR * NF, 4);
 
-        moonpol0 = 0.0;
+        // T^2 table corrections
+        moonpol0 = chewm(LRT2, NLRT2, 4, 2);
 
-        // terms in T^2, scale 1.0 = 10^-5"
-        moonpol0 += chewm(LRT2, NLRT2, 4, 2);
-
+        // Explicit planetary perturbations
         f_ve = 18.0 * Ve - 16.0 * Ea;
 
         double g_arg = STR * (f_ve - MP);
@@ -461,9 +465,8 @@ class MoshierMoon {
 
         l2 += moonpol0;
 
-        // terms in T
-        moonpol0 = 0.0;
-        moonpol0 += chewm(LRT, NLRT, 4, 1);
+        // T^1 table corrections
+        moonpol0 = chewm(LRT, NLRT, 4, 1);
 
         g_arg = STR * (2.0 * Ve - 3.0 * Ea);
         cg = Math.cos(g_arg);
@@ -541,11 +544,8 @@ class MoshierMoon {
         l1 += 158.4 * Math.sin(g_arg);
 
         l1 += moonpol0;
-    }
 
-    private void moon2() {
-        double g_arg;
-
+        // Additional DE404-fitted explicit terms
         g_arg = STR * (2.0 * (Ea - Ju + D) - MP + 648431.172);
         l_acc += 1.14307 * Math.sin(g_arg);
 
@@ -629,16 +629,12 @@ class MoshierMoon {
 
         g_arg = STR * (3.0 * Ve - 4.0 * Ea + D - MP - 322765.56);
         l_acc += 0.10386 * Math.sin(g_arg);
-    }
 
-    private void moon3() {
-        moonpol0 = 0.0;
-        moonpol0 += chewm(LR, NLR, 4, 1);
+        // Main perturbation table (118 terms) + final assembly
+        moonpol0 = chewm(LR, NLR, 4, 1);
         l_acc += (((l4 * T + l3) * T + l2) * T + l1) * T * 1.0e-5;
         moonpol0 = SWELP + l_acc + 1.0e-4 * moonpol0;
-    }
 
-    private double moon4() {
         return STR * mods3600(moonpol0);
     }
 
@@ -650,10 +646,7 @@ class MoshierMoon {
 
         meanElements();
         meanElementsPl();
-        moon1();
-        moon2();
-        moon3();
-        double lonRad = moon4();
+        double lonRad = lunarPerturbations();
 
         double lonDeg = lonRad * (180.0 / Math.PI);
 

@@ -243,13 +243,6 @@ pub struct MoonState {
     ma: f64,
     ju: f64,
     sa: f64,
-    moonpol0: f64,
-    l_acc: f64,
-    l1: f64,
-    l2: f64,
-    l3: f64,
-    l4: f64,
-    f_ve: f64,
 }
 
 impl MoonState {
@@ -260,9 +253,6 @@ impl MoonState {
             swelp: 0.0, m_sun: 0.0, mp: 0.0, d: 0.0, nf: 0.0,
             t: 0.0, t2: 0.0,
             ve: 0.0, ea: 0.0, ma: 0.0, ju: 0.0, sa: 0.0,
-            moonpol0: 0.0, l_acc: 0.0,
-            l1: 0.0, l2: 0.0, l3: 0.0, l4: 0.0,
-            f_ve: 0.0,
         }
     }
 
@@ -403,7 +393,10 @@ impl MoonState {
         self.sa += ((4.475946e-8 * t - 6.874806e-5) * t + 7.56161437443e-1) * t2;
     }
 
-    fn moon1(&mut self) {
+    /// Compute all perturbation corrections to mean lunar longitude.
+    /// Returns lunar longitude in radians (arcseconds-based).
+    fn lunar_perturbations(&mut self) -> f64 {
+        let g = |x: f64| -> f64 { (STR * x).sin() };
 
         // Zero ss/cc arrays
         for i in 0..5 {
@@ -418,203 +411,196 @@ impl MoonState {
         self.sscc(2, STR * self.mp, 4);
         self.sscc(3, STR * self.nf, 4);
 
-        self.moonpol0 = 0.0;
+        // T^2 table corrections
+        let mut moonpol0 = self.chewm(&LRT2, NLRT2, 4, 2);
 
-        // T^2 terms
-        self.moonpol0 = self.chewm(&LRT2, NLRT2, 4, 2);
+        // Explicit planetary perturbations
+        let f_ve = 18.0 * self.ve - 16.0 * self.ea;
 
-        self.f_ve = 18.0 * self.ve - 16.0 * self.ea;
-
-        let g_arg = STR * (self.f_ve - self.mp);
+        let g_arg = STR * (f_ve - self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc = 6.367278 * cg + 12.747036 * sg;
-        self.l1 = 23123.70 * cg - 10570.02 * sg;
-        self.l2 = Z[12] * cg + Z[13] * sg;
+        let mut l_acc = 6.367278 * cg + 12.747036 * sg;
+        let mut l1 = 23123.70 * cg - 10570.02 * sg;
+        let mut l2 = Z[12] * cg + Z[13] * sg;
 
         let g_arg = STR * (10.0 * self.ve - 3.0 * self.ea - self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.253102 * cg + 0.503359 * sg;
-        self.l1 += 1258.46 * cg + 707.29 * sg;
-        self.l2 += Z[14] * cg + Z[15] * sg;
+        l_acc += -0.253102 * cg + 0.503359 * sg;
+        l1 += 1258.46 * cg + 707.29 * sg;
+        l2 += Z[14] * cg + Z[15] * sg;
 
         let g_arg = STR * (8.0 * self.ve - 13.0 * self.ea);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.187231 * cg - 0.127481 * sg;
-        self.l1 += -319.87 * cg - 18.34 * sg;
-        self.l2 += Z[16] * cg + Z[17] * sg;
+        l_acc += -0.187231 * cg - 0.127481 * sg;
+        l1 += -319.87 * cg - 18.34 * sg;
+        l2 += Z[16] * cg + Z[17] * sg;
 
         let a = 4.0 * self.ea - 8.0 * self.ma + 3.0 * self.ju;
         let g_arg = STR * a;
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.866287 * cg + 0.248192 * sg;
-        self.l1 += 41.87 * cg + 1053.97 * sg;
-        self.l2 += Z[18] * cg + Z[19] * sg;
+        l_acc += -0.866287 * cg + 0.248192 * sg;
+        l1 += 41.87 * cg + 1053.97 * sg;
+        l2 += Z[18] * cg + Z[19] * sg;
 
         let g_arg = STR * (a - self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.165009 * cg + 0.044176 * sg;
-        self.l1 += 4.67 * cg + 201.55 * sg;
+        l_acc += -0.165009 * cg + 0.044176 * sg;
+        l1 += 4.67 * cg + 201.55 * sg;
 
-        let g_arg = STR * self.f_ve;
+        let g_arg = STR * f_ve;
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += 0.330401 * cg + 0.661362 * sg;
-        self.l1 += 1202.67 * cg - 555.59 * sg;
-        self.l2 += Z[20] * cg + Z[21] * sg;
+        l_acc += 0.330401 * cg + 0.661362 * sg;
+        l1 += 1202.67 * cg - 555.59 * sg;
+        l2 += Z[20] * cg + Z[21] * sg;
 
-        let g_arg = STR * (self.f_ve - 2.0 * self.mp);
+        let g_arg = STR * (f_ve - 2.0 * self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += 0.352185 * cg + 0.705041 * sg;
-        self.l1 += 1283.59 * cg - 586.43 * sg;
+        l_acc += 0.352185 * cg + 0.705041 * sg;
+        l1 += 1283.59 * cg - 586.43 * sg;
 
         let g_arg = STR * (2.0 * self.ju - 5.0 * self.sa);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.034700 * cg + 0.160041 * sg;
-        self.l2 += Z[22] * cg + Z[23] * sg;
+        l_acc += -0.034700 * cg + 0.160041 * sg;
+        l2 += Z[22] * cg + Z[23] * sg;
 
         let g_arg = STR * (self.swelp - self.nf);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += 0.000116 * cg + 7.063040 * sg;
-        self.l1 += 298.8 * sg;
+        l_acc += 0.000116 * cg + 7.063040 * sg;
+        l1 += 298.8 * sg;
 
         // T^3 terms
         let sg = (STR * self.m_sun).sin();
-        self.l3 = Z[24] * sg;
-        self.l4 = 0.0;
+        let l3 = Z[24] * sg;
+        let l4 = 0.0f64;
 
-        self.l2 += self.moonpol0;
+        l2 += moonpol0;
 
-        // T^1 terms
-        self.moonpol0 = self.chewm(&LRT, NLRT, 4, 1);
+        // T^1 table corrections
+        moonpol0 = self.chewm(&LRT, NLRT, 4, 1);
 
         let g_arg = STR * (2.0 * self.ve - 3.0 * self.ea);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.343550 * cg - 0.000276 * sg;
-        self.l1 += 105.90 * cg + 336.53 * sg;
+        l_acc += -0.343550 * cg - 0.000276 * sg;
+        l1 += 105.90 * cg + 336.53 * sg;
 
-        let g_arg = STR * (self.f_ve - 2.0 * self.d);
+        let g_arg = STR * (f_ve - 2.0 * self.d);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += 0.074668 * cg + 0.149501 * sg;
-        self.l1 += 271.77 * cg - 124.20 * sg;
+        l_acc += 0.074668 * cg + 0.149501 * sg;
+        l1 += 271.77 * cg - 124.20 * sg;
 
-        let g_arg = STR * (self.f_ve - 2.0 * self.d - self.mp);
+        let g_arg = STR * (f_ve - 2.0 * self.d - self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += 0.073444 * cg + 0.147094 * sg;
-        self.l1 += 265.24 * cg - 121.16 * sg;
+        l_acc += 0.073444 * cg + 0.147094 * sg;
+        l1 += 265.24 * cg - 121.16 * sg;
 
-        let g_arg = STR * (self.f_ve + 2.0 * self.d - self.mp);
+        let g_arg = STR * (f_ve + 2.0 * self.d - self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += 0.072844 * cg + 0.145829 * sg;
-        self.l1 += 265.18 * cg - 121.29 * sg;
+        l_acc += 0.072844 * cg + 0.145829 * sg;
+        l1 += 265.18 * cg - 121.29 * sg;
 
-        let g_arg = STR * (self.f_ve + 2.0 * (self.d - self.mp));
+        let g_arg = STR * (f_ve + 2.0 * (self.d - self.mp));
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += 0.070201 * cg + 0.140542 * sg;
-        self.l1 += 255.36 * cg - 116.79 * sg;
+        l_acc += 0.070201 * cg + 0.140542 * sg;
+        l1 += 255.36 * cg - 116.79 * sg;
 
         let g_arg = STR * (self.ea + self.d - self.nf);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += 0.288209 * cg - 0.025901 * sg;
-        self.l1 += -63.51 * cg - 240.14 * sg;
+        l_acc += 0.288209 * cg - 0.025901 * sg;
+        l1 += -63.51 * cg - 240.14 * sg;
 
         let g_arg = STR * (2.0 * self.ea - 3.0 * self.ju + 2.0 * self.d - self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += 0.077865 * cg + 0.438460 * sg;
-        self.l1 += 210.57 * cg + 124.84 * sg;
+        l_acc += 0.077865 * cg + 0.438460 * sg;
+        l1 += 210.57 * cg + 124.84 * sg;
 
         let g_arg = STR * (self.ea - 2.0 * self.ma);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.216579 * cg + 0.241702 * sg;
-        self.l1 += 197.67 * cg + 125.23 * sg;
+        l_acc += -0.216579 * cg + 0.241702 * sg;
+        l1 += 197.67 * cg + 125.23 * sg;
 
         let g_arg = STR * (a + self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.165009 * cg + 0.044176 * sg;
-        self.l1 += 4.67 * cg + 201.55 * sg;
+        l_acc += -0.165009 * cg + 0.044176 * sg;
+        l1 += 4.67 * cg + 201.55 * sg;
 
         let g_arg = STR * (a + 2.0 * self.d - self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.133533 * cg + 0.041116 * sg;
-        self.l1 += 6.95 * cg + 187.07 * sg;
+        l_acc += -0.133533 * cg + 0.041116 * sg;
+        l1 += 6.95 * cg + 187.07 * sg;
 
         let g_arg = STR * (a - 2.0 * self.d + self.mp);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.133430 * cg + 0.041079 * sg;
-        self.l1 += 6.28 * cg + 169.08 * sg;
+        l_acc += -0.133430 * cg + 0.041079 * sg;
+        l1 += 6.28 * cg + 169.08 * sg;
 
         let g_arg = STR * (3.0 * self.ve - 4.0 * self.ea);
         let cg = g_arg.cos();
         let sg = g_arg.sin();
-        self.l_acc += -0.175074 * cg + 0.003035 * sg;
-        self.l1 += 49.17 * cg + 150.57 * sg;
+        l_acc += -0.175074 * cg + 0.003035 * sg;
+        l1 += 49.17 * cg + 150.57 * sg;
 
         let g_arg = STR * (2.0 * (self.ea + self.d - self.mp) - 3.0 * self.ju + 213534.0);
-        self.l1 += 158.4 * g_arg.sin();
+        l1 += 158.4 * g_arg.sin();
 
-        self.l1 += self.moonpol0;
-    }
+        l1 += moonpol0;
 
-    fn moon2(&mut self) {
-        let g = |x: f64| -> f64 { (STR * x).sin() };
+        // Additional DE404-fitted explicit terms
+        l_acc += 1.14307 * g(2.0 * (self.ea - self.ju + self.d) - self.mp + 648431.172);
+        l_acc += 0.82155 * g(self.ve - self.ea + 648035.568);
+        l_acc += 0.64371 * g(3.0 * (self.ve - self.ea) + 2.0 * self.d - self.mp + 647933.184);
+        l_acc += 0.63880 * g(self.ea - self.ju + 4424.04);
+        l_acc += 0.49331 * g(self.swelp + self.mp - self.nf + 4.68);
+        l_acc += 0.4914 * g(self.swelp - self.mp - self.nf + 4.68);
+        l_acc += 0.36061 * g(self.swelp + self.nf + 2.52);
+        l_acc += 0.30154 * g(2.0 * self.ve - 2.0 * self.ea + 736.2);
+        l_acc += 0.28282 * g(2.0 * self.ea - 3.0 * self.ju + 2.0 * self.d - 2.0 * self.mp + 36138.2);
+        l_acc += 0.24516 * g(2.0 * self.ea - 2.0 * self.ju + 2.0 * self.d - 2.0 * self.mp + 311.0);
+        l_acc += 0.21117 * g(self.ea - self.ju - 2.0 * self.d + self.mp + 6275.88);
+        l_acc += 0.19444 * g(2.0 * (self.ea - self.ma) - 846.36);
+        l_acc -= 0.18457 * g(2.0 * (self.ea - self.ju) + 1569.96);
+        l_acc += 0.18256 * g(2.0 * (self.ea - self.ju) - self.mp - 55.8);
+        l_acc += 0.16499 * g(self.ea - self.ju - 2.0 * self.d + 6490.08);
+        l_acc += 0.16427 * g(self.ea - 2.0 * self.ju - 212378.4);
+        l_acc += 0.16088 * g(2.0 * (self.ve - self.ea - self.d) + self.mp + 1122.48);
+        l_acc -= 0.15350 * g(self.ve - self.ea - self.mp + 32.04);
+        l_acc += 0.14346 * g(self.ea - self.ju - self.mp + 4488.88);
+        l_acc += 0.13594 * g(2.0 * (self.ve - self.ea + self.d) - self.mp - 8.64);
+        l_acc += 0.13432 * g(2.0 * (self.ve - self.ea - self.d) + 1319.76);
+        l_acc -= 0.13122 * g(self.ve - self.ea - 2.0 * self.d + self.mp - 56.16);
+        l_acc -= 0.12722 * g(self.ve - self.ea + self.mp + 54.36);
+        l_acc += 0.12539 * g(3.0 * (self.ve - self.ea) - self.mp + 433.8);
+        l_acc += 0.10994 * g(self.ea - self.ju + self.mp + 4002.12);
+        l_acc += 0.10652 * g(20.0 * self.ve - 21.0 * self.ea - 2.0 * self.d + self.mp - 317511.72);
+        l_acc += 0.10490 * g(26.0 * self.ve - 29.0 * self.ea - self.mp + 270002.52);
+        l_acc += 0.10386 * g(3.0 * self.ve - 4.0 * self.ea + self.d - self.mp - 322765.56);
 
-        self.l_acc += 1.14307 * g(2.0 * (self.ea - self.ju + self.d) - self.mp + 648431.172);
-        self.l_acc += 0.82155 * g(self.ve - self.ea + 648035.568);
-        self.l_acc += 0.64371 * g(3.0 * (self.ve - self.ea) + 2.0 * self.d - self.mp + 647933.184);
-        self.l_acc += 0.63880 * g(self.ea - self.ju + 4424.04);
-        self.l_acc += 0.49331 * g(self.swelp + self.mp - self.nf + 4.68);
-        self.l_acc += 0.4914 * g(self.swelp - self.mp - self.nf + 4.68);
-        self.l_acc += 0.36061 * g(self.swelp + self.nf + 2.52);
-        self.l_acc += 0.30154 * g(2.0 * self.ve - 2.0 * self.ea + 736.2);
-        self.l_acc += 0.28282 * g(2.0 * self.ea - 3.0 * self.ju + 2.0 * self.d - 2.0 * self.mp + 36138.2);
-        self.l_acc += 0.24516 * g(2.0 * self.ea - 2.0 * self.ju + 2.0 * self.d - 2.0 * self.mp + 311.0);
-        self.l_acc += 0.21117 * g(self.ea - self.ju - 2.0 * self.d + self.mp + 6275.88);
-        self.l_acc += 0.19444 * g(2.0 * (self.ea - self.ma) - 846.36);
-        self.l_acc -= 0.18457 * g(2.0 * (self.ea - self.ju) + 1569.96);
-        self.l_acc += 0.18256 * g(2.0 * (self.ea - self.ju) - self.mp - 55.8);
-        self.l_acc += 0.16499 * g(self.ea - self.ju - 2.0 * self.d + 6490.08);
-        self.l_acc += 0.16427 * g(self.ea - 2.0 * self.ju - 212378.4);
-        self.l_acc += 0.16088 * g(2.0 * (self.ve - self.ea - self.d) + self.mp + 1122.48);
-        self.l_acc -= 0.15350 * g(self.ve - self.ea - self.mp + 32.04);
-        self.l_acc += 0.14346 * g(self.ea - self.ju - self.mp + 4488.88);
-        self.l_acc += 0.13594 * g(2.0 * (self.ve - self.ea + self.d) - self.mp - 8.64);
-        self.l_acc += 0.13432 * g(2.0 * (self.ve - self.ea - self.d) + 1319.76);
-        self.l_acc -= 0.13122 * g(self.ve - self.ea - 2.0 * self.d + self.mp - 56.16);
-        self.l_acc -= 0.12722 * g(self.ve - self.ea + self.mp + 54.36);
-        self.l_acc += 0.12539 * g(3.0 * (self.ve - self.ea) - self.mp + 433.8);
-        self.l_acc += 0.10994 * g(self.ea - self.ju + self.mp + 4002.12);
-        self.l_acc += 0.10652 * g(20.0 * self.ve - 21.0 * self.ea - 2.0 * self.d + self.mp - 317511.72);
-        self.l_acc += 0.10490 * g(26.0 * self.ve - 29.0 * self.ea - self.mp + 270002.52);
-        self.l_acc += 0.10386 * g(3.0 * self.ve - 4.0 * self.ea + self.d - self.mp - 322765.56);
-    }
-
-    fn moon3(&mut self) {
-        self.moonpol0 = self.chewm(&LR, NLR, 4, 1);
+        // Main perturbation table (118 terms) + final assembly
+        moonpol0 = self.chewm(&LR, NLR, 4, 1);
         let t = self.t;
-        self.l_acc += (((self.l4 * t + self.l3) * t + self.l2) * t + self.l1) * t * 1.0e-5;
-        self.moonpol0 = self.swelp + self.l_acc + 1.0e-4 * self.moonpol0;
-    }
+        l_acc += (((l4 * t + l3) * t + l2) * t + l1) * t * 1.0e-5;
+        let moonpol0 = self.swelp + l_acc + 1.0e-4 * moonpol0;
 
-    fn moon4(&self) -> f64 {
-        STR * mods3600(self.moonpol0)
+        STR * mods3600(moonpol0)
     }
 
     /// Compute tropical lunar longitude in degrees [0, 360)
@@ -625,10 +611,7 @@ impl MoonState {
 
         self.mean_elements();
         self.mean_elements_pl();
-        self.moon1();
-        self.moon2();
-        self.moon3();
-        let lon_rad = self.moon4();
+        let lon_rad = self.lunar_perturbations();
 
         let mut lon_deg = lon_rad * (180.0 / PI);
 
