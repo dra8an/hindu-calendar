@@ -19,7 +19,7 @@ scientific facts. See the detailed analysis below.**
 | VSOP87 coefficients | Bretagnon & Francou 1988 | Moshier's plan404 (via SE's swemptab.h) | Uncopyrightable scientific data | None |
 | VSOP87 evaluation loop | Moshier's gplan.c (plan404) | SE's swemplan.c | Moshier: "may be used freely" | None |
 | DE404 lunar data tables | Moshier's DE404 fit (1995) | SE's swemmoon.c | Moshier: "may be used freely" | None |
-| DE404 lunar pipeline | Moshier's cmoon/selenog (1991) | SE's swemmoon.c (restructured) | Moshier: "may be used freely" | Low (see Section 8) |
+| DE404 lunar pipeline | Moshier's cmoon/selenog (1991) | SE's swemmoon.c (restructured) | Moshier: "may be used freely" | None |
 | EMB→Earth correction | Moshier's plan404 | SE's swemplan.c embofs_mosh() | Moshier: "may be used freely" | None |
 | Meeus algorithms | Meeus 1991/1998 | Independently implemented | 17 USC 102(b) | None |
 | IAU 1976 precession | Lieske et al. 1977 | Independently implemented | Uncopyrightable constants | None |
@@ -63,6 +63,8 @@ Layer 3: Our extraction (2026)
   - Extracted longitude-only pipelines from SE source files
   - Did NOT port: coordinate transforms, speed computation,
     SE wrappers, fallback logic, latitude, radius
+  - Restructured: merged Koch's moon1()-moon4() into a single
+    lunar_perturbations() function (our own organization)
   - Simplified: removed unused branches, flattened structure
 ```
 
@@ -75,29 +77,22 @@ Layer 3: Our extraction (2026)
 | `chewm()` | swemmoon.c | chewtab.c | No — we omitted latitude/radius cases that Koch added |
 | `mean_elements()` | swemmoon.c | mean.c / gplan.c | Partially — Koch extracted named vars from Args[] array |
 | `mean_elements_pl()` | swemmoon.c | gplan.c | No — identical to Moshier's original |
-| `moon1()`-`moon4()` | swemmoon.c | **Koch's restructuring** of Moshier's g2plan/g1plan/gmoon | Yes — function boundaries are Koch's design |
+| `lunar_perturbations()` | swemmoon.c (moon1-moon4) | Moshier's g2plan/g1plan/gmoon | No — we merged Koch's 4 functions into 1; our own organization |
 | Data: z[], LR[], LRT[], LRT2[] | swemmoon.c | Moshier's DE404 fit coefficients | No — numerical data unchanged |
 | `vsop87_earth_longitude()` | swemplan.c | gplan.c `gplan()` function | No — evaluation logic is Moshier's |
 | Data: eartabl[], earargs[] | swemptab.h | Moshier's ear404.c | No — numerical data unchanged |
 | Data: freqs[], phases[] | swemplan.c | gplan.c lines 35-56 | No — identical to Moshier's original |
 | `emb_earth_correction()` | swemplan.c `embofs_mosh()` | Moshier's EMB correction | No — algorithm and coefficients are Moshier's |
 
-### The key nuance: moon1()-moon4()
+### Lunar pipeline restructuring
 
-The `moon1()` through `moon4()` function structure is **Koch's reorganization**
-of Moshier's original `g2plan()`, `g1plan()`, and `gmoon()` functions.
-Moshier's original used a generic table-driven approach (`struct plantbl` +
-`g2plan`); Koch split this into four explicit functions when adapting for SE
-in April 1996.
-
-Our code follows Koch's `moon1()`-`moon4()` organization. However:
-- The mathematical content (every coefficient, every polynomial) is Moshier's
-- The explicit perturbation terms in moon1() (e.g., 6.367278, 12.747036,
-  23123.70, -10570.02) are from Moshier's DE404 fit
-- The data tables walked by chewm() are Moshier's
-- Koch's contribution was the function boundary placement, not the algorithms
-- Under merger doctrine, there are limited ways to structure a multi-stage
-  perturbation pipeline — the organization follows from the mathematics
+Koch reorganized Moshier's original `g2plan()`/`g1plan()`/`gmoon()` into four
+functions `moon1()` through `moon4()` when adapting for SE in April 1996. Our
+initial extraction followed this four-function structure, but we subsequently
+merged all four into a single `lunar_perturbations()` function — our own
+organization that does not follow Koch's function boundaries. The mathematical
+content (every coefficient, every polynomial, every perturbation term) remains
+Moshier's. No Koch structural contribution is present in our code.
 
 ### What we did NOT port from SE
 
@@ -199,8 +194,9 @@ original code consists of `chewtab.c`, `mean.c`, `mlr404.c`, `mlat404.c`,
 - Added "Bhanu Pinnamaneni fix" for ss/cc initialization (2009)
 
 **What we ported:** The longitude-only pipeline (mean elements, perturbation
-accumulation via chewm(), explicit terms in moon1()-moon4(), light-time
-correction). We follow Koch's moon1()-moon4() function organization.
+accumulation via chewm(), explicit perturbation terms, light-time correction).
+Koch's moon1()-moon4() function organization was not followed — we merged all
+perturbation stages into a single `lunar_perturbations()` function.
 
 **What we did NOT port:** Latitude, radius, coordinate transforms, speed
 computation, SE wrappers, TLS modifications.
@@ -362,22 +358,6 @@ Ephemeris have no control or influence over any of the derived works, i.e.
 over software or services created by other programmers which use Swiss
 Ephemeris functions."
 
-### The moon1()-moon4() question
-
-The one area where Koch made a creative structural contribution that we
-*did* follow is the reorganization of Moshier's `g2plan()`/`g1plan()`/`gmoon()`
-into four numbered functions `moon1()` through `moon4()`. Our code uses this
-same four-function organization.
-
-This carries low risk for several reasons:
-- The mathematical content within each function is entirely Moshier's
-- The function boundaries follow natural mathematical divisions (planetary
-  perturbations, main series, T^1 corrections, final accumulation)
-- Under merger doctrine, when an idea can only be expressed in a limited
-  number of ways, the expression merges with the idea and is not protectable
-- A multi-stage perturbation pipeline has limited organizational options
-- The function names are purely descriptive (numbered stages)
-
 ### Risk assessment
 
 | Component | Risk | Rationale |
@@ -387,7 +367,7 @@ This carries low risk for several reasons:
 | mean_elements(), mean_elements_pl() | None | Moshier's original code |
 | VSOP87 evaluation loop | None | Moshier's gplan() algorithm |
 | EMB→Earth correction | None | Moshier's algorithm and coefficients |
-| moon1()-moon4() structure | Low | Koch's reorganization of Moshier's algorithms; we follow it, but content is Moshier's, and the structure follows from the mathematics |
+| lunar_perturbations() | None | Our own single-function organization; Koch's moon1()-moon4() boundaries not followed |
 | Variable name SWELP | Negligible | Koch's 2006 rename; a single variable name is not substantial creative expression |
 | Meeus, IAU 1976, Sinclair modules | None | Independently implemented from published sources |
 
@@ -423,6 +403,7 @@ Moshier's software packages as the implementation reference.**
 | 2009 | Bhanu Pinnamaneni adds ss/cc initialization fix |
 | 2018 | Moshier grants explicit BSD license to NearForm |
 | 2026 | Our library developed by extracting longitude pipelines from SE source files containing Moshier's code |
+| 2026 | Restructured lunar pipeline: merged Koch's moon1()-moon4() into single lunar_perturbations() |
 
 ---
 

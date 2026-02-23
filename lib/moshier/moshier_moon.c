@@ -361,12 +361,7 @@ static double T, T2;
 /* Planetary mean longitudes */
 static double Ve, Ea, Ma, Ju, Sa;
 
-/* Perturbation accumulators */
-static double moonpol0;  /* longitude accumulator */
-static double l_acc;     /* explicit perturbation longitude (arcsec) */
-static double l1, l2, l3, l4; /* polynomial coefficients */
-static double f_ve;      /* 18V - 16E */
-static double cg, sg;
+/* (Perturbation accumulators are local to lunar_perturbations.) */
 
 /* ---- Mean elements (DE404) ---- */
 static void mean_elements(void)
@@ -445,9 +440,28 @@ static void mean_elements_pl(void)
     Sa += ((4.475946e-8 * T - 6.874806E-5) * T + 7.56161437443E-1) * T2;
 }
 
-/* ---- moon1: Venus-Jupiter-Earth-Mars perturbations ---- */
-static void moon1(void)
+/* ================================================================
+ * Lunar longitude perturbations (DE404-fitted)
+ *
+ * Computes all perturbation corrections to the mean lunar longitude:
+ *   1. Initialize sin/cos multiples for D, l', l, F
+ *   2. T^2 table corrections (LRT2, 25 terms)
+ *   3. Explicit planetary perturbations (Venus, Jupiter, Earth, Mars, Saturn)
+ *   4. T^1 table corrections (LRT, 38 terms)
+ *   5. Additional DE404-fitted explicit terms
+ *   6. Main perturbation table (LR, 118 terms)
+ *   7. Polynomial assembly and conversion to radians
+ *
+ * Returns lunar longitude in radians (arcseconds-based, needs degree
+ * conversion by caller).
+ * ================================================================ */
+static double lunar_perturbations(void)
 {
+    double moonpol0;     /* table accumulator */
+    double l_acc;        /* explicit perturbation longitude (arcsec) */
+    double l1, l2, l3, l4;  /* polynomial coefficients for T^1..T^4 */
+    double f_ve;         /* 18V - 16E */
+    double cg, sg;       /* cos/sin of current argument */
     double a, g_arg;
     int i, j;
 
@@ -463,11 +477,11 @@ static void moon1(void)
     sscc(2, STR * MP, 4);
     sscc(3, STR * NF, 4);
 
+    /* ---- T^2 table corrections ---- */
     moonpol0 = 0.0;
-
-    /* terms in T^2, scale 1.0 = 10^-5" */
     chewm(LRT2, NLRT2, 4, 2, &moonpol0);
 
+    /* ---- Explicit planetary perturbations ---- */
     f_ve = 18.0 * Ve - 16.0 * Ea;
 
     g_arg = STR * (f_ve - MP);       /* 18V - 16E - l */
@@ -537,7 +551,7 @@ static void moon1(void)
 
     l2 += moonpol0;
 
-    /* terms in T */
+    /* ---- T^1 table corrections ---- */
     moonpol0 = 0.0;
     chewm(LRT, NLRT, 4, 1, &moonpol0);
 
@@ -618,17 +632,7 @@ static void moon1(void)
 
     l1 += moonpol0;
 
-    /* set amplitude scale: 1.0 = 10^-4 arcsec */
-    a = 0.1 * T;
-    (void)a; /* moonpol[1] and moonpol[2] would be scaled by a, but we skip lat/rad */
-}
-
-/* ---- moon2: additional DE404-fitted perturbations ---- */
-static void moon2(void)
-{
-    double g_arg;
-
-    /* 24 longitude terms in T^0 */
+    /* ---- Additional DE404-fitted explicit terms ---- */
     g_arg = STR * (2.0 * (Ea - Ju + D) - MP + 648431.172);
     l_acc += 1.14307 * sin(g_arg);
 
@@ -712,20 +716,13 @@ static void moon2(void)
 
     g_arg = STR * (3.0 * Ve - 4.0 * Ea + D - MP - 322765.56);
     l_acc += 0.10386 * sin(g_arg);
-}
 
-/* ---- moon3: main table summation + polynomial assembly ---- */
-static void moon3(void)
-{
+    /* ---- Main perturbation table (118 terms) + final assembly ---- */
     moonpol0 = 0.0;
     chewm(LR, NLR, 4, 1, &moonpol0);
     l_acc += (((l4 * T + l3) * T + l2) * T + l1) * T * 1.0e-5;
     moonpol0 = SWELP + l_acc + 1.0e-4 * moonpol0;
-}
 
-/* ---- moon4: convert arcseconds to radians ---- */
-static double moon4(void)
-{
     return STR * mods3600(moonpol0);
 }
 
@@ -742,10 +739,7 @@ double moshier_lunar_longitude(double jd_ut)
 
     mean_elements();
     mean_elements_pl();
-    moon1();
-    moon2();
-    moon3();
-    lon_rad = moon4();
+    lon_rad = lunar_perturbations();
 
     /* Convert to degrees */
     lon_deg = lon_rad * (180.0 / M_PI);
