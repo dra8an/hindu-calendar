@@ -280,28 +280,91 @@ Date         Drik  Center  Edge
 
 Neither approach perfectly matches drikpanchang. Switching to disc edge
 trades 32 fixes for 13 regressions — a net improvement (16 vs 35
-mismatches) but not a clean win. This confirms that the mismatches are
-genuinely at the margin of computational precision, where the exact
-combination of refraction model, disc convention, ephemeris, and delta-T
-determines the answer. Drikpanchang uses its own specific parameter set
-that doesn't exactly correspond to either configuration.
+mismatches) but not a clean win.
 
-We retain **disc center** as our production setting because:
+## Optimal h0 Search
+
+Since disc center is "too late" for 33 dates and disc edge is "too early"
+for 13 dates, we searched for an intermediate h0 that minimizes total
+mismatches across all 55,152 days.
+
+### Method
+
+For each of the 48 boundary dates (35 disc-center mismatches + 13
+disc-edge regressions), we binary-searched for the exact h0 where the
+tithi flips. This gives a "critical h0" per date. Dates where
+drikpanchang assigns the previous tithi need h0 more negative than their
+critical value (earlier sunrise); dates where drikpanchang assigns the
+next tithi need h0 less negative (later sunrise).
+
+### Results
+
+| Configuration | h0 | Mismatches | Match rate |
+|---|---|---|---|
+| Disc center (production) | -0.612° | 35 | 99.937% |
+| **Optimal h0** | **-0.817°** | **8** | **99.985%** |
+| Disc edge | -0.878° | 16 | 99.971% |
+
+The optimal h0 = -0.817° was verified against the full 55,152-date
+drikpanchang dataset with **zero collateral damage** — no currently-correct
+dates were broken.
+
+The sweet spot window is narrow: approximately -0.818° < h0 < -0.813°
+(5 millidegrees / 18 arcseconds).
+
+### The 8 irreducible mismatches
+
+Phase 2 of the analysis proves that no single constant h0 can fix all
+48 boundary dates — the constraints provably conflict. The 8 remaining
+mismatches at h0 = -0.817° are:
+
+```
+Date         Drik  h0=-0.817  Why unfixable
+1965-05-06     5     6        Needs h0 < -0.824° (too far from sweet spot)
+1982-03-07    12    13        Needs h0 < -0.896° (widest margin, 1.3 min)
+2028-03-11    16    15        Needs h0 > -0.630° (opposite direction)
+2028-11-13    27    26        Needs h0 > -0.763° (opposite direction)
+2041-11-14    22    21        Needs h0 > -0.798° (opposite direction)
+2045-01-17    30    29        No h0 flips the tithi (boundary too far)
+2046-05-22    18    17        Needs h0 > -0.576° (opposite direction)
+2046-12-21    24    23        Needs h0 > -0.630° (opposite direction)
+```
+
+### Physical interpretation
+
+h0 = -0.817° corresponds to Sinclair refraction (0.612°) plus ~77% of
+the solar semi-diameter (0.205° of 0.266°) — between disc center and
+disc edge, with no standard astronomical convention. Adopting this value
+would be curve-fitting to drikpanchang's undocumented parameters.
+
+### Decision
+
+We retain **disc center** (h0 = -0.612°) as our production setting because:
 1. It matches the Python drik-panchanga reference implementation
 2. It matches Swiss Ephemeris `SE_BIT_DISC_CENTER` convention
 3. The 99.937% match rate is already well within ephemeris uncertainty
+4. The optimal h0 has no physical motivation — it would be overfitting
+
+The optimal h0 analysis confirms that the mismatches are genuinely at the
+margin of computational precision, where the exact combination of
+refraction model, disc convention, ephemeris, and delta-T determines the
+answer. Drikpanchang uses its own specific parameter set that doesn't
+exactly correspond to any standard configuration.
 
 Diagnostic tools: `tools/disc_edge_test.c` (35-date comparison),
-`tools/disc_edge_full.c` (full 55,152-date CSV generator).
+`tools/disc_edge_full.c` (full CSV generator), `tools/h0_sweep.c`
+(optimal h0 search with critical-value analysis).
 
 ## Conclusion
 
 The 99.937% match rate across 151 years confirms that our implementation
 is essentially identical to drikpanchang.com. The 35 disagreements are
 all at tithi boundaries within 1.3 minutes of sunrise — well within the
-uncertainty of any ephemeris computation. Neither side is definitively
-correct for these edge cases; the differences arise from slightly
-different sunrise and lunar longitude calculations.
+uncertainty of any ephemeris computation. An optimal h0 search shows the
+theoretical minimum is 8 irreducible mismatches (99.985%), proving that
+no single refraction parameter can achieve a perfect match. Neither side
+is definitively correct for these edge cases; the differences arise from
+slightly different sunrise and lunar longitude calculations.
 
 This is the most comprehensive validation of a Hindu calendar
 implementation we are aware of: 55,152 days independently verified
