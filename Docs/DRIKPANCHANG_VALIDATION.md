@@ -8,8 +8,14 @@ tithi for each day against our computed reference.
 
 | Backend | Match | Mismatch | Rate |
 |---------|-------|----------|------|
-| **Moshier** | **55,117** | **35** | **99.937%** |
-| Swiss Ephemeris | 55,115 | 37 | 99.933% |
+| **Moshier (disc center)** | **55,117** | **35** | **99.937%** |
+| Swiss Ephemeris (disc center) | 55,115 | 37 | 99.933% |
+| Moshier (disc edge) | 55,136 | 16 | 99.971% |
+
+Our production code uses **disc center** (center of solar disc with
+Sinclair refraction, h0 = -0.612°). The disc-edge experiment
+(h0 = -0.878°, subtracting 0.266° solar semi-diameter) halves the
+mismatch count but introduces new regressions — see below.
 
 ### Relationship to the 2 SE-specific mismatches
 
@@ -56,7 +62,7 @@ is tied to the server's `_DRIK_SESSION_ID` cookie, not the IP). With
 session rotation and 15-second delays, all 1,812 months were downloaded
 in ~4 sessions over several hours.
 
-## The 35 Mismatches
+## The 35 Disc-Center Mismatches
 
 ### Pattern
 
@@ -167,6 +173,126 @@ Date         Sunrise   Our Drik  BdyBefore  BdyAfter   Margin   Direction
 Mismatches are spread fairly evenly, with slightly more in the early 20th
 century (likely due to larger delta-T uncertainty) and a gap in the
 1990–2030 range where modern observations constrain delta-T precisely.
+
+## Disc Center vs Disc Edge Experiment
+
+Our production code uses **disc center** sunrise (Sinclair refraction at
+the horizon, h0 = -0.612°). Since 33 of 35 mismatches have the tithi
+boundary falling just *before* our sunrise, we tested whether using
+**disc edge** sunrise (h0 = -0.878°, adding 0.266° solar semi-diameter)
+would resolve them by shifting sunrise ~75 seconds earlier.
+
+### Results
+
+| Approach | h0 | Mismatches | Match rate |
+|----------|-----|-----------|------------|
+| Disc center (production) | -0.612° | 35 | 99.937% |
+| Disc edge | -0.878° | 16 | 99.971% |
+
+Disc edge **fixes 32** of the original 35 mismatches but **introduces
+13 new ones** — dates where disc center was correct but disc edge pushes
+sunrise too early, crossing a tithi boundary in the wrong direction.
+
+### Three-way breakdown (disc center vs disc edge vs drikpanchang)
+
+| Days | Description |
+|------|-------------|
+| 55,104 | All agree (disc center = disc edge = drikpanchang) |
+| 32 | Disc edge fixes (center wrong, edge matches drikpanchang) |
+| 13 | Disc edge regressions (center correct, edge wrong) |
+| 3 | Both wrong (neither matches drikpanchang) |
+
+### Fixed by disc edge (32 dates)
+
+These are 32 of the original 33 "near start" mismatches. The ~75-second
+earlier disc-edge sunrise falls before the tithi boundary, matching
+drikpanchang's assignment of the previous tithi.
+
+```
+Date         Drik  Center  Edge
+1902-05-30    22     23     22
+1903-05-18    21     22     21
+1908-03-17    14     15     14
+1909-10-11    27     28     27
+1909-12-01    19     20     19
+1911-08-26     2      3      2
+1912-12-14     5      6      5
+1915-12-05    28     29     28
+1916-02-24    20     21     20
+1920-10-12    30      1     30
+1924-02-05    30      1     30
+1925-03-03     8      9      8
+1932-05-15     9     10      9
+1939-07-23     7      8      7
+1940-02-03    25     26     25
+1943-12-17    20     21     20
+1946-01-29    26     27     26
+1951-06-08     3      4      3
+1956-05-29    19     20     19
+1957-08-28     3      4      3
+1965-05-06     5      6      5
+1966-01-08    16     17     16
+1966-08-09    22     23     22
+1966-10-25    11     12     11
+1968-03-11    11     12     11
+1968-05-24    27     28     27
+1972-04-01    17     18     17
+1974-12-19     5      6      5
+1978-09-15    13     14     13
+1987-12-18    27     28     27
+2007-10-09    28     29     28
+2014-05-22    23     24     23
+```
+
+### Regressions from disc edge (13 dates)
+
+These are new mismatches where disc edge assigns the *previous* tithi
+while drikpanchang assigns the *next*. The tithi boundary falls just
+*after* the disc-edge sunrise but *before* the disc-center sunrise.
+
+```
+Date         Drik  Center  Edge
+1929-11-26    26     26     25
+1930-10-31    10     10      9
+1936-12-29    17     17     16
+2001-01-19    26     26     25
+2007-08-15     3      3      2
+2018-05-19     5      5      4
+2020-11-06    21     21     20
+2026-06-30    16     16     15
+2028-03-11    16     16     15
+2028-11-13    27     27     26
+2041-11-14    22     22     21
+2046-12-21    24     24     23
+2049-10-16    21     21     20
+```
+
+### Wrong in both (3 dates)
+
+```
+Date         Drik  Center  Edge
+1982-03-07    12     13     13    (widest margin: 1.3 min, edge shift insufficient)
+2045-01-17    30     29     29    ("near end" case, edge shifts wrong direction)
+2046-05-22    18     17     17    ("near end" case, edge shifts wrong direction)
+```
+
+### Conclusion on disc center vs edge
+
+Neither approach perfectly matches drikpanchang. Switching to disc edge
+trades 32 fixes for 13 regressions — a net improvement (16 vs 35
+mismatches) but not a clean win. This confirms that the mismatches are
+genuinely at the margin of computational precision, where the exact
+combination of refraction model, disc convention, ephemeris, and delta-T
+determines the answer. Drikpanchang uses its own specific parameter set
+that doesn't exactly correspond to either configuration.
+
+We retain **disc center** as our production setting because:
+1. It matches the Python drik-panchanga reference implementation
+2. It matches Swiss Ephemeris `SE_BIT_DISC_CENTER` convention
+3. The 99.937% match rate is already well within ephemeris uncertainty
+
+Diagnostic tools: `tools/disc_edge_test.c` (35-date comparison),
+`tools/disc_edge_full.c` (full 55,152-date CSV generator).
 
 ## Conclusion
 
