@@ -9,3 +9,6 @@ java/build/
 
 # Rust / Cargo
 rust/target/
+
+# Scraper data (HTML pages + parsed CSVs + reports, ~1.8 GB total)
+scraper/data/
