@@ -403,8 +403,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 3,1340,32,1933,6,15,Asharh
 4,1340,31,1933,7,17,Srabon
 5,1340,31,1933,8,17,Bhadro
-6,1340,30,1933,9,17,Ashshin
-7,1340,30,1933,10,17,Kartik
+6,1340,31,1933,9,17,Ashshin
+7,1340,29,1933,10,18,Kartik
 8,1340,30,1933,11,16,Ogrohaeon
 9,1340,30,1933,12,16,Poush
 10,1340,29,1934,1,15,Magh
@@ -628,8 +628,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 12,1358,30,1952,3,15,Choitro
 1,1359,31,1952,4,14,Boishakh
 2,1359,31,1952,5,15,Joishtho
-3,1359,32,1952,6,15,Asharh
-4,1359,31,1952,7,17,Srabon
+3,1359,31,1952,6,15,Asharh
+4,1359,32,1952,7,16,Srabon
 5,1359,31,1952,8,17,Bhadro
 6,1359,30,1952,9,17,Ashshin
 7,1359,30,1952,10,17,Kartik
@@ -871,8 +871,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 3,1379,32,1972,6,15,Asharh
 4,1379,31,1972,7,17,Srabon
 5,1379,31,1972,8,17,Bhadro
-6,1379,30,1972,9,17,Ashshin
-7,1379,30,1972,10,17,Kartik
+6,1379,31,1972,9,17,Ashshin
+7,1379,29,1972,10,18,Kartik
 8,1379,30,1972,11,16,Ogrohaeon
 9,1379,30,1972,12,16,Poush
 10,1379,29,1973,1,15,Magh
@@ -894,8 +894,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 2,1381,32,1974,5,15,Joishtho
 3,1381,31,1974,6,16,Asharh
 4,1381,32,1974,7,17,Srabon
-5,1381,30,1974,8,18,Bhadro
-6,1381,31,1974,9,17,Ashshin
+5,1381,31,1974,8,18,Bhadro
+6,1381,30,1974,9,18,Ashshin
 7,1381,30,1974,10,18,Kartik
 8,1381,30,1974,11,17,Ogrohaeon
 9,1381,29,1974,12,17,Poush
@@ -919,8 +919,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 3,1383,32,1976,6,15,Asharh
 4,1383,31,1976,7,17,Srabon
 5,1383,31,1976,8,17,Bhadro
-6,1383,30,1976,9,17,Ashshin
-7,1383,31,1976,10,17,Kartik
+6,1383,31,1976,9,17,Ashshin
+7,1383,30,1976,10,18,Kartik
 8,1383,29,1976,11,17,Ogrohaeon
 9,1383,30,1976,12,16,Poush
 10,1383,29,1977,1,15,Magh
@@ -1339,8 +1339,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 3,1418,32,2011,6,16,Asharh
 4,1418,31,2011,7,18,Srabon
 5,1418,31,2011,8,18,Bhadro
-6,1418,30,2011,9,18,Ashshin
-7,1418,30,2011,10,18,Kartik
+6,1418,31,2011,9,18,Ashshin
+7,1418,29,2011,10,19,Kartik
 8,1418,30,2011,11,17,Ogrohaeon
 9,1418,30,2011,12,17,Poush
 10,1418,29,2012,1,16,Magh
@@ -1362,8 +1362,8 @@ month,year,length,greg_year,greg_month,greg_day,month_name
 2,1420,32,2013,5,15,Joishtho
 3,1420,31,2013,6,16,Asharh
 4,1420,32,2013,7,17,Srabon
-5,1420,30,2013,8,18,Bhadro
-6,1420,31,2013,9,17,Ashshin
+5,1420,31,2013,8,18,Bhadro
+6,1420,30,2013,9,18,Ashshin
 7,1420,30,2013,10,18,Kartik
 8,1420,30,2013,11,17,Ogrohaeon
 9,1420,29,2013,12,17,Poush

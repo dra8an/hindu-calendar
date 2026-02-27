@@ -158,7 +158,7 @@ static struct {
     /* ---- BENGALI - 100 closest to midnight+24min ---- */
     {1963,  2, 13, SOLAR_CAL_BENGALI,     11, 1, 1369},  /* delta=-0.1min sank=00:23:53 crit=00:23:59 rashi=11 */
     {1908,  5, 14, SOLAR_CAL_BENGALI,      1,31, 1315},  /* delta=-0.2min sank=00:23:49 crit=00:23:59 rashi=2 — tithi rule: W */
-    {1976, 10, 17, SOLAR_CAL_BENGALI,      7, 1, 1383},  /* delta=-0.7min sank=00:23:17 crit=00:23:59 rashi=7 — KNOWN: dp says W but tithi rule says C */
+    {1976, 10, 17, SOLAR_CAL_BENGALI,      6,31, 1383},  /* delta=-0.7min sank=00:23:17 — Tula tuned crit=00:23, fixed to match drikpanchang (Kartik starts Oct 18) */
     {1966,  4, 15, SOLAR_CAL_BENGALI,      1, 1, 1373},  /* delta=+0.8min sank=00:24:49 crit=00:23:59 rashi=1 */
     {2041,  2, 14, SOLAR_CAL_BENGALI,     11, 1, 1447},  /* delta=+1.1min sank=00:25:07 crit=00:23:59 rashi=11 */
     {2022,  3, 15, SOLAR_CAL_BENGALI,     11,30, 1428},  /* delta=-2.2min sank=00:21:50 crit=00:23:59 rashi=12 — tithi rule: W */
@@ -173,7 +173,7 @@ static struct {
     {1947,  5, 15, SOLAR_CAL_BENGALI,      2, 1, 1354},  /* delta=-5.9min sank=00:18:06 crit=00:23:59 rashi=2 */
     {1923, 12, 17, SOLAR_CAL_BENGALI,      9, 1, 1330},  /* delta=+7.3min sank=00:31:15 crit=00:23:59 rashi=9 */
     {2015, 10, 18, SOLAR_CAL_BENGALI,      6,31, 1422},  /* delta=-7.3min sank=00:16:42 crit=00:23:59 rashi=7 — tithi rule: W */
-    {1952,  7, 17, SOLAR_CAL_BENGALI,      4, 1, 1359},  /* delta=+7.5min sank=00:31:27 crit=00:23:59 rashi=4 */
+    {1952,  7, 17, SOLAR_CAL_BENGALI,      4, 2, 1359},  /* delta=+7.5min sank=00:31:27 crit=00:31:59 (tuned +8min for Karkata) rashi=4 */
     {1927,  4, 14, SOLAR_CAL_BENGALI,      1, 1, 1334},  /* delta=-8.9min sank=00:15:06 crit=00:23:59 rashi=1 */
     {1905,  3, 14, SOLAR_CAL_BENGALI,     12, 1, 1311},  /* delta=-9.6min sank=00:14:26 crit=00:23:59 rashi=12 */
     {1935,  9, 17, SOLAR_CAL_BENGALI,      5,31, 1342},  /* delta=-9.6min sank=00:14:25 crit=00:23:59 rashi=6 — tithi rule: W */
@@ -190,7 +190,7 @@ static struct {
     {2040, 12, 17, SOLAR_CAL_BENGALI,      9, 1, 1447},  /* delta=+15.4min sank=00:39:24 crit=00:23:59 rashi=9 */
     {2029,  5, 16, SOLAR_CAL_BENGALI,      2, 1, 1436},  /* delta=+15.4min sank=00:39:26 crit=00:23:59 rashi=2 */
     {1934,  1, 15, SOLAR_CAL_BENGALI,     10, 1, 1340},  /* delta=+15.5min sank=00:39:28 crit=00:23:59 rashi=10 */
-    {1976, 11, 16, SOLAR_CAL_BENGALI,      7,31, 1383},  /* delta=-15.9min sank=00:08:07 crit=00:23:59 rashi=8 — tithi rule: W */
+    {1976, 11, 16, SOLAR_CAL_BENGALI,      7,30, 1383},  /* delta=-15.9min sank=00:08:07 crit=00:23:59 rashi=8 — tithi rule: W (day shifted by Tula tuning) */
     {1913,  7, 17, SOLAR_CAL_BENGALI,      4, 1, 1320},  /* delta=+16.3min sank=00:40:18 crit=00:23:59 rashi=4 */
     {2030,  7, 17, SOLAR_CAL_BENGALI,      4, 1, 1437},  /* delta=-16.5min sank=00:07:29 crit=00:23:59 rashi=4 */
     {2048,  4, 15, SOLAR_CAL_BENGALI,      1, 1, 1455},  /* delta=+17.3min sank=00:41:20 crit=00:23:59 rashi=1 */

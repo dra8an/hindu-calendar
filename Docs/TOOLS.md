@@ -81,15 +81,61 @@ One-off tools built while reverse-engineering drikpanchang.com's critical time r
 | `bengali_shifted.c` | Tests shifted sankranti times (with ayanamsa correction) against all fixed IST cutoffs and nishita+buffer combinations. Confirmed max non-trivial score of 22/37 |
 | `bengali_weekday.c` | Day-of-week analysis — showed each rashi's edge cases always fall on the same weekday, so weekday alone can't separate W/C entries |
 
+### Bengali mismatch investigation (Phase 16)
+
+| Tool | Purpose |
+|------|---------|
+| `bengali_mismatch_diag.c` | For all 8 Bengali solar calendar mismatches vs drikpanchang, prints sankranti time IST, midnight zone distances, shifted sankranti (DP ayanamsa), tithi data, and code assignment |
+| `bengali_rule_test.c` | Tests 5 alternative Bengali critical-time rules (sunset, midnight-24min, midnight flat, midnight+24min with DP ayanamsa shift) against the 8 mismatch dates |
+| `bengali_regression_diag.c` | Diagnostic for the 7 regression dates caused by the pre-midnight zone fix attempt (which was reverted) |
+| `bengali_buffer_sweep.c` | Sweeps Bengali critical-time buffer 0–30 min in 0.5 min steps across all 1,811 months. Confirms 0 min buffer is optimal |
+| `bengali_midnight_zone_count.c` | Counts how many Bengali sankrantis fall in the midnight zone (23:36–00:24 IST) across 1900–2050. Result: 60 of 1,812 (3.3%) |
+| `bengali_midnight_zone_analysis.c` | Full analysis of all sankrantis in expanded zone (23:26–00:34 IST): sorted by delta from midnight, marks Karkata/Makara exceptions, flags drikpanchang mismatches. See `Docs/BENGALI_MIDNIGHT_ZONE.md` |
+| `compare_bengali_oct1976.py` | Python script to compare Bengali solar calendar for Oct 1976 day-by-day: parses drikpanchang HTML and compares against our C code output. Confirmed that a month-start mismatch shifts all subsequent days |
+
+### Lunisolar mismatch investigation (Phase 15)
+
+| Tool | Purpose |
+|------|---------|
+| `drikpanchang_mismatch_diag.c` | For all 35 lunisolar tithi mismatches vs drikpanchang, shows sunrise time, our tithi vs drikpanchang tithi, and margin to nearest tithi boundary (min before / after sunrise) |
+| `disc_edge_test.c` | Compares disc-center vs disc-edge sunrise for the 35 mismatch dates. Shows which dates are fixed and which regress |
+| `disc_edge_full.c` | Generates full 55,152-day tithi reference CSV using disc-edge sunrise (h0=-0.878°) for comprehensive comparison |
+| `h0_sweep.c` | Finds the optimal refraction angle (h0) that minimizes total drikpanchang mismatches. Binary-searches for critical h0 per date, then scans the full parameter space. Result: h0=-0.817° gives 8 mismatches (99.985%) |
+| `tithi_boundary_diag.c` | Measures elongation error at tithi boundaries for failing dates. Shows distance (in arcseconds and minutes of time) to the boundary flip point |
+| `tithi_check2.c` | Quick check of the 2 remaining failing tithi dates (1965-05-30, 2001-09-20) by comparing Moshier vs SE calculations |
+
+### Moshier ephemeris development (Phases 10–11)
+
+| Tool | Purpose |
+|------|---------|
+| `moon_diag.c` | Compare Moshier lunar longitude against expected values at key test dates |
+| `moon_diag_se.c` | Compare Swiss Ephemeris lunar longitude at key test dates |
+| `moon_diag_se2.c` | Compare SE Moon longitude with various computation flags (geometric, apparent, true) |
+| `moon_drift.c` | Measure raw lunar longitude drift between Moshier and SE (TRUEPOS+NONUT) across 1900–2050 |
+| `moon_drift2.c` | Measure apparent lunar longitude difference between Moshier and SE using proper circular difference |
+| `deltat_cmp.c` | Compare delta-T (UT→TT correction) between Moshier library and Swiss Ephemeris |
+| `deltat_table.c` | Extract Swiss Ephemeris delta-T values at yearly resolution (1620–2025) for embedding in Moshier library |
+| `sunrise_debug.c` | Debug sunrise computation for a single date, showing intermediate values to diagnose 1-day offset issues |
+| `sunrise_compare.c` | Compare Moshier vs Swiss Ephemeris sunrise times across all days of a year for Delhi. Identifies systematic offsets |
+| `altitude_debug.c` | Compute solar altitude at SE-reported sunrise time using Moshier functions to identify the source of sunrise discrepancies |
+
 ### Edge case correction helper
 
 | Tool | Purpose |
 |------|---------|
 | `edge_corrections.c` | For each of the 21 wrong edge case entries (6 Tamil + 15 Malayalam), computes the corrected expected values by looking at the previous day's solar date. Used once to generate the corrected test data for `tests/test_solar_edge.c` |
 
-### Build (all diagnostic tools follow the same pattern)
+### Build
+
+All C diagnostic tools follow the same pattern. Use the Moshier backend (default) or Swiss Ephemeris:
 
 ```bash
-cc -O2 -Isrc -Ilib/swisseph tools/<tool>.c build/astro.o build/date_utils.o build/tithi.o build/masa.o build/panchang.o build/solar.o build/swe/*.o -lm -o build/<tool>
-./build/<tool>
+# Moshier backend (default)
+cc -O2 -Isrc -Ilib/moshier tools/<tool>.c src/solar.c src/astro.c src/date_utils.c src/tithi.c src/masa.c lib/moshier/moshier_*.c -lm -o tools/<tool>
+
+# Swiss Ephemeris backend (for SE-specific tools like moon_diag_se.c)
+cc -O2 -Isrc -Ilib/swisseph tools/<tool>.c src/solar.c src/astro.c src/date_utils.c src/tithi.c src/masa.c lib/swisseph/*.c -lm -o tools/<tool>
+
+# Python tools
+python3 tools/<tool>.py [args]
 ```
