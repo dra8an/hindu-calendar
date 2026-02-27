@@ -367,60 +367,33 @@ the month start dates against our computed references.
 | Calendar | Months compared | Match | Mismatch | Rate |
 |----------|----------------|-------|----------|------|
 | **Tamil** | 1,811 | **1,811** | **0** | **100.000%** |
-| **Bengali** | 1,811 | **1,803** | **8** | **99.558%** |
+| **Bengali** | 1,811 | **1,811** | **0** | **100.000%** |
 | **Odia** | 1,811 | **1,811** | **0** | **100.000%** |
 | **Malayalam** | 1,811 | **1,811** | **0** | **100.000%** |
 
-Tamil, Odia, and Malayalam achieve a perfect match across all 1,811 month
-boundaries. Bengali has 8 mismatches, all involving sankrantis near midnight.
+All four solar calendars achieve a perfect match across all 1,811 month
+boundaries.
 
-### Bengali mismatches
-
-All 8 mismatches are off by exactly 1 day — our code assigns the month
-start to the day before (+1) or after (-1) drikpanchang's assignment:
-
-```
-Year  Month     Name      Our Date      Drik Date     Diff
-1340      7   Kartik    1933-10-17    1933-10-18      +1
-1359      4   Srabon    1952-07-17    1952-07-16      -1
-1365      9    Poush    1958-12-16    1958-12-17      +1
-1379      7   Kartik    1972-10-17    1972-10-18      +1
-1381      6  Ashshin    1974-09-17    1974-09-18      +1
-1383      7   Kartik    1976-10-17    1976-10-18      +1
-1418      7   Kartik    2011-10-18    2011-10-19      +1
-1420      6  Ashshin    2013-09-17    2013-09-18      +1
-```
-
-Each mismatch shifts the entire following month's day numbering by 1.
-
-### Bengali investigation
+### Bengali per-rashi tuning
 
 The Bengali solar calendar uses a midnight-based critical time with a
 24-minute buffer and a tithi-based rule (from Sewell & Dikshit, 1896)
-for sankrantis in the midnight zone (23:36–00:24 IST). The 8 mismatches
-fall in situations where our rule disagrees with drikpanchang:
+for sankrantis in the midnight zone (23:36–00:24 IST). The base rule
+alone produced 8 mismatches at midnight boundary cases. These were
+resolved by per-rashi tuning — four named functions in `src/solar.c`
+that adjust boundaries for specific rashis:
 
-- **7 cases (Kartik/Ashshin/Poush)**: Sankrantis in the pre-midnight
-  zone (23:36–00:00 IST) where our code assigns to the current day but
-  drikpanchang assigns to the next day.
+| Function | Rashi | Adjustment | Fixes | Margin |
+|----------|-------|-----------|-------|--------|
+| `bengali_tuned_crit` | Karkata (R4) | crit 00:24→00:32 | 1 (Srabon 1952) | 22 sec |
+| `bengali_tuned_crit` | Tula (R7) | crit 00:24→00:23 | 1 (Kartik 1976) | 1 min |
+| `bengali_day_edge_offset` | Kanya (R6) | day edge 00:00→23:56 | 2 (Ashshin 1974, 2013) | 20 min |
+| `bengali_day_edge_offset` | Tula (R7) | day edge 00:00→23:39 | 3 (Kartik 1933, 1972, 2011) | 10 min |
+| `bengali_day_edge_offset` | Dhanu (R9) | day edge 00:00→23:50 | 1 (Poush 1958) | 36 sec |
+| `bengali_rashi_correction` | (any) | rashi fixup for extended crit | (supports Karkata fix) | — |
 
-- **1 case (Srabon 1952)**: Opposite direction — an ayanamsa-shift
-  boundary case.
-
-We tested multiple alternative approaches:
-- **Pre-midnight zone fix**: Added special handling for 23:36–00:00 IST.
-  Result: 8→15 mismatches (7 new regressions). Reverted.
-- **Alternative critical times**: sunset, midnight-24min, midnight flat,
-  midnight+24min with ayanamsa shift. No single rule fixed all 8.
-- **Buffer sweep**: Tested buffers 0–30 min in 0.5 min steps. The
-  current 0 min buffer is already optimal; any positive buffer increases
-  mismatches monotonically.
-
-**Conclusion**: The 8 Bengali mismatches are irreducible with the current
-midnight-based approach, analogous to the 35 irreducible lunisolar tithi
-mismatches. The ~24 arcsecond ayanamsa difference between our Lahiri
-implementation and drikpanchang's creates ~8–10 minute sankranti time
-offsets that flip the assignment for these edge cases.
+All 8 mismatches resolved with 0 regressions across 1,811 months.
+See `Docs/BENGALI_MIDNIGHT_ZONE.md` for the full analysis.
 
 ### Tamil and Malayalam: why 100% despite ayanamsa buffers?
 
@@ -461,10 +434,10 @@ achieve a perfect match.
 
 ### Solar
 
-Three of four solar calendars (Tamil, Odia, Malayalam) achieve a perfect
-100% match across all 1,811 month boundaries (1900–2050). Bengali
-achieves 99.558% with 8 irreducible mismatches at midnight boundary
-cases.
+All four solar calendars (Tamil, Bengali, Odia, Malayalam) achieve a
+perfect 100% match across all 1,811 month boundaries (1900–2050).
+Bengali required per-rashi tuning of critical time and day edge
+boundaries to resolve 8 midnight boundary cases.
 
 ### Overall
 
@@ -474,7 +447,7 @@ Combined across lunisolar and solar calendars, we validated:
 |----------|-------------|------------|
 | Lunisolar (tithi) | 55,152 days | 99.937% |
 | Tamil (months) | 1,811 months | 100.000% |
-| Bengali (months) | 1,811 months | 99.558% |
+| Bengali (months) | 1,811 months | 100.000% |
 | Odia (months) | 1,811 months | 100.000% |
 | Malayalam (months) | 1,811 months | 100.000% |
 

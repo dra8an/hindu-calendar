@@ -32,7 +32,14 @@ static const char *find_csv(const char *base)
 {
     /* Try common locations */
     static char path[512];
-    const char *prefixes[] = { "validation/se/solar/", "../validation/se/solar/", NULL };
+    const char *prefixes[] = {
+#ifdef USE_SWISSEPH
+        "validation/se/solar/", "../validation/se/solar/",
+#else
+        "validation/moshier/solar/", "../validation/moshier/solar/",
+#endif
+        NULL
+    };
     for (int i = 0; prefixes[i]; i++) {
         snprintf(path, sizeof(path), "%s%s", prefixes[i], base);
         FILE *f = fopen(path, "r");

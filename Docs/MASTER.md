@@ -28,7 +28,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [MALAYALAM_ADJUSTMENTS.md](MALAYALAM_ADJUSTMENTS.md) | Malayalam critical time boundary investigation. Documents the 3/5 daytime discovery and the v0.3.2 ayanamsa buffer (−9.5 min). |
 | [ODIA_ADJUSTMENTS.md](ODIA_ADJUSTMENTS.md) | Odia critical time investigation. Documents discovery of fixed 22:12 IST cutoff from 35 boundary cases. |
 | [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) | VSOP87 solar longitude implementation in the Moshier library. Covers the full computation pipeline (7 steps), ayanamsa nutation discovery, precision analysis vs Swiss Ephemeris, test result evolution, and key lessons learned. |
-| [BENGALI_INVESTIGATION.md](BENGALI_INVESTIGATION.md) | Bengali critical time investigation. Documents the tithi-based rule from Sewell & Dikshit (1896) that achieves 36/37 on verified edge cases. Includes exhaustive testing of time-based rules (all failed) and proof of inseparability. |
+| [BENGALI_INVESTIGATION.md](BENGALI_INVESTIGATION.md) | Bengali critical time investigation. Documents the tithi-based rule from Sewell & Dikshit (1896) + per-rashi tuning that achieves 100% on all 1,811 months. Includes exhaustive testing of time-based rules (all failed) and proof of inseparability. |
 | [SOLAR_VERIFICATION_WEB.md](SOLAR_VERIFICATION_WEB.md) | Plan for adding solar calendar support to the validation web page. |
 | [REINGOLD_VALIDATION.md](REINGOLD_VALIDATION.md) | Approach for comparing our Drik Siddhanta output against Reingold/Dershowitz Surya Siddhanta (HL function via SBCL). |
 | [REINGOLD_VALIDATION_WEB_PAGE.md](REINGOLD_VALIDATION_WEB_PAGE.md) | Design for embedding Reingold diff overlay into the validation web page. |

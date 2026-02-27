@@ -21,7 +21,7 @@
 | 13 | Java 21 port | Done | Moshier-only, 227 tests, identical output to C |
 | 14 | Rust port | Done | Moshier-only, 275,396 assertions, identical output to C |
 | 15 | Drikpanchang.com lunisolar scrape | Done | 55,117/55,152 tithi match (99.937%), 35 boundary edge cases |
-| 16 | Drikpanchang.com solar scrape | Done | Tamil 100%, Bengali 99.558% (8), Odia 100%, Malayalam 100% |
+| 16 | Drikpanchang.com solar scrape | Done | Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100% |
 
 ## Test Results
 
@@ -84,7 +84,7 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 351 unit test assertions + 327 external validation assertions + 28,976 regression assertions + 1,200 edge case assertions across 4 regional solar calendar variants:
 
 - **Tamil** (10 unit + 33 validation + 100 edge case dates): Sankranti boundaries, mid-month, year transitions, all 12 months of 2025, Chithirai 1 across 21 years (Saka era). Critical time adjusted by −8.0 min for ayanamsa difference; 6 boundary dates corrected
-- **Bengali** (9 unit + 24 validation + 100 edge case dates): Midnight + 24min buffer with tithi-based rule (Sewell & Dikshit, 1896) for edge cases — Karkata always "before midnight", Makara always "after midnight", others check tithi at Hindu sunrise. 36/37 verified edge cases correct (1 known failure: 1976-10-17). Boishakh 1 across 12 years, all 12 months of 2025 (Bangabda era)
+- **Bengali** (9 unit + 24 validation + 100 edge case dates): Midnight + 24min buffer with tithi-based rule (Sewell & Dikshit, 1896) for edge cases — Karkata always "before midnight", Makara always "after midnight", others check tithi at Hindu sunrise. Per-rashi tuning of critical time and day edge boundaries achieves 100% match (1,811/1,811 months). Boishakh 1 across 12 years, all 12 months of 2025 (Bangabda era)
 - **Odia** (7 unit + 24 validation + 100 edge case dates): Fixed 22:12 IST cutoff, all 12 months of 2025 + 2030 (Saka era). 100/100 edge cases correct — no ayanamsa adjustment needed
 - **Malayalam** (7 unit + 28 validation + 100 edge case dates): End-of-madhyahna critical time, Chingam 1 across 16 years, all 12 months of 2025 (Kollam era). Critical time adjusted by −9.5 min for ayanamsa difference; 15 boundary dates corrected
 - Roundtrip tests: `gregorian_to_solar()` → `solar_to_gregorian()` for all 33 unit test dates
@@ -102,7 +102,7 @@ Swiss Ephemeris SE_SIDM_LAHIRI differs from drikpanchang.com's Lahiri ayanamsa b
 | Calendar | Danger zone (delta) | Wrong entries | Buffer applied | Result |
 |----------|-------------------|---------------|----------------|--------|
 | Tamil | 0 to −7.7 min | 6 | −8.0 min from sunset | All 6 fixed |
-| Bengali | Tithi-based rule | 1 (of 37 verified) | Tithi at Hindu sunrise + Karkata/Makara overrides | 36/37 correct |
+| Bengali | Tithi-based rule | 0 | Tithi at Hindu sunrise + Karkata/Makara overrides + per-rashi tuning | 1,811/1,811 correct |
 | Odia | None | 0 | None needed | 100/100 correct |
 | Malayalam | 0 to −9.3 min | 15 | −9.5 min from madhyahna | All 15 fixed |
 
@@ -117,8 +117,7 @@ The buffer is subtracted from `critical_time_jd()` in `src/solar.c`. This single
 - No kshaya masa detection (extremely rare edge case)
 - UTC offset is manual (no IANA timezone / DST support)
 - Location defaults to New Delhi; no city database
-- Solar calendars fully validated via drikpanchang.com scrape (1,811 months each, 1900–2050): Tamil 100%, Odia 100%, Malayalam 100%, Bengali 99.558% (8 irreducible mismatches at midnight boundary cases). Tamil and Malayalam use empirical ayanamsa buffers (−8.0 and −9.5 min) to compensate for ~24 arcsecond Lahiri ayanamsa difference. See `Docs/DRIKPANCHANG_VALIDATION.md`
-- Bengali solar calendar has 8 known edge case failures where sankrantis near midnight are assigned to different civil days than drikpanchang.com; no single rule adjustment fixes all 8 without regressions. See `Docs/BENGALI_INVESTIGATION.md`
+- Solar calendars fully validated via drikpanchang.com scrape (1,811 months each, 1900–2050): all four calendars achieve 100% match. Tamil and Malayalam use empirical ayanamsa buffers (−8.0 and −9.5 min). Bengali uses per-rashi tuning of critical time and day edge boundaries. See `Docs/DRIKPANCHANG_VALIDATION.md`
 
 ## Dual Backend Architecture
 

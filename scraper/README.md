@@ -151,7 +151,7 @@ Resume by switching IP and re-running (already-downloaded files are skipped).
 |----------|-------|-------|----------|------|
 | Lunisolar | 1,812 | 55,117/55,152 days | 35 | 99.937% |
 | Tamil | 1,812 | 1,811/1,811 months | 0 | 100.000% |
-| Bengali | 1,812 | 1,803/1,811 months | 8 | 99.558% |
+| Bengali | 1,812 | 1,811/1,811 months | 0 | 100.000% |
 | Odia | 1,812 | 1,811/1,811 months | 0 | 100.000% |
 | Malayalam | 1,812 | 1,811/1,811 months | 0 | 100.000% |
 

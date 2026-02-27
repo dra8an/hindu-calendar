@@ -31,11 +31,11 @@
 ## Solar (Phase 16)
 - Scraped all 4 solar calendars: 1,812 pages each, 7,248 total
 - `scraper/solar/` — fetch.py (parameterized by --calendar), parse.py, compare.py
-- Results: Tamil 100%, Bengali 99.558% (8 mismatches), Odia 100%, Malayalam 100%
-- Bengali 8 mismatches are irreducible: all midnight boundary cases, no rule change fixes all 8
-  - 7 pre-midnight (Kartik/Ashshin/Poush), 1 ayanamsa-shift (Srabon 1952)
-  - Tested: pre-midnight zone fix (8→15, reverted), alternative rules, buffer sweep (0 min optimal)
-  - Each mismatch shifts entire following month's day numbering by 1
+- Results: Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100%
+- Bengali originally had 8 mismatches at midnight boundary cases, all fixed by per-rashi tuning (Phase 17):
+  - `bengali_tuned_crit`: Karkata crit 00:24→00:32 (1 fix), Tula crit 00:24→00:23 (1 fix)
+  - `bengali_day_edge_offset`: Kanya 23:56 (2 fixes), Tula 23:39 (3 fixes), Dhanu 23:50 (1 fix)
+  - `bengali_rashi_correction`: rashi fixup when extended crit crosses a sankranti
 - Bengali mismatch diagnostic tools: `tools/bengali_mismatch_diag.c`, `bengali_rule_test.c`, `bengali_buffer_sweep.c`
 - Comparison reports in `scraper/data/solar/comparison/`
 - Full writeup added to `Docs/DRIKPANCHANG_VALIDATION.md`

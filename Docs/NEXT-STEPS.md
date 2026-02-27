@@ -13,7 +13,7 @@
 - [x] Solar edge case scanner: 100 closest sankrantis per calendar scanned and verified against drikpanchang.com
 - [x] Ayanamsa buffer adjustments: Tamil −8.0 min, Malayalam −9.5 min (fixes 6 + 15 boundary dates)
 - [x] Validation web page extended for solar calendar comparison (dropdown for all 4 calendars)
-- [x] Resolve Bengali solar calendar edge cases — implemented tithi-based rule from Sewell & Dikshit (1896): 36/37 verified edge cases correct (1 known failure: 1976-10-17)
+- [x] Resolve Bengali solar calendar edge cases — tithi-based rule from Sewell & Dikshit (1896) + per-rashi tuning: 100% (1,811/1,811 months)
 - [x] Dual-backend validation data: SE + Moshier reference CSVs, JSON, web backend selector, `make gen-ref`/`gen-json` targets, `tools/generate_all_validation.sh` master script
 - [ ] Continue manual validation of remaining lunisolar months via web page against drikpanchang.com
 - [ ] Document any edge-case discrepancies (midnight new moons, polar regions)

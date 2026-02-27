@@ -47,7 +47,8 @@
 - [x] Phase 13: Java 21 port — 227 tests, identical to C
 - [x] Phase 14: Rust port — 275,396 assertions, identical to C
 - [x] Phase 15: Drikpanchang.com full scrape validation — 55,117/55,152 tithi match (99.937%)
-- [x] Phase 16: Solar calendar full scrape — Tamil 100%, Bengali 99.558% (8), Odia 100%, Malayalam 100%
+- [x] Phase 16: Solar calendar full scrape — Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100%
+- [x] Phase 17: Bengali per-rashi tuning — 8 midnight boundary mismatches → 0, all 4 solar calendars 100%
 
 ## Validation Web Page
 - `tools/csv_to_json.py --backend {se,moshier}` — converts ref CSV → 1,812 per-month JSON files
@@ -78,7 +79,7 @@
 - Sankranti finding: bisection on sidereal solar longitude (50 iterations, ~3ns precision)
 - Critical time rules (which civil day "owns" a sankranti):
   - **Tamil**: sunset − 8.0 min (ayanamsa buffer) — splits 7.7–8.7 min danger zone, fixes 6 boundary dates
-  - **Bengali**: midnight + 24min buffer + tithi-based rule (Sewell & Dikshit 1896): Karkata→before midnight, Makara→after midnight, others→tithi at Hindu sunrise determines assignment. Full scrape: 1,803/1,811 (99.558%), 8 irreducible mismatches
+  - **Bengali**: midnight + 24min buffer + tithi-based rule (Sewell & Dikshit 1896) + per-rashi tuning: Karkata→before midnight (crit 00:32), Makara→after midnight, others→tithi at Hindu sunrise. Day edge tuning for Kanya (23:56), Tula (23:39), Dhanu (23:50). Full scrape: 1,811/1,811 (100%)
   - **Odia**: fixed 22:12 IST cutoff — 100/100 edge cases correct, no ayanamsa adjustment needed
   - **Malayalam**: end of madhyahna − 9.5 min (ayanamsa buffer) = sunrise + 3/5 × (sunset − sunrise) − 9.5 min — splits 9.3–10.0 min danger zone, fixes 15 boundary dates
 - Era offsets (from Gregorian year):
@@ -165,10 +166,10 @@
 
 ## Drikpanchang.com Full Scrape Validation (Phases 15-16)
 - **Lunisolar**: 55,152 days (1900-2050), 99.937% match (35 boundary edge cases)
-- **Solar**: Tamil 100%, Bengali 99.558% (8 irreducible), Odia 100%, Malayalam 100%
+- **Solar**: Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100%
 - CAPTCHA: hard 200-request per-IP limit; 2s delay works; VPN rotation required
 - `scraper/lunisolar/` and `scraper/solar/` — fetch, parse, compare scripts
-- Bengali 8 mismatches: midnight boundary cases, no rule change fixes all without regressions
+- Bengali 8 mismatches: all fixed via per-rashi tuning (Phase 17)
 - Disc center retained (h0=-0.612°); optimal h0=-0.817° gives 8 lunisolar mismatches but is overfitting
 - Detailed notes: `memory/scrape_validation.md`, docs: `Docs/DRIKPANCHANG_VALIDATION.md`
 

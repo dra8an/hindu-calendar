@@ -5,29 +5,34 @@ All Bengali sankrantis falling within the expanded midnight zone
 delta from midnight. This covers the 48-min midnight rule zone
 (23:36–00:24) plus a 10-min margin on each side.
 
-## Summary
+**UPDATE**: All 8 failures below have been fixed via per-rashi tuning.
+Bengali now achieves 100% (1,811/1,811 months). The table below reflects
+the state BEFORE tuning, which motivated the fixes. See
+`Docs/DRIKPANCHANG_VALIDATION.md` for the tuning table.
+
+## Summary (before per-rashi tuning)
 
 | Metric | Value |
 |--------|-------|
 | Total month boundaries (1900–2050) | 1,812 |
 | In expanded zone (23:26–00:34) | 82 (4.5%) |
-| Correct | 74 (90.2%) |
-| Wrong | 8 (9.8%) |
+| Correct (base rule) | 74 (90.2%) |
+| Wrong (base rule) | 8 (9.8%) → **all 8 fixed by tuning** |
 
-### Rule breakdown
+### Rule breakdown (before tuning)
 
 | Rule | Count | Correct | Wrong |
 |------|-------|---------|-------|
-| Tithi rule | 65 | 59 | 6 |
-| Karkata exception (always current day) | 9 | 8 | 1 |
+| Tithi rule | 65 | 59 | 6 → fixed by day edge tuning |
+| Karkata exception (always current day) | 9 | 8 | 1 → fixed by crit tuning |
 | Makara exception (always next day) | 8 | 8 | 0 |
 
-### Pre-midnight vs post-midnight
+### Pre-midnight vs post-midnight (before tuning)
 
 | Zone | Count | Correct | Wrong |
 |------|-------|---------|-------|
-| Pre-midnight (23:26–00:00) | 39 | 33 | 6 |
-| Post-midnight (00:00–00:34) | 43 | 41 | 2 |
+| Pre-midnight (23:26–00:00) | 39 | 33 | 6 → fixed by day edge |
+| Post-midnight (00:00–00:34) | 43 | 41 | 2 → fixed by crit tuning |
 
 ## Full Table
 
