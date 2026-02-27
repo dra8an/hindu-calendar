@@ -20,6 +20,8 @@
 | 12 | Dual-backend validation data | Done | SE + Moshier CSVs, JSON, web backend selector |
 | 13 | Java 21 port | Done | Moshier-only, 227 tests, identical output to C |
 | 14 | Rust port | Done | Moshier-only, 275,396 assertions, identical output to C |
+| 15 | Drikpanchang.com lunisolar scrape | Done | 55,117/55,152 tithi match (99.937%), 35 boundary edge cases |
+| 16 | Drikpanchang.com solar scrape | Done | Tamil 100%, Bengali 99.558% (8), Odia 100%, Malayalam 100% |
 
 ## Test Results
 
@@ -115,8 +117,8 @@ The buffer is subtracted from `critical_time_jd()` in `src/solar.c`. This single
 - No kshaya masa detection (extremely rare edge case)
 - UTC offset is manual (no IANA timezone / DST support)
 - Location defaults to New Delhi; no city database
-- Solar calendars validated with 351 unit + 327 external + 28,976 regression + 1,200 edge case assertions; Tamil and Malayalam have empirical ayanamsa buffers (−8.0 and −9.5 min) to compensate for ~24 arcsecond Lahiri ayanamsa difference with drikpanchang.com
-- Bengali solar calendar has 1 known edge case failure (1976-10-17 Tula sankranti) where the tithi-based rule disagrees with drikpanchang.com; 36/37 verified edge cases correct. See `Docs/BENGALI_INVESTIGATION.md`
+- Solar calendars fully validated via drikpanchang.com scrape (1,811 months each, 1900–2050): Tamil 100%, Odia 100%, Malayalam 100%, Bengali 99.558% (8 irreducible mismatches at midnight boundary cases). Tamil and Malayalam use empirical ayanamsa buffers (−8.0 and −9.5 min) to compensate for ~24 arcsecond Lahiri ayanamsa difference. See `Docs/DRIKPANCHANG_VALIDATION.md`
+- Bengali solar calendar has 8 known edge case failures where sankrantis near midnight are assigned to different civil days than drikpanchang.com; no single rule adjustment fixes all 8 without regressions. See `Docs/BENGALI_INVESTIGATION.md`
 
 ## Dual Backend Architecture
 

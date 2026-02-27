@@ -355,17 +355,130 @@ Diagnostic tools: `tools/disc_edge_test.c` (35-date comparison),
 `tools/disc_edge_full.c` (full CSV generator), `tools/h0_sweep.c`
 (optimal h0 search with critical-value analysis).
 
+## Solar Calendar Validation
+
+In addition to the lunisolar tithi validation, we scraped all four
+regional solar calendar pages from drikpanchang.com for 1900–2050
+(1,812 Gregorian months per calendar, 7,248 pages total) and compared
+the month start dates against our computed references.
+
+### Results
+
+| Calendar | Months compared | Match | Mismatch | Rate |
+|----------|----------------|-------|----------|------|
+| **Tamil** | 1,811 | **1,811** | **0** | **100.000%** |
+| **Bengali** | 1,811 | **1,803** | **8** | **99.558%** |
+| **Odia** | 1,811 | **1,811** | **0** | **100.000%** |
+| **Malayalam** | 1,811 | **1,811** | **0** | **100.000%** |
+
+Tamil, Odia, and Malayalam achieve a perfect match across all 1,811 month
+boundaries. Bengali has 8 mismatches, all involving sankrantis near midnight.
+
+### Bengali mismatches
+
+All 8 mismatches are off by exactly 1 day — our code assigns the month
+start to the day before (+1) or after (-1) drikpanchang's assignment:
+
+```
+Year  Month     Name      Our Date      Drik Date     Diff
+1340      7   Kartik    1933-10-17    1933-10-18      +1
+1359      4   Srabon    1952-07-17    1952-07-16      -1
+1365      9    Poush    1958-12-16    1958-12-17      +1
+1379      7   Kartik    1972-10-17    1972-10-18      +1
+1381      6  Ashshin    1974-09-17    1974-09-18      +1
+1383      7   Kartik    1976-10-17    1976-10-18      +1
+1418      7   Kartik    2011-10-18    2011-10-19      +1
+1420      6  Ashshin    2013-09-17    2013-09-18      +1
+```
+
+Each mismatch shifts the entire following month's day numbering by 1.
+
+### Bengali investigation
+
+The Bengali solar calendar uses a midnight-based critical time with a
+24-minute buffer and a tithi-based rule (from Sewell & Dikshit, 1896)
+for sankrantis in the midnight zone (23:36–00:24 IST). The 8 mismatches
+fall in situations where our rule disagrees with drikpanchang:
+
+- **7 cases (Kartik/Ashshin/Poush)**: Sankrantis in the pre-midnight
+  zone (23:36–00:00 IST) where our code assigns to the current day but
+  drikpanchang assigns to the next day.
+
+- **1 case (Srabon 1952)**: Opposite direction — an ayanamsa-shift
+  boundary case.
+
+We tested multiple alternative approaches:
+- **Pre-midnight zone fix**: Added special handling for 23:36–00:00 IST.
+  Result: 8→15 mismatches (7 new regressions). Reverted.
+- **Alternative critical times**: sunset, midnight-24min, midnight flat,
+  midnight+24min with ayanamsa shift. No single rule fixed all 8.
+- **Buffer sweep**: Tested buffers 0–30 min in 0.5 min steps. The
+  current 0 min buffer is already optimal; any positive buffer increases
+  mismatches monotonically.
+
+**Conclusion**: The 8 Bengali mismatches are irreducible with the current
+midnight-based approach, analogous to the 35 irreducible lunisolar tithi
+mismatches. The ~24 arcsecond ayanamsa difference between our Lahiri
+implementation and drikpanchang's creates ~8–10 minute sankranti time
+offsets that flip the assignment for these edge cases.
+
+### Tamil and Malayalam: why 100% despite ayanamsa buffers?
+
+Tamil and Malayalam use empirical ayanamsa buffers (−8.0 min and −9.5 min
+respectively) subtracted from their critical times. These buffers were
+originally calibrated from 100 edge cases per calendar and are now
+confirmed correct across all 1,811 month boundaries.
+
+### Odia: no buffer needed
+
+Odia uses a fixed 22:12 IST cutoff that cleanly separates all sankranti
+boundary cases without any ayanamsa adjustment, confirmed across all
+1,811 month boundaries.
+
+### Scraper
+
+The solar scraper lives in `scraper/solar/` and operates analogously to
+the lunisolar scraper:
+
+1. **fetch.py** — Downloads solar calendar month pages per calendar type
+2. **parse.py** — Extracts month boundaries (solar day 1) from HTML
+3. **compare.py** — Diffs parsed start dates against our reference CSVs
+
+Data in `scraper/data/solar/`. Comparison reports in
+`scraper/data/solar/comparison/`.
+
 ## Conclusion
 
-The 99.937% match rate across 151 years confirms that our implementation
-is essentially identical to drikpanchang.com. The 35 disagreements are
-all at tithi boundaries within 1.3 minutes of sunrise — well within the
-uncertainty of any ephemeris computation. An optimal h0 search shows the
-theoretical minimum is 8 irreducible mismatches (99.985%), proving that
-no single refraction parameter can achieve a perfect match. Neither side
-is definitively correct for these edge cases; the differences arise from
-slightly different sunrise and lunar longitude calculations.
+### Lunisolar
+
+The 99.937% match rate across 151 years (55,152 days) confirms that our
+lunisolar implementation is essentially identical to drikpanchang.com.
+The 35 disagreements are all at tithi boundaries within 1.3 minutes of
+sunrise — well within the uncertainty of any ephemeris computation. An
+optimal h0 search shows the theoretical minimum is 8 irreducible
+mismatches (99.985%), proving that no single refraction parameter can
+achieve a perfect match.
+
+### Solar
+
+Three of four solar calendars (Tamil, Odia, Malayalam) achieve a perfect
+100% match across all 1,811 month boundaries (1900–2050). Bengali
+achieves 99.558% with 8 irreducible mismatches at midnight boundary
+cases.
+
+### Overall
+
+Combined across lunisolar and solar calendars, we validated:
+
+| Calendar | Data points | Match rate |
+|----------|-------------|------------|
+| Lunisolar (tithi) | 55,152 days | 99.937% |
+| Tamil (months) | 1,811 months | 100.000% |
+| Bengali (months) | 1,811 months | 99.558% |
+| Odia (months) | 1,811 months | 100.000% |
+| Malayalam (months) | 1,811 months | 100.000% |
 
 This is the most comprehensive validation of a Hindu calendar
-implementation we are aware of: 55,152 days independently verified
-against the authoritative reference site.
+implementation we are aware of: 55,152 lunisolar days plus 7,244 solar
+month boundaries independently verified against the authoritative
+reference site.

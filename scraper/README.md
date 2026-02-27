@@ -132,29 +132,47 @@ All fetches use these cookies for New Delhi + Lahiri ayanamsa:
 
 ## CAPTCHA Handling
 
-Drikpanchang triggers CAPTCHAs after ~200-400 requests per session. The
-scrapers detect this (response < 50 KB) and rotate to a fresh session
-automatically. CAPTCHAs are tied to session cookies, not IP.
+Drikpanchang triggers CAPTCHAs after a hard limit of ~200 requests per
+IP address, regardless of request delay. The CAPTCHA is detected by
+response size (< 50 KB vs normal ~200 KB).
 
-## Storage Estimates
+**Important findings:**
+- The limit is per-IP, not per-session — session rotation alone does not help
+- A 2-second delay between requests works fine (no benefit from longer delays)
+- VPN/IP rotation is required after each ~200-request batch
+- At 2s delay: ~400 seconds per batch, ~9 batches per calendar, ~1 hour total per calendar with VPN switching
 
-| Calendar   | Pages | At 20s delay | Storage |
-|-----------|-------|-------------|---------|
-| Lunisolar | 1,812 | ~10h (done) | 363 MB  |
-| Tamil     | 1,812 | ~10h        | ~360 MB |
-| Bengali   | 1,812 | ~10h        | ~360 MB |
-| Odia      | 1,812 | ~10h        | ~360 MB |
-| Malayalam  | 1,812 | ~10h        | ~360 MB |
-| **Total** | **9,060** | **~50h** | **~1.8 GB** |
+The scrapers detect CAPTCHAs automatically and stop with a clear message.
+Resume by switching IP and re-running (already-downloaded files are skipped).
+
+## Validation Results
+
+| Calendar | Pages | Match | Mismatch | Rate |
+|----------|-------|-------|----------|------|
+| Lunisolar | 1,812 | 55,117/55,152 days | 35 | 99.937% |
+| Tamil | 1,812 | 1,811/1,811 months | 0 | 100.000% |
+| Bengali | 1,812 | 1,803/1,811 months | 8 | 99.558% |
+| Odia | 1,812 | 1,811/1,811 months | 0 | 100.000% |
+| Malayalam | 1,812 | 1,811/1,811 months | 0 | 100.000% |
+
+See `Docs/DRIKPANCHANG_VALIDATION.md` for full analysis of mismatches.
+
+## Storage
+
+| Calendar   | Pages | Storage |
+|-----------|-------|---------|
+| Lunisolar | 1,812 | 363 MB  |
+| Tamil     | 1,812 | ~360 MB |
+| Bengali   | 1,812 | ~360 MB |
+| Odia      | 1,812 | ~360 MB |
+| Malayalam  | 1,812 | ~360 MB |
+| **Total** | **9,060** | **~1.8 GB** |
 
 ## Parser Notes
 
-The solar parser needs to be tuned after examining actual HTML pages from
-drikpanchang. Before running the parser on full data:
-
-1. Download 1 sample page per calendar manually
-2. Examine the DOM to find CSS selectors for solar day/month/year
-3. Update the parser's extraction logic if needed
-
 The lunisolar parser extracts tithi (1-30) per day from the `dpCellTithi`
 element. Tithi is scheme-independent (same value regardless of Amanta/Purnimanta).
+
+The solar parser extracts month boundaries by scanning for solar day 1 in
+each Gregorian month page. It handles all four calendar-specific HTML
+structures (different CSS classes, header formats, and month name mappings).
