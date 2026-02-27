@@ -15,7 +15,7 @@ PROJECT_DIR = os.path.dirname(SCRAPER_DIR)
 REF_DIR = os.path.join(PROJECT_DIR, "validation", "moshier", "solar")
 
 # --- Fetch settings ---
-DEFAULT_DELAY = 20
+DEFAULT_DELAY = 2
 DEFAULT_START_YEAR = 1900
 DEFAULT_END_YEAR = 2050
 

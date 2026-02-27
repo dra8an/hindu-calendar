@@ -30,6 +30,9 @@ HEADERS = {
 # Normal pages are 150-250 KB; CAPTCHA pages are ~2 KB
 MIN_VALID_SIZE = 50000
 
+# Rotate session every N requests to avoid CAPTCHA (triggers at ~200-400)
+SESSION_ROTATE_INTERVAL = 10
+
 # Graceful shutdown flag
 _shutdown = False
 
@@ -106,6 +109,7 @@ def fetch_pages(targets, output_dir, url_fn, delay, label="page"):
     session = new_session()
     downloaded = 0
     failed = 0
+    since_rotate = 0
 
     for key, fname in targets:
         if is_shutdown():
@@ -115,6 +119,11 @@ def fetch_pages(targets, output_dir, url_fn, delay, label="page"):
         output_path = os.path.join(output_dir, fname)
         if os.path.exists(output_path):
             continue
+
+        # Proactive session rotation to avoid CAPTCHA
+        if since_rotate >= SESSION_ROTATE_INTERVAL:
+            session = new_session()
+            since_rotate = 0
 
         url = url_fn(key)
         remaining -= 1
@@ -129,19 +138,24 @@ def fetch_pages(targets, output_dir, url_fn, delay, label="page"):
             size_kb = os.path.getsize(output_path) / 1024
             print(f"  OK ({size_kb:.0f} KB)")
             downloaded += 1
+            since_rotate += 1
         elif result == "captcha":
-            print(f"\nCAPTCHA hit after {downloaded} fetches. Rotating session...")
+            # Should be rare with proactive rotation, but handle it anyway
+            print(f"\nCAPTCHA hit after {since_rotate} fetches. Rotating session...")
             session = new_session()
+            since_rotate = 0
             result = fetch_url(url, output_path, session)
             if result == "ok":
                 size_kb = os.path.getsize(output_path) / 1024
                 print(f"  Retry OK ({size_kb:.0f} KB)")
                 downloaded += 1
+                since_rotate += 1
             else:
                 print(f"\nStill blocked after session rotation. Stopping.")
                 break
         else:
             failed += 1
+            since_rotate += 1
 
         if remaining > 0 and not is_shutdown():
             time.sleep(delay)

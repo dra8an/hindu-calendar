@@ -59,13 +59,25 @@ def _parse_header(soup, calendar_type):
     if len(parts) != 2:
         return None, None, None
 
-    month_before_raw = parts[0].strip()
-    rest = parts[1].strip().split()
-    if not rest:
+    # Each side may have "MonthName Year" — strip trailing year from both
+    before_tokens = parts[0].strip().split()
+    after_tokens = parts[1].strip().split()
+
+    if not before_tokens or not after_tokens:
         return None, None, None
 
-    month_after_raw = rest[0]
-    year = int(rest[1]) if len(rest) > 1 and rest[1].isdigit() else None
+    # Year is the last token if numeric
+    if before_tokens[-1].isdigit():
+        month_before_raw = " ".join(before_tokens[:-1])
+    else:
+        month_before_raw = " ".join(before_tokens)
+
+    if after_tokens[-1].isdigit():
+        month_after_raw = " ".join(after_tokens[:-1])
+        year = int(after_tokens[-1])
+    else:
+        month_after_raw = " ".join(after_tokens)
+        year = None
 
     month_before = normalize_month_name(month_before_raw, calendar_type)
     month_after = normalize_month_name(month_after_raw, calendar_type)

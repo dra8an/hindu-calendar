@@ -22,20 +22,19 @@ from scraper.solar.config import (
 
 
 def load_ref_csv(path):
-    """Load reference CSV. Returns dict of (greg_year, greg_month) -> row dict.
+    """Load reference CSV. Returns dict keyed by (greg_year, greg_month, greg_day).
 
-    We key by the Gregorian month of the solar month start, since each
-    Gregorian month contains at most one solar month start.
-    Actually, we need to key by solar month identity: (solar_year, solar_month_num).
+    We key by Gregorian date of the solar month start to avoid era mismatches
+    (e.g. Odia uses a different era than Saka on drikpanchang).
     """
     data = {}
     with open(path) as f:
         for row in csv.DictReader(f):
-            key = (int(row["year"]), int(row["month"]))  # solar_year, solar_month
+            gy, gm, gd = int(row["greg_year"]), int(row["greg_month"]), int(row["greg_day"])
+            key = (gy, gm, gd)
             data[key] = {
-                "greg_year": int(row["greg_year"]),
-                "greg_month": int(row["greg_month"]),
-                "greg_day": int(row["greg_day"]),
+                "solar_year": int(row["year"]),
+                "solar_month": int(row["month"]),
                 "month_name": row["month_name"],
                 "length": int(row["length"]),
             }
@@ -47,14 +46,11 @@ def load_parsed_csv(path):
     data = {}
     with open(path) as f:
         for row in csv.DictReader(f):
-            year_str = row["year"]
-            if not year_str:
-                continue
-            key = (int(year_str), int(row["month"]))
+            gy, gm, gd = int(row["greg_year"]), int(row["greg_month"]), int(row["greg_day"])
+            key = (gy, gm, gd)
             data[key] = {
-                "greg_year": int(row["greg_year"]),
-                "greg_month": int(row["greg_month"]),
-                "greg_day": int(row["greg_day"]),
+                "solar_year": int(row["year"]) if row["year"] else None,
+                "solar_month": int(row["month"]),
                 "month_name": row["month_name"],
                 "length": int(row["length"]) if row["length"] and int(row["length"]) > 0 else None,
             }
@@ -82,39 +78,60 @@ def compare_calendar(calendar_type, report_path=None):
     parsed = load_parsed_csv(parsed_path)
     ref = load_ref_csv(reference_path)
 
+    # Build parallel lists sorted by Gregorian date for alignment.
+    # Match ref entries to parsed entries by finding the closest parsed date
+    # for each ref solar month (same month_num).
+    # Simple approach: for each ref entry, look for a parsed entry with same
+    # greg_date (exact match) or ±1 day (mismatch).
+
     matched = 0
     mismatched = 0
     missing_in_ref = 0
     missing_in_parsed = 0
     mismatches = []
 
-    for key in sorted(ref):
-        solar_year, solar_month = key
-        if key not in parsed:
-            missing_in_parsed += 1
-            continue
+    # Index parsed by (greg_year, solar_month_num) for flexible matching
+    parsed_by_gm = {}
+    for key, p in parsed.items():
+        gy, gm, gd = key
+        idx_key = (gy, p["solar_month"])
+        parsed_by_gm[idx_key] = (key, p)
 
-        p = parsed[key]
-        r = ref[key]
+    ref_matched_keys = set()
+    parsed_matched_keys = set()
 
-        if (p["greg_year"] == r["greg_year"] and
-            p["greg_month"] == r["greg_month"] and
-            p["greg_day"] == r["greg_day"]):
+    for ref_key in sorted(ref):
+        gy, gm, gd = ref_key
+        r = ref[ref_key]
+
+        if ref_key in parsed:
+            # Exact Gregorian date match
             matched += 1
+            ref_matched_keys.add(ref_key)
+            parsed_matched_keys.add(ref_key)
         else:
-            mismatched += 1
-            mismatches.append({
-                "solar_year": solar_year,
-                "solar_month": solar_month,
-                "month_name": r["month_name"],
-                "ref_date": f"{r['greg_year']}-{r['greg_month']:02d}-{r['greg_day']:02d}",
-                "drik_date": f"{p['greg_year']}-{p['greg_month']:02d}-{p['greg_day']:02d}",
-                "diff_days": _date_diff(r, p),
-            })
+            # Look for same solar month in same greg_year with different day
+            idx_key = (gy, r["solar_month"])
+            if idx_key in parsed_by_gm:
+                p_key, p = parsed_by_gm[idx_key]
+                mismatched += 1
+                ref_matched_keys.add(ref_key)
+                parsed_matched_keys.add(p_key)
+                mismatches.append({
+                    "solar_year": r["solar_year"],
+                    "solar_month": r["solar_month"],
+                    "month_name": r["month_name"],
+                    "ref_date": f"{gy}-{gm:02d}-{gd:02d}",
+                    "drik_date": f"{p_key[0]}-{p_key[1]:02d}-{p_key[2]:02d}",
+                    "diff_days": _date_diff(
+                        {"greg_year": gy, "greg_month": gm, "greg_day": gd},
+                        {"greg_year": p_key[0], "greg_month": p_key[1], "greg_day": p_key[2]}),
+                })
+            else:
+                missing_in_parsed += 1
 
-    # Keys in parsed but not in ref
     for key in parsed:
-        if key not in ref:
+        if key not in parsed_matched_keys:
             missing_in_ref += 1
 
     total_compared = matched + mismatched

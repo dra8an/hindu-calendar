@@ -20,7 +20,7 @@ BASE_URL_MONTH = "https://www.drikpanchang.com/panchang/month-panchang.html"
 BASE_URL_DAY = "https://www.drikpanchang.com/panchang/day-panchang.html"
 
 # --- Fetch settings ---
-DEFAULT_DELAY = 20  # seconds between requests
+DEFAULT_DELAY = 5  # seconds between requests
 DEFAULT_START_YEAR = 1900
 DEFAULT_END_YEAR = 2050
 
