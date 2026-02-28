@@ -4,8 +4,8 @@
  * Algorithm from Meeus, "Astronomical Algorithms", 2nd ed., Ch. 15.
  * Iterative method using hour angle computation.
  *
- * Configuration: disc center with atmospheric refraction
- *   h₀ = Sinclair refraction at horizon (~-0.612°)
+ * Configuration: upper limb with atmospheric refraction
+ *   h₀ = Sinclair refraction at horizon (~-0.612°) - solar semi-diameter (~-0.267°)
  *   Sidereal time = GAST (apparent, with equation of equinoxes)
  *
  * Precision: ~2 seconds (sufficient for Hindu calendar)
@@ -15,6 +15,10 @@
 
 #define DEG2RAD (M_PI / 180.0)
 #define RAD2DEG (180.0 / M_PI)
+
+/* Solar semi-diameter for upper limb sunrise/sunset (arcminutes).
+ * Mean value ~15.95'. Range: 15.75' (aphelion) to 16.29' (perihelion). */
+#define SOLAR_SEMIDIAM_ARCMIN 16.0
 
 /* Forward declarations for helpers in moshier_sun.c */
 extern double moshier_solar_declination(double jd_ut);
@@ -144,6 +148,7 @@ static double rise_set(double jd_ut, double lon, double lat, double alt, int is_
     if (alt > 0)
         atpress = 1013.25 * pow(1.0 - 0.0065 * alt / 288.0, 5.255);
     double h0 = -sinclair_refraction_horizon(atpress, 0.0);
+    h0 -= SOLAR_SEMIDIAM_ARCMIN / 60.0;  /* solar semi-diameter: upper limb */
     if (alt > 0)
         h0 -= 0.0353 * sqrt(alt);  /* dip of horizon */
 

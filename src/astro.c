@@ -70,9 +70,8 @@ double sunrise_jd(double jd_ut, const Location *loc)
     geopos[1] = loc->latitude;
     geopos[2] = loc->altitude;
 
-    /* Hindu sunrise: center of disc at horizon.
-     * Matches the Python drik-panchanga reference. */
-    int rsmi = SE_CALC_RISE | SE_BIT_DISC_CENTER;
+    /* Hindu sunrise: upper limb at horizon (matches drikpanchang.com). */
+    int rsmi = SE_CALC_RISE;
     int ret = swe_rise_trans(jd_ut - loc->utc_offset / 24.0,
                              SE_SUN, NULL,
                              SEFLG_MOSEPH, rsmi,
@@ -95,7 +94,7 @@ double sunset_jd(double jd_ut, const Location *loc)
     geopos[1] = loc->latitude;
     geopos[2] = loc->altitude;
 
-    int rsmi = SE_CALC_SET | SE_BIT_DISC_CENTER;
+    int rsmi = SE_CALC_SET;
     int ret = swe_rise_trans(jd_ut - loc->utc_offset / 24.0,
                              SE_SUN, NULL,
                              SEFLG_MOSEPH, rsmi,

@@ -123,11 +123,11 @@ static double critical_time_jd(double jd_midnight_ut, const Location *loc,
 {
     switch (type) {
     case SOLAR_CAL_TAMIL:
-        /* Subtract 8.0 min buffer to account for ~24 arcsecond ayanamsa
+        /* Subtract 9.5 min buffer to account for ~24 arcsecond ayanamsa
          * difference between our Lahiri and drikpanchang.com's Lahiri.
-         * This shifts sankranti times by ~8 min; verified against 100
-         * boundary cases — splits the 7.7–8.7 min gap cleanly. */
-        return sunset_jd(jd_midnight_ut, loc) - 8.0 / (24.0 * 60.0);
+         * (Increased from 8.0 min after switching to upper limb sunset,
+         * which is ~1.3 min earlier than disc center.) */
+        return sunset_jd(jd_midnight_ut, loc) - 9.5 / (24.0 * 60.0);
 
     case SOLAR_CAL_BENGALI:
         /* Bengali midnight zone upper bound (00:24 IST = midnight + 24 min).
