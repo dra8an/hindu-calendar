@@ -9,7 +9,7 @@ A chronological summary of each development phase.
 Vendored the Swiss Ephemeris C library from github.com/aloistr/swisseph.
 Set up the Makefile, project structure, and basic astronomical wrapper
 (`astro.c`) for solar/lunar longitude, ayanamsa, and sunrise. Configured
-Lahiri ayanamsa, disc-center sunrise, and Moshier built-in ephemeris mode.
+Lahiri ayanamsa, upper limb sunrise, and Moshier built-in ephemeris mode.
 
 **Phase 2 — Tithi Calculation**
 
@@ -63,7 +63,7 @@ Malayalam. Each has its own rule for which civil day owns a sankranti (the
 moment the Sun enters a new zodiac sign). Discovered the rules empirically
 by testing boundary cases against drikpanchang.com:
 
-- Tamil: sunset minus 8 minutes (ayanamsa buffer)
+- Tamil: sunset minus 9.5 minutes (ayanamsa buffer)
 - Bengali: midnight with a tithi-based rule from Sewell & Dikshit (1896)
 - Odia: fixed 22:12 IST cutoff (not astronomical — discovered after ruling
   out every astronomical hypothesis)

@@ -11,7 +11,7 @@
 - [x] Generate bulk regression CSV for solar calendars (4 CSVs, 1,811 months each, 1900-2050)
 - [x] Malayalam critical time rule verified: end of madhyahna (3/5 of daytime) confirmed correct (see `Docs/MALAYALAM_NOON_FIX.md`)
 - [x] Solar edge case scanner: 100 closest sankrantis per calendar scanned and verified against drikpanchang.com
-- [x] Ayanamsa buffer adjustments: Tamil −8.0 min, Malayalam −9.5 min (fixes 6 + 15 boundary dates)
+- [x] Ayanamsa buffer adjustments: Tamil −9.5 min, Malayalam −9.5 min (fixes 6 + 15 boundary dates)
 - [x] Validation web page extended for solar calendar comparison (dropdown for all 4 calendars)
 - [x] Resolve Bengali solar calendar edge cases — tithi-based rule from Sewell & Dikshit (1896) + per-rashi tuning: 100% (1,811/1,811 months)
 - [x] Dual-backend validation data: SE + Moshier reference CSVs, JSON, web backend selector, `make gen-ref`/`gen-json` targets, `tools/generate_all_validation.sh` master script
@@ -30,13 +30,13 @@ Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshie
 - [x] Dual backend: `make` = moshier, `make USE_SWISSEPH=1` = SE
 - [x] All solar calendar tests 100% pass with moshier (91 failures eliminated by VSOP87)
 - [x] 53,114/53,143 (99.95%) pass with moshier; 29 remaining failures are tithi boundary edge cases from ~10″ lunar precision
-- [ ] Improve lunar longitude precision to eliminate remaining 29 tithi boundary failures
-- [ ] Calibrate Lahiri ayanamsa to match drikpanchang.com (close the ~24″ gap with SE_SIDM_LAHIRI), eliminating the need for Tamil (−8.0 min) and Malayalam (−9.5 min) empirical buffers
+- [x] DE404 moon pipeline: ±0.07″ precision, eliminated all lunar-related failures
+- [x] Upper limb sunrise: matches drikpanchang.com, reduced mismatches from 35 → 16 (99.971%)
+- [x] SE naming cleanup: removed Swiss Ephemeris variable names from Moshier library
+- [ ] Calibrate Lahiri ayanamsa to match drikpanchang.com (close the ~24″ gap), eliminating the need for Tamil and Malayalam empirical buffers
 
-## Priority 2: Sunrise Accuracy
+## Priority 2: Additional Improvements
 
-- [ ] Compare `SE_BIT_DISC_CENTER` (current, with refraction) vs `SE_BIT_DISC_CENTER | SE_BIT_NO_REFRACTION` (geometric) against drikpanchang.com
-- [ ] Try `SE_BIT_HINDU_RISING` flag (disc center + no refraction + geocentric)
 - [ ] Optionally support Swiss Ephemeris data files (in `ephe/`) for higher precision
 - [ ] Add sunrise/sunset unit tests with tighter tolerances
 

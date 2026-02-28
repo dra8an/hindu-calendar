@@ -60,7 +60,7 @@ The key finding: **no single fixed fraction perfectly separates all cases**. Spe
 
 ## Root Cause
 
-The inconsistency is explained by a ~10 minute systematic offset between our sankranti times and drikpanchang's. This offset corresponds to approximately 24 arcseconds of difference in the Lahiri ayanamsa value. Our code uses Swiss Ephemeris SE_SIDM_LAHIRI; drikpanchang likely uses a slightly different Lahiri computation (possibly the Indian Astronomical Ephemeris value).
+The inconsistency is explained by a ~10 minute systematic offset between our sankranti times and drikpanchang's. This offset corresponds to approximately 24 arcseconds of difference in the Lahiri ayanamsa value. Our code uses Swiss Ephemeris our Lahiri; drikpanchang likely uses a slightly different Lahiri computation (possibly the Indian Astronomical Ephemeris value).
 
 Since sankranti is defined as the moment the sidereal solar longitude crosses a multiple of 30 degrees, even a tiny ayanamsa difference shifts the sankranti time. At the sun's typical speed of ~1 degree/day, 24 arcseconds ≈ 10 minutes.
 
@@ -88,14 +88,14 @@ In v0.3.2, a comprehensive edge case scan of all 1,812 Malayalam sankrantis (190
 - **Delta ≤ −10.0 min**: all correct
 - **0 > Delta ≥ −9.3 min**: all 15 entries wrong (our code shows day 1 of new month, drikpanchang shows last day of previous month)
 
-The 9.3–10.0 min gap corresponds exactly to the ~24 arcsecond Lahiri ayanamsa difference between SE_SIDM_LAHIRI and drikpanchang.com. Applied a −9.5 min buffer to the critical time:
+The 9.3–10.0 min gap corresponds exactly to the ~24 arcsecond Lahiri ayanamsa difference between our Lahiri and drikpanchang.com. Applied a −9.5 min buffer to the critical time:
 
 ```c
 // v0.3.2: end of madhyahna minus ayanamsa buffer
 return sr + 0.6 * (ss - sr) - 9.5 / (24.0 * 60.0);
 ```
 
-This splits the 9.3–10.0 min gap cleanly and fixes all 15 boundary dates. The same approach was applied to Tamil (−8.0 min buffer from sunset).
+This splits the 9.3–10.0 min gap cleanly and fixes all 15 boundary dates. The same approach was applied to Tamil (−9.5 min buffer from sunset).
 
 ## Validation Results
 

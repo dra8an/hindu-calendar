@@ -74,13 +74,13 @@ Layer 3: Our extraction (2026)
 |-------------|-------------|-----------------|-------------------------------|
 | `mods3600()` | swemmoon.c, swemplan.c | gplan.c line 22 (macro) | No — SE only changed it from macro to function |
 | `sscc()` | swemmoon.c | gplan.c line 230 | No — identical to Moshier's original |
-| `chewm()` | swemmoon.c | chewtab.c | No — we omitted latitude/radius cases that Koch added |
+| `accum_series()` (was `chewm`) | swemmoon.c | chewtab.c | No — we omitted latitude/radius cases that Koch added |
 | `mean_elements()` | swemmoon.c | mean.c / gplan.c | Partially — Koch extracted named vars from Args[] array |
 | `mean_elements_pl()` | swemmoon.c | gplan.c | No — identical to Moshier's original |
 | `lunar_perturbations()` | swemmoon.c (moon1-moon4) | Moshier's g2plan/g1plan/gmoon | No — we merged Koch's 4 functions into 1; our own organization |
-| Data: z[], LR[], LRT[], LRT2[] | swemmoon.c | Moshier's DE404 fit coefficients | No — numerical data unchanged |
+| Data: z[], moon_lr[], moon_lr_t1[], moon_lr_t2[] | swemmoon.c | Moshier's DE404 fit coefficients | No — numerical data unchanged |
 | `vsop87_earth_longitude()` | swemplan.c | gplan.c `gplan()` function | No — evaluation logic is Moshier's |
-| Data: eartabl[], earargs[] | swemptab.h | Moshier's ear404.c | No — numerical data unchanged |
+| Data: earth_coeffs[], earth_args[] | swemptab.h | Moshier's ear404.c | No — numerical data unchanged |
 | Data: freqs[], phases[] | swemplan.c | gplan.c lines 35-56 | No — identical to Moshier's original |
 | `emb_earth_correction()` | swemplan.c `embofs_mosh()` | Moshier's EMB correction | No — algorithm and coefficients are Moshier's |
 
@@ -139,7 +139,7 @@ observational data table in our library is free to implement in original code.
 computing the Earth-Moon Barycenter's ecliptic longitude, from Bretagnon &
 Francou's VSOP87 planetary theory.
 
-**Proximate source:** The data tables (`eartabl[460]`, `earargs[819]`) and
+**Proximate source:** The data tables (`earth_coeffs[460]`, `earth_args[819]`) and
 evaluation loop were adapted from SE's `swemptab.h` and `swemplan.c`. These
 SE files contain Moshier's plan404 package (circa 1995), which SE incorporated.
 The SE file header states: "Moshier planet routines, modified for SWISSEPH by
@@ -363,12 +363,12 @@ Ephemeris functions."
 | Component | Risk | Rationale |
 |-----------|------|-----------|
 | Data tables (all) | None | Scientific facts, uncopyrightable |
-| sscc(), chewm(), mods3600() | None | Moshier's original code, permissive license |
+| sscc(), accum_series(), mods3600() | None | Moshier's original code, permissive license |
 | mean_elements(), mean_elements_pl() | None | Moshier's original code |
 | VSOP87 evaluation loop | None | Moshier's gplan() algorithm |
 | EMB→Earth correction | None | Moshier's algorithm and coefficients |
 | lunar_perturbations() | None | Our own single-function organization; Koch's moon1()-moon4() boundaries not followed |
-| Variable name SWELP | Negligible | Koch's 2006 rename; a single variable name is not substantial creative expression |
+| Variable name LP (was SWELP) | None | Koch's 2006 rename SWELP subsequently renamed to LP in our code; no SE naming remains |
 | Meeus, IAU 1976, Sinclair modules | None | Independently implemented from published sources |
 
 ---
@@ -404,6 +404,7 @@ Moshier's software packages as the implementation reference.**
 | 2018 | Moshier grants explicit BSD license to NearForm |
 | 2026 | Our library developed by extracting longitude pipelines from SE source files containing Moshier's code |
 | 2026 | Restructured lunar pipeline: merged Koch's moon1()-moon4() into single lunar_perturbations() |
+| 2026 | SE naming cleanup: renamed SWELP→LP, chewm→accum_series, eartabl→earth_coeffs, earargs→earth_args, LR→moon_lr, LRT→moon_lr_t1, LRT2→moon_lr_t2 |
 
 ---
 

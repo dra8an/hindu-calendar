@@ -1,32 +1,30 @@
 # Drikpanchang.com Scrape Validation Details
 
-## Lunisolar (Phase 15)
+## Lunisolar (Phase 15, updated Phase 18)
 - Scraped all 1,812 month panchang pages (1900-2050), 55,152 days of tithi data
 - `scraper/lunisolar/` — fetch.py, parse.py, compare.py
 - HTML structure: `dpBigDate` (Gregorian day) + `dpCellTithi` ("TithiName Paksha")
 - Cookies: `drik-school-name=amanta`, `drik-geoname-id=1261481` (New Delhi), `drik-ayanamsha-type=chitra-paksha`
 - Rate limiting: CAPTCHA after ~200 requests per IP, detected by response size <50KB
 - VPN/IP rotation required after each ~200-request batch; 2s delay works (no benefit from longer)
-- Result: 55,117/55,152 match (99.937%), 35 mismatches
-- All 35 mismatches are tithi boundary edge cases: elongation crosses 12° within 0-1.3 min of sunrise
-- 33 dates: our code assigns next tithi, drikpanchang keeps previous (boundary just before sunrise)
-- 2 dates (2045-01-17, 2046-05-22): opposite direction
-- Tightest margin: 3 seconds (1939-07-23), widest: 1.3 min (1982-03-07)
-- Diagnostic tool: `tools/drikpanchang_mismatch_diag.c`
+- Result: 55,136/55,152 match (99.971%), 16 mismatches
+- All 16 mismatches are tithi boundary edge cases: elongation crosses 12° within 0-1.8 min of sunrise
+- 15 dates: our code assigns next tithi, drikpanchang keeps previous (boundary 0.0-1.8 min after sunrise)
+- 1 date: opposite direction
+- Diagnostic tool: `tools/mismatch16_diag.c`
 - Full writeup: `Docs/DRIKPANCHANG_VALIDATION.md`
 
-## Disc Center vs Disc Edge Experiment
-- Production: disc center (Sinclair refraction h0=-0.612°) — 35 mismatches (99.937%)
-- Disc edge (h0=-0.878°, subtract 0.266° solar semi-diameter) — 16 mismatches (99.971%)
-- Disc edge fixes 32 of 35 original mismatches but introduces 13 new regressions
+## Upper Limb Sunrise (Phase 18)
+- Production: upper limb (h0 ≈ -0.879°, Sinclair refraction + 16' solar semi-diameter) — 16 mismatches (99.971%)
+- Previous disc center (h0 = -0.612°) gave 35 mismatches (99.937%)
+- Switching to upper limb fixed 32 of 35 original mismatches, introduced 13 new → net 16
+- Drikpanchang sunrise confirmed to be upper limb: scraped HH:MM times are ~60-75s earlier than disc center
 - 3 dates wrong in both: 1982-03-07 (margin too wide), 2045-01-17, 2046-05-22 ("near end" cases)
-- Neither approach perfectly matches drikpanchang — confirms sub-minute boundary uncertainty
 - **Optimal h0 search**: h0=-0.817° gives only 8 mismatches (99.985%), zero collateral damage
 - Sweet spot window: -0.818° < h0 < -0.813° (5 millidegrees)
 - 8 irreducible mismatches: no single constant h0 can fix all (constraints provably conflict)
 - h0=-0.817° = refraction + ~77% semi-diameter — no physical motivation, would be overfitting
-- Retained disc center: matches Python drik-panchanga ref and SE_BIT_DISC_CENTER convention
-- Tools: `tools/disc_edge_test.c`, `tools/disc_edge_full.c`, `tools/h0_sweep.c`
+- Tools: `tools/disc_edge_test.c`, `tools/disc_edge_full.c`, `tools/h0_sweep.c`, `tools/sunrise_dp_compare.c`
 
 ## Solar (Phase 16)
 - Scraped all 4 solar calendars: 1,812 pages each, 7,248 total

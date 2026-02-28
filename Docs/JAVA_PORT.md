@@ -145,13 +145,13 @@ C `extern` declarations and global state become constructor injection in Java. M
 
 ### Thread Safety
 
-NOT thread-safe, matching the C implementation. Moshier pipeline uses mutable instance fields (ss/cc tables, moon state variables like T, T2, SWELP, MP, D, NF, moonpol0, etc.). Each `Ephemeris` instance should be used from a single thread.
+NOT thread-safe, matching the C implementation. Moshier pipeline uses mutable instance fields (sin/cos tables, moon state variables like T, T2, LP, MP, D, NF, moonpol0, etc.). Each `Ephemeris` instance should be used from a single thread.
 
 ## Key Porting Traps Encountered
 
-1. **VSOP87 pointer walking**: The nested loop in `calc_vsop_earth()` walks two arrays (`eartabl` for coefficients, `earargs` for argument indices) with different strides. Getting the index arithmetic wrong produces subtly wrong solar longitudes. Must carefully track `pIdx` and `plIdx` through the coefficient/harmonic structure.
+1. **VSOP87 pointer walking**: The nested loop in `calc_vsop_earth()` walks two arrays (`earth_coeffs` / `EARTABL` for coefficients, `earth_args` / `EARARGS` for argument indices) with different strides. Getting the index arithmetic wrong produces subtly wrong solar longitudes. Must carefully track `pIdx` and `plIdx` through the coefficient/harmonic structure.
 
-2. **DE404 `chewm()` function**: Accumulates table values into moonpol using pointer walking in C. Java version uses explicit index tracking through `LR[]`, `LRT[]`, and `LRT2[]` arrays.
+2. **DE404 `accum_series()` function**: Accumulates table values into moonpol using pointer walking in C. Java version uses explicit index tracking through the lunar data arrays.
 
 3. **Mutable state in moon pipeline**: The DE404 pipeline has ~25 mutable fields that persist across calls. These are instance fields in `MoshierMoon`, not local variables, because intermediate results (mean elements, planetary perturbations) are shared between `moon1()`...`moon4()`.
 

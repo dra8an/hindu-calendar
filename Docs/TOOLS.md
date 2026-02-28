@@ -77,7 +77,7 @@ One-off tools built while reverse-engineering drikpanchang.com's critical time r
 | `bengali_diag.c` | Prints all 100 Bengali edge cases with multiple candidate rules. Original diagnostic tool |
 | `bengali_analysis.c` | Analysis of the 37 verified entries against nishita and midnight variants |
 | `bengali_eot.c` | Tests equation of time midnight at IST, Ujjain, Delhi, and Kolkata longitudes. Ruled out |
-| `bengali_ayanamsa.c` | Computes critical ayanamsa difference for each entry and tests linear ayanamsa models. Used to measure the ~24 arcsecond SE_SIDM_LAHIRI vs drikpanchang offset |
+| `bengali_ayanamsa.c` | Computes critical ayanamsa difference for each entry and tests linear ayanamsa models. Used to measure the ~24 arcsecond Lahiri vs drikpanchang offset |
 | `bengali_shifted.c` | Tests shifted sankranti times (with ayanamsa correction) against all fixed IST cutoffs and nishita+buffer combinations. Confirmed max non-trivial score of 22/37 |
 | `bengali_weekday.c` | Day-of-week analysis — showed each rashi's edge cases always fall on the same weekday, so weekday alone can't separate W/C entries |
 
@@ -97,8 +97,10 @@ One-off tools built while reverse-engineering drikpanchang.com's critical time r
 
 | Tool | Purpose |
 |------|---------|
-| `drikpanchang_mismatch_diag.c` | For all 35 lunisolar tithi mismatches vs drikpanchang, shows sunrise time, our tithi vs drikpanchang tithi, and margin to nearest tithi boundary (min before / after sunrise) |
-| `disc_edge_test.c` | Compares disc-center vs disc-edge sunrise for the 35 mismatch dates. Shows which dates are fixed and which regress |
+| `drikpanchang_mismatch_diag.c` | For the original 35 disc-center lunisolar tithi mismatches vs drikpanchang, shows sunrise time, our tithi vs drikpanchang tithi, and margin to nearest tithi boundary |
+| `mismatch16_diag.c` | Diagnoses the 16 remaining upper-limb mismatches: sunrise time, tithi, margin to nearest boundary |
+| `sunrise_dp_compare.c` | Compares our sunrise times against drikpanchang's HH:MM sunrise for mismatch dates |
+| `disc_edge_test.c` | Historical: compares disc-center vs disc-edge sunrise for the original 35 mismatch dates |
 | `disc_edge_full.c` | Generates full 55,152-day tithi reference CSV using disc-edge sunrise (h0=-0.878°) for comprehensive comparison |
 | `h0_sweep.c` | Finds the optimal refraction angle (h0) that minimizes total drikpanchang mismatches. Binary-searches for critical h0 per date, then scans the full parameter space. Result: h0=-0.817° gives 8 mismatches (99.985%) |
 | `tithi_boundary_diag.c` | Measures elongation error at tithi boundaries for failing dates. Shows distance (in arcseconds and minutes of time) to the boundary flip point |

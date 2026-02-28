@@ -83,8 +83,8 @@ Remove or reword all comments that reference SE source files or constants:
 ## Verification
 
 1. `make clean && make` — build succeeds, no warnings
-2. `make test` — all 53,143 assertions pass (minus the 2 known Moshier lunisolar edge cases)
-3. `python3 -m scraper.lunisolar.compare` — 55,117/55,152 (35 mismatches, unchanged)
+2. `make test` — all 53,143 assertions pass (100%)
+3. `python3 -m scraper.lunisolar.compare` — 55,136/55,152 (16 mismatches with upper limb)
 4. `python3 -m scraper.solar.compare --calendar bengali` — 1,811/1,811 (100%)
 5. `grep -r 'SWELP\|eartabl\|earargs\|ear_max_harmonic\|chewm' lib/ src/ tests/` — no matches
 6. Java: `cd java && ./gradlew test` — 227 tests pass

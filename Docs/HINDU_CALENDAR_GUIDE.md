@@ -62,7 +62,7 @@ To implement these calendars, you need:
 1. **A planetary ephemeris library** — either Swiss Ephemeris or a self-contained analytical library. Must support:
    - Tropical ecliptic longitudes for Sun and Moon
    - Lahiri ayanamsa computation
-   - Sunrise/sunset calculation (disc center, with refraction)
+   - Sunrise/sunset calculation (upper limb, with refraction)
    - Julian Day ↔ Gregorian date conversion
 
 2. **Basic numerical methods** — Bisection root-finding, Lagrange interpolation
@@ -131,11 +131,10 @@ The **[ayanamsa](https://en.wikipedia.org/wiki/Ayanamsa)** is the angular differ
 
 In Swiss Ephemeris, set it with:
 ```
-SE_SIDM_LAHIRI = 1
-swe_set_sid_mode(SE_SIDM_LAHIRI, 0, 0)
+swe_set_sid_mode(1 /* Lahiri */, 0, 0)
 ```
 
-**Important**: There are small differences (~24 arcseconds) between the Swiss Ephemeris SE_SIDM_LAHIRI and the Indian Astronomical Ephemeris Lahiri value. This causes ~10 minute differences in sankranti times, which matters for boundary cases in solar calendars. This can be resolved with empirical buffers on the critical times. See [Section 5.3](#53-ayanamsa-differences).
+**Important**: There are small differences (~24 arcseconds) between the Swiss Ephemeris Lahiri and the Indian Astronomical Ephemeris Lahiri value. This causes ~10 minute differences in sankranti times, which matters for boundary cases in solar calendars. This can be resolved with empirical buffers on the critical times. See [Section 5.3](#53-ayanamsa-differences).
 
 ### 2.4 Tropical vs Sidereal: When to Use Which
 
@@ -174,12 +173,12 @@ Key values:
 The Hindu calendar is sunrise-based: the tithi at sunrise governs the entire civil day. This means sunrise computation is critical.
 
 **Sunrise definition**: For matching drikpanchang.com, use:
-- **Center of disc** at the horizon (not upper limb)
-- **With [atmospheric refraction](https://en.wikipedia.org/wiki/Atmospheric_refraction)** (standard ~34 arcminutes)
+- **Upper limb** at the horizon (top edge of the solar disc, ~16 arcminutes semi-diameter)
+- **With [atmospheric refraction](https://en.wikipedia.org/wiki/Atmospheric_refraction)** (Sinclair formula, ~34 arcminutes at horizon)
 
 In Swiss Ephemeris terms:
 ```
-rsmi = SE_CALC_RISE | SE_BIT_DISC_CENTER
+rsmi = SE_CALC_RISE   /* upper limb is the default (no SE_BIT_DISC_CENTER) */
 ```
 
 The `geopos` array for Swiss Ephemeris `swe_rise_trans` is ordered: `[longitude, latitude, altitude]` (note: longitude first, unlike the usual lat/lon convention).
@@ -916,7 +915,7 @@ Mesha (rashi 1), typically around April 14 (Pohela Boishakh).
 
 #### Critical Time: Fixed 22:12 IST
 
-The Odia calendar uses a fixed IST clock time as its critical time. This was discovered empirically by examining 35 boundary cases against drikpanchang.com.
+The Odia calendar uses a fixed IST clock time as its critical time. This was discovered empirically by examining 23 boundary cases against drikpanchang.com.
 
 ```
 function critical_time_odia(jd_midnight_ut, location):
@@ -1023,7 +1022,7 @@ Fraction   Assignment
 
 The pair at fractions 0.587 and 0.588 are assigned to opposite sides of the boundary. This means no single fixed fraction can perfectly separate all cases.
 
-**Root cause**: There is a ~10 minute systematic offset between our sankranti times and drikpanchang's, caused by a ~24 arcsecond difference in the Lahiri ayanamsa value between Swiss Ephemeris (SE_SIDM_LAHIRI) and drikpanchang's implementation. Since the sun moves ~1°/day, 24 arcseconds ≈ 10 minutes of time.
+**Root cause**: There is a ~10 minute systematic offset between our sankranti times and drikpanchang's, caused by a ~24 arcsecond difference in the Lahiri ayanamsa value between our implementation and drikpanchang's. Since the sun moves ~1°/day, 24 arcseconds ≈ 10 minutes of time.
 
 The rule IS 3/5 of daytime, but the ~10 minute sankranti time difference means that cases within ~10 minutes of the cutoff (fractions 0.586–0.600) disagree without compensation. This affects 15 dates in the 1900–2050 range.
 
@@ -1231,7 +1230,7 @@ Without the 0.5, all dates computed from local midnight through local noon will 
 
 ### 5.3 Ayanamsa Differences
 
-The Swiss Ephemeris `SE_SIDM_LAHIRI` and the Indian Astronomical Ephemeris Lahiri ayanamsa differ by approximately 24 arcseconds. This translates to:
+The Swiss Ephemeris Lahiri ayanamsa and the Indian Astronomical Ephemeris Lahiri ayanamsa differ by approximately 24 arcseconds. This translates to:
 
 - ~10 minutes difference in sankranti times (sun moves ~1°/day, so 24" / 3600"/° × 24h/°/day ≈ 10 min)
 - ~10 minutes difference in rashi boundary crossings
@@ -1245,34 +1244,34 @@ Systematic investigation of all ~400 closest-to-critical-time sankrantis (100 pe
 
 | Calendar | Danger Zone | Wrong Entries | Buffer Applied | Result |
 |----------|-------------|---------------|----------------|--------|
-| Tamil | 0 to −7.7 min | 6 | −8.0 min from sunset | All 6 fixed |
+| Tamil | 0 to −7.7 min | 6 | −9.5 min from sunset | All 6 fixed |
 | Bengali | Tithi-based rule + per-rashi tuning | 0 | Tithi at Hindu sunrise + Karkata/Makara overrides + per-rashi crit/day-edge | 1,811/1,811 correct |
 | Odia | None | 0 | None needed | 100/100 correct |
 | Malayalam | 0 to −9.3 min | 15 | −9.5 min from end of madhyahna | All 15 fixed |
 
-The buffer is subtracted from the critical time computation. For Tamil: `sunset - 8.0 min`. For Malayalam: `end_of_madhyahna - 9.5 min`. Odia's fixed 22:12 IST cutoff is naturally immune to the ayanamsa offset. Bengali uses a fundamentally different approach (tithi-based rule) that sidesteps the issue.
+The buffer is subtracted from the critical time computation. For Tamil: `sunset - 9.5 min`. For Malayalam: `end_of_madhyahna - 9.5 min`. Odia's fixed 22:12 IST cutoff is naturally immune to the ayanamsa offset. Bengali uses a fundamentally different approach (tithi-based rule) that sidesteps the issue.
 
-With these buffers applied, the implementation matches drikpanchang.com on 100% of lunisolar dates and all but 1 solar calendar boundary date (1976-10-17 Bengali) across 1900–2050.
+With these buffers applied, all four solar calendars achieve 100% match against drikpanchang.com across all 1,811 months (1900–2050).
 
 ### 5.4 Sunrise Definition
 
-The Hindu calendar defines sunrise as the moment the **center of the sun's disc** appears at the geometric horizon, accounting for atmospheric refraction (~34 arcminutes).
+The Hindu calendar defines sunrise as the moment the **upper limb** (top edge) of the sun's disc appears at the geometric horizon, accounting for atmospheric refraction (~34 arcminutes). The geometric depression angle is h₀ ≈ −0.879° (Sinclair refraction ~0.612° + solar semi-diameter ~0.267°).
 
 This is different from:
-- **Upper limb** sunrise (used in some civil definitions): sun appears ~1 minute earlier
+- **Disc center** sunrise (used in some astronomical ephemeris defaults): sun appears ~60-75 seconds later
 - **No refraction**: sun appears ~2 minutes later
 
-To match drikpanchang.com, you must use disc center with refraction. In Swiss Ephemeris:
+To match drikpanchang.com, you must use upper limb with refraction. In Swiss Ephemeris:
 
 ```
-rsmi = SE_CALC_RISE | SE_BIT_DISC_CENTER
+rsmi = SE_CALC_RISE   /* upper limb is the default (no SE_BIT_DISC_CENTER) */
 ```
 
 Using the wrong sunrise definition shifts all tithi determinations by 1–2 minutes, which usually doesn't matter but can flip edge cases (a tithi transition at sunrise).
 
 ### 5.5 Day-of-Week Conventions
 
-Swiss Ephemeris `swe_day_of_week()` returns 0=Monday, 1=Tuesday, ..., 6=Sunday (ISO convention).
+The ISO convention returns 0=Monday, 1=Tuesday, ..., 6=Sunday.
 
 Many other systems use 0=Sunday, 1=Monday, ..., 6=Saturday.
 
@@ -1363,7 +1362,7 @@ For implementers: do not try to find an "elegant" astronomical rule for Odia. Us
 
 The Malayalam 3/5-of-daytime rule has an inherent ambiguity zone (fractions 0.586–0.600) where no single fraction perfectly separates all drikpanchang.com assignments. This is due to the ~24 arcsecond ayanamsa difference (see [Section 5.3](#53-ayanamsa-differences)).
 
-**Resolution**: Subtracting a 9.5-minute empirical buffer from the end-of-madhyahna critical time (`end_of_madhyahna - 9.5 min`) cleanly splits the 9.3–10.0 min danger zone and fixes all 15 previously wrong boundary dates across 1900–2050. The same approach works for Tamil (−8.0 min from sunset, fixing 6 dates). See [Section 5.3](#53-ayanamsa-differences) for the full summary.
+**Resolution**: Subtracting a 9.5-minute empirical buffer from the end-of-madhyahna critical time (`end_of_madhyahna - 9.5 min`) cleanly splits the 9.3–10.0 min danger zone and fixes all 15 previously wrong boundary dates across 1900–2050. The same approach works for Tamil (−9.5 min from sunset, fixing 6 dates). See [Section 5.3](#53-ayanamsa-differences) for the full summary.
 
 ### 5.15 Self-Contained Ephemeris Alternative
 
@@ -1377,9 +1376,9 @@ It is possible to implement a fully self-contained ephemeris library (~2,000 lin
 5. Nutation in longitude (Δψ, from a 13-term IAU 1980 series)
 6. Aberration correction (−20.496 arcseconds)
 
-**Lunar longitude (DE404-fitted Moshier theory)**: The full Moshier moon pipeline (originally fitted to JPL DE404) provides lunar ecliptic longitude to ±0.07 arcseconds. This involves ~800 lines of code with four computational stages (`moon1`–`moon4`), 26 mean element functions, and three lookup tables (LR, LRT, LRT2). The critical insight is that ALL stages and corrections are needed — using just the main table without the explicit terms from `moon1`/`moon2` gives *worse* results than Meeus Ch.47 with 60 terms.
+**Lunar longitude (DE404-fitted Moshier theory)**: The full Moshier moon pipeline (originally fitted to JPL DE404) provides lunar ecliptic longitude to ±0.07 arcseconds. This involves ~800 lines of code with four computational stages (`moon1`–`moon4`), 26 mean element functions, and three lookup tables (moon_lr, moon_lr_t1, moon_lr_t2). The critical insight is that ALL stages and corrections are needed — using just the main table without the explicit terms from `moon1`/`moon2` gives *worse* results than Meeus Ch.47 with 60 terms.
 
-**Lahiri ayanamsa (IAU 1976 precession)**: Three-dimensional equatorial precession matching Swiss Ephemeris's algorithm for SE_SIDM_LAHIRI. The key parameters are: t₀ = JD 2435553.5, ayan_t₀ = 23.245524743°. **Critical**: The ayanamsa must be computed WITHOUT nutation — `swe_get_ayanamsa_ut()` returns the mean ayanamsa. Nutation cancels in sidereal positions: `sid = (trop + Δψ) − (ayan + Δψ) = trop − ayan`. Adding nutation to the ayanamsa causes a ~17 arcsecond oscillating error with an 18.6-year period.
+**Lahiri ayanamsa (IAU 1976 precession)**: Three-dimensional equatorial precession matching Swiss Ephemeris's Lahiri algorithm. The key parameters are: t₀ = JD 2435553.5, ayan_t₀ = 23.245524743°. **Critical**: The ayanamsa must be computed WITHOUT nutation — `swe_get_ayanamsa_ut()` returns the mean ayanamsa. Nutation cancels in sidereal positions: `sid = (trop + Δψ) − (ayan + Δψ) = trop − ayan`. Adding nutation to the ayanamsa causes a ~17 arcsecond oscillating error with an 18.6-year period.
 
 **Sunrise (iterative Meeus Ch.15)**: Three-iteration transit/rise/set algorithm with Sinclair refraction and apparent sidereal time. Achieves ±2 second precision vs Swiss Ephemeris.
 
@@ -1568,7 +1567,7 @@ GY = Gregorian Year.
 
 | Calendar | Critical Time | Formula | Season-Dependent? |
 |----------|--------------|---------|-------------------|
-| Tamil | Sunset − 8 min | `sunset_jd(date, location) − 8.0 min` | Yes (sunset varies) |
+| Tamil | Sunset − 9.5 min | `sunset_jd(date, location) − 9.5 min` | Yes (sunset varies) |
 | Bengali | Midnight + 24 min + tithi rule | `midnight_ut + 24min` + Sewell & Dikshit tithi rule | Partially (tithi varies) |
 | Odia | 22:12 IST | `midnight_ut + 16.7h` | No |
 | Malayalam | End of madhyahna − 9.5 min | `sunrise + 0.6 × (sunset − sunrise) − 9.5 min` | Yes (day length varies) |
@@ -1594,7 +1593,7 @@ function tropical_lunar_longitude(jd) → double
 function get_ayanamsa(jd) → double
 
 // Returns JD (UT) of sunrise for a given date JD and location
-// Uses disc center with refraction
+// Uses upper limb with refraction
 function sunrise_jd(jd, location) → double
 
 // Returns JD (UT) of sunset for a given date JD and location
@@ -2161,13 +2160,13 @@ Year: Simha sankranti date, on/after → Kollam = 2025 - 824 = 1201
 
 10. **Ayanamsa** — the angular measure of precession; Lahiri ayanamsa is the Indian standard.
     - [Wikipedia: Ayanamsa](https://en.wikipedia.org/wiki/Ayanamsa)
-    - The Indian Astronomical Ephemeris (published by the Positional Astronomy Centre, Kolkata) defines the official Lahiri value; this differs by ~24 arcseconds from Swiss Ephemeris SE_SIDM_LAHIRI
+    - The Indian Astronomical Ephemeris (published by the Positional Astronomy Centre, Kolkata) defines the official Lahiri value; this differs by ~24 arcseconds from Swiss Ephemeris's Lahiri
 
 11. **Julian day** — the continuous day count used as the time coordinate in all algorithms.
     - [Wikipedia: Julian day](https://en.wikipedia.org/wiki/Julian_day)
     - [US Naval Observatory Julian Date Converter](https://aa.usno.navy.mil/data/JulianDate)
 
-12. **Sunrise and sunset computation** — atmospheric refraction, disc center vs upper limb.
+12. **Sunrise and sunset computation** — atmospheric refraction, upper limb definition.
     - [Wikipedia: Sunrise equation](https://en.wikipedia.org/wiki/Sunrise_equation)
     - Swiss Ephemeris docs on `swe_rise_trans` — [Rise/Transit documentation](https://www.astro.com/swisseph/swephprg.htm#_Toc112948997)
 

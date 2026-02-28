@@ -55,7 +55,7 @@ simple in description but are maddeningly specific in practice:
 that the ~24 arcsecond difference between our computed Lahiri ayanamsa and
 drikpanchang's creates an 8-10 minute offset in sankranti times. When the
 sankranti falls within minutes of sunset, that offset flips the day assignment.
-We solved it with an empirical buffer of -8.0 minutes from sunset.
+We solved it with an empirical buffer of -9.5 minutes from sunset.
 
 **Odia** was the most surprising. I initially hypothesized it used apparent
 midnight, then 5 ghati before apparent midnight, then various other

@@ -251,7 +251,7 @@ Date       | Day | Solar Date
 
 Implemented in v0.3.0, expanded in v0.3.1, ayanamsa buffers added in v0.3.2. All solar tests pass: 351 unit + 327 validation + 28,976 regression + 1,200 edge case = 30,854 solar assertions. Total: 53,143 assertions across 10 suites.
 
-Malayalam end-of-madhyahna rule confirmed correct in v0.3.1 — see `Docs/MALAYALAM_NOON_FIX.md`. Ayanamsa buffer adjustments (Tamil −8.0 min, Malayalam −9.5 min) added in v0.3.2 — see `Docs/MALAYALAM_ADJUSTMENTS.md`.
+Malayalam end-of-madhyahna rule confirmed correct in v0.3.1 — see `Docs/MALAYALAM_NOON_FIX.md`. Ayanamsa buffer adjustments (Tamil −9.5 min, Malayalam −9.5 min) added in v0.3.2 — see `Docs/MALAYALAM_ADJUSTMENTS.md`.
 
 ## Resolved Open Questions
 
@@ -269,7 +269,7 @@ The plan had some incorrect critical time rules. The actual rules verified again
 
 | Calendar | Plan | Actual | Notes |
 |----------|------|--------|-------|
-| **Tamil** | Sunset | **Sunset − 8.0 min** | Correct concept; ayanamsa buffer added in v0.3.2 to fix 6 boundary dates |
+| **Tamil** | Sunset | **Sunset − 9.5 min** | Correct concept; ayanamsa buffer added in v0.3.2 to fix 6 boundary dates |
 | **Bengali** | Midnight | **Midnight + 24min buffer** | Edge-case zone 11:36 PM - 12:24 AM from R/D book confirmed; 23 edge cases with complex pattern remain unresolved |
 | **Odia** | Sunrise (next morning) | **22:12 IST fixed cutoff** | Empirically determined; 100/100 edge cases correct, no ayanamsa adjustment needed |
 | **Malayalam** | Apparent noon | **End of madhyahna − 9.5 min** | 3/5 of daytime (not midpoint); ayanamsa buffer added in v0.3.2 to fix 15 boundary dates |

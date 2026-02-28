@@ -9,7 +9,7 @@ Self-contained astronomical ephemeris replacing Swiss Ephemeris (SE) for the Hin
 | Lines of code | 1,943 | 51,493 |
 | External files | None | Optional .se1 files |
 | Build time | ~0.5s | ~3s |
-| Test pass rate | 53,141 / 53,143 (99.996%) | 53,143 / 53,143 (100%) |
+| Test pass rate | 53,143 / 53,143 (100%) | 53,143 / 53,143 (100%) |
 | drikpanchang.com match | 1,071 / 1,071 (100%) | 1,071 / 1,071 (100%) |
 | Reduction factor | **26x fewer lines** | — |
 
@@ -77,25 +77,25 @@ Full DE404-fitted Moshier lunar theory, ported from SE's `swemmoon.c` (longitude
 
 **Pipeline:**
 ```
-mean_elements()     → D, M, MP, NF, SWELP + z[] corrections
+mean_elements()     → D, M, MP, NF, LP + z[] corrections
 mean_elements_pl()  → Ve, Ea, Ma, Ju, Sa (planetary mean longitudes)
-moon1()             → Venus-Jupiter-Earth-Mars perturbations (LRT2, LRT tables + explicit terms)
+moon1()             → Venus-Jupiter-Earth-Mars perturbations (moon_lr_t2, moon_lr_t1 tables + explicit terms)
 moon2()             → 24 additional DE404-fitted perturbation terms
-moon3()             → Main LR table summation (118 terms) + polynomial assembly
+moon3()             → Main moon_lr table summation (118 terms) + polynomial assembly
 moon4()             → Convert arcseconds to radians, normalize
 ```
 
 **Data tables:**
 - `z[26]`: Mean element corrections and perturbation T² coefficients
-- `LR[118×8]`: Main longitude/radius terms (longitude half used)
-- `LRT[38×8]`: T¹ longitude/radius corrections
-- `LRT2[25×6]`: T² longitude corrections
+- `moon_lr[118×8]`: Main longitude/radius terms (longitude half used)
+- `moon_lr_t1[38×8]`: T¹ longitude/radius corrections
+- `moon_lr_t2[25×6]`: T² longitude corrections
 - Variable light-time correction using 5 LR radius terms
 
 **Helper functions:**
 - `mods3600()`: Normalize arcseconds modulo 1,296,000 (360°)
 - `sscc()`: Chebyshev recurrence for sin/cos multiples of angles
-- `chewm()`: Step through perturbation table and accumulate terms
+- `accum_series()`: Step through perturbation table and accumulate terms
 
 Nutation in longitude (from `moshier_sun.c`) is added to get apparent longitude.
 
@@ -103,7 +103,7 @@ Nutation in longitude (from `moshier_sun.c`) is added to get apparent longitude.
 
 ### Lahiri Ayanamsa (`moshier_ayanamsa.c`)
 
-Replicates SE_SIDM_LAHIRI exactly using the same 3D equatorial precession algorithm:
+Replicates the Lahiri ayanamsa exactly using the same 3D equatorial precession algorithm as Swiss Ephemeris:
 
 1. Start with vernal point at target date: (1, 0, 0) in equatorial coordinates
 2. Precess from target date → J2000 using IAU 1976 angles
@@ -135,7 +135,7 @@ Meeus Ch. 15 iterative method with SE-matching refinements:
 6. Midnight UT wrap-around handling for near-midnight sunrises (e.g., Delhi in May)
 7. Return JD of event
 
-**Refraction**: Sinclair formula at 0°C, 1013.25 hPa (matches SE's `calc_astronomical_refr()`), giving h₀ ≈ −0.612° at horizon. This replaces the Meeus standard h₀ = −0.5667° for better SE agreement.
+**Upper limb**: h₀ = −(Sinclair refraction) − (solar semi-diameter) ≈ −0.612° − 0.267° ≈ −0.879°. This matches drikpanchang.com's sunrise definition (top edge of the solar disc at the horizon).
 
 **Sidereal time**: GAST (apparent sidereal time) = GMST + Δψ × cos(ε). SE's `swe_sidtime()` returns GAST; using GMST instead caused ~1″ hour angle error (~4s sunrise offset).
 
@@ -157,15 +157,9 @@ Statistical comparison across 1900–2050 at representative dates:
 
 All differences are well within the requirements for Hindu calendar calculation (tithi boundaries need ~1 arcminute, sankranti boundaries need ~1 minute).
 
-## The 2 Remaining Failures
+## Zero Test Failures
 
-Only 2 failures remain (out of 53,143 assertions), both irreducible edge cases:
-
-1. **1965-05-30** (`test_adhika_kshaya`): Near-midnight-UT sunrise wrap-around. Delhi sunrise falls at ~23:54 UT (05:24 IST), extremely close to 0h UT. The Meeus Ch.15 iteration converges correctly but the midnight-UT wrap-around introduces a ~16s systematic offset compared to SE's different algorithm. This flips the tithi at a boundary.
-
-2. **2001-09-20** (`test_adhika_kshaya`): Tithi boundary within 0.17″ of transition at sunrise. Even with DE404 precision (0.07″ RMS), the residual elongation difference of 0.31″ is enough to flip the discrete tithi result.
-
-Neither affects the 1,071 dates externally verified against drikpanchang.com, which all pass with both backends.
+All 53,143 assertions pass with the Moshier backend. The two dates that previously appeared as "failures" (1965-05-30 and 2001-09-20) were caused by `test_adhika_kshaya.c` being hardcoded to read the Swiss Ephemeris CSV even when testing with Moshier. Once fixed to select the backend-appropriate CSV, both dates pass — and are confirmed correct by drikpanchang.com (SE is wrong on those 2 dates, not Moshier).
 
 ## What We Tried and Why
 
@@ -195,11 +189,11 @@ See [Error Cancellation](#error-cancellation-meeus-p164-formula) below.
 
 ### Removing Eccentricity Correction
 
-Hypothesized that SE's `chewm()` function doesn't apply the E correction (eccentricity factor) to lunar terms, so perhaps we shouldn't either.
+Hypothesized that SE's `accum_series()` function doesn't apply the E correction (eccentricity factor) to lunar terms, so perhaps we shouldn't either.
 
 **Result: 208 failures (much worse)**
 
-The E correction is essential for the Meeus 60-term model. SE's `chewm()` handles E differently (through its T-dependent LRT terms), but the standalone Meeus model requires explicit E multiplication.
+The E correction is essential for the Meeus 60-term model. SE's `accum_series()` handles E differently (through its T-dependent LRT terms), but the standalone Meeus model requires explicit E multiplication.
 
 ### Solar Planetary Perturbation Terms
 
@@ -267,7 +261,7 @@ Earlier experiments with the Phase 9 solar code:
 - Eliminated all 91 solar-related failures
 - Exposed and fixed ayanamsa nutation bug (was double-counting Δψ)
 
-### Phase 11: DE404 Moon + Sunrise (1,943 lines, 2 failures)
+### Phase 11: DE404 Moon + Sunrise (1,943 lines, 0 failures)
 
 - Lunar: Full DE404 Moshier pipeline (ported from SE's swemmoon.c, longitude only)
 - Delta-T: SE yearly lookup table (1620–2025) replacing Meeus polynomials

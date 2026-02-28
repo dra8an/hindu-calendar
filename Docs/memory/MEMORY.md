@@ -4,7 +4,7 @@
 - Hindu lunisolar calendar (panchang) implementation in C
 - Must match drikpanchang.com output (Drik Siddhanta approach)
 - Dual backend: self-contained Moshier (default, 1,265 lines) or Swiss Ephemeris (USE_SWISSEPH=1, 51K lines)
-- Lahiri ayanamsa (SE_SIDM_LAHIRI = 1)
+- Lahiri ayanamsa (IAU 1976 precession)
 - NOT Surya Siddhanta (traditional method from Reingold/Dershowitz book)
 - Initial scope: Tithi + Month (masa) + adhika months + Gregorian-to-Hindu conversion
 - Amanta scheme (new moon to new moon) first, Purnimanta later
@@ -46,7 +46,9 @@
 - [x] Phase 11: DE404 moon pipeline + sunrise improvements — 29→2 failures (99.996%)
 - [x] Phase 13: Java 21 port — 227 tests, identical to C
 - [x] Phase 14: Rust port — 275,396 assertions, identical to C
-- [x] Phase 15: Drikpanchang.com full scrape validation — 55,117/55,152 tithi match (99.937%)
+- [x] Phase 15: Drikpanchang.com full scrape validation — 55,136/55,152 tithi match (99.971%)
+- [x] Phase 17: Bengali per-rashi tuning — 8 midnight boundary mismatches → 0, all 4 solar calendars 100%
+- [x] Phase 18: SE naming cleanup + upper limb sunrise — 35→16 lunisolar mismatches (99.971%)
 - [x] Phase 16: Solar calendar full scrape — Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100%
 - [x] Phase 17: Bengali per-rashi tuning — 8 midnight boundary mismatches → 0, all 4 solar calendars 100%
 
@@ -78,7 +80,7 @@
 - `src/solar.h` + `src/solar.c` — 4 regional variants: Tamil, Bengali, Odia, Malayalam
 - Sankranti finding: bisection on sidereal solar longitude (50 iterations, ~3ns precision)
 - Critical time rules (which civil day "owns" a sankranti):
-  - **Tamil**: sunset − 8.0 min (ayanamsa buffer) — splits 7.7–8.7 min danger zone, fixes 6 boundary dates
+  - **Tamil**: sunset − 9.5 min (ayanamsa buffer) — tuned for upper limb sunset, 100% match
   - **Bengali**: midnight + 24min buffer + tithi-based rule (Sewell & Dikshit 1896) + per-rashi tuning: Karkata→before midnight (crit 00:32), Makara→after midnight, others→tithi at Hindu sunrise. Day edge tuning for Kanya (23:56), Tula (23:39), Dhanu (23:50). Full scrape: 1,811/1,811 (100%)
   - **Odia**: fixed 22:12 IST cutoff — 100/100 edge cases correct, no ayanamsa adjustment needed
   - **Malayalam**: end of madhyahna − 9.5 min (ayanamsa buffer) = sunrise + 3/5 × (sunset − sunrise) − 9.5 min — splits 9.3–10.0 min danger zone, fixes 15 boundary dates
@@ -101,7 +103,7 @@
 - Precision vs SE: solar ±1" (VSOP87), ayanamsa ±0.3", sidereal ±0.5", lunar ±0.07" (DE404), sunrise ±2s
 - All 1,071 drikpanchang.com validation assertions pass with both backends
 - 53,143/53,143 tests pass with both backends
-- Full drikpanchang.com scrape: Moshier 55,117/55,152 (99.937%), SE 55,115/55,152 (99.933%)
+- Full drikpanchang.com scrape: Moshier 55,136/55,152 (99.971%), 16 sub-minute boundary mismatches
 - SE has 2 extra mismatches vs drikpanchang: 1965-05-30, 2001-09-20 (drikpanchang confirms Moshier correct)
 - All solar calendar tests 100% pass
 - Key bugs found during development: transit formula sign (lon_east not +lon), Meeus correction `m += dm` not `m -= dm`
@@ -112,7 +114,7 @@
   sid = (trop + dpsi) - (ayan + dpsi) = trop - ayan. Adding nutation to ayanamsa causes
   ~17" oscillating error with 18.6-year period.
 - VSOP87 implementation: ported from SE's swemplan.c/swemptab.h
-  - 460 doubles (eartabl), 819 signed chars (earargs), 9 frequencies + 9 phases
+  - 460 doubles (earth_coeffs), 819 signed chars (earth_args), 9 frequencies + 9 phases
   - Pipeline: VSOP87 J2000 → general precession IAU 1976 → EMB→Earth correction → geocentric → nutation → aberration(-20.496")
   - EMB→Earth correction: simplified 6-term Moon series from SE embofs_mosh(), first-order ecliptic approx
 - Previous Meeus EoC approach (120 failures) had beneficial error cancellation:
@@ -121,7 +123,7 @@
 - DE404 moon pipeline (Phase 11): ported from SE swemmoon.c (longitude only, ~760 lines)
   - Pipeline: mean_elements → mean_elements_pl → moon1 → moon2 → moon3 → moon4
   - Data: z[26], LR[118×8], LRT[38×8], LRT2[25×6] tables, plus moon1/moon2 explicit terms
-  - Helpers: mods3600, sscc (Chebyshev sin/cos multiples), chewm (table accumulation)
+  - Helpers: mods3600, sscc (Chebyshev sin/cos multiples), accum_series (table accumulation)
   - Variable light-time correction using 5 LR radius terms (distance-dependent)
   - SE delta-T yearly lookup table embedded (replaces Meeus polynomial for 1620-2025)
   - Precision: 0.018" RMS, 0.065" max vs SE (was 10" RMS with 60 Meeus terms)
@@ -139,19 +141,19 @@
 - Tithi uses **tropical** longitudes (ayanamsa cancels in moon-sun diff)
 - Rashi uses **sidereal** (manually subtract ayanamsa from tropical)
 - New moon finding: 17-point inverse Lagrange interpolation (matches Python ref)
-- Sunrise: SE_BIT_DISC_CENTER (center of disc, with refraction) — matches webresh fork
-- swe_day_of_week returns 0=Monday..6=Sunday
+- Sunrise: upper limb (Sinclair refraction + 16' solar semi-diameter) — matches drikpanchang.com
+- day_of_week returns 0=Monday..6=Sunday (ISO convention)
 - JD is noon-based: add 0.5 to get midnight-based when converting to local time
 - 53,143 assertions pass across 10 suites (186 external + regression + 351 solar + 327 solar validation + 1,200 solar edge)
 - Bengali tithi-based rule: when sankranti in midnight zone, check tithi at previous day's sunrise — if tithi extends past sankranti → "before midnight" (day 1), else → "after midnight" (last day). Karkata always C, Makara always W. Source: Sewell & Dikshit "The Indian Calendar" (1896). Full investigation in Docs/BENGALI_INVESTIGATION.md
 - Bengali diagnostic tools: `tools/bengali_tithi_rule.c`, `bengali_diag.c`, `bengali_analysis.c`, `bengali_eot.c`, `bengali_ayanamsa.c`, `bengali_shifted.c`, `bengali_weekday.c`
 - 186 dates manually verified against drikpanchang.com: tithi, masa, adhika, saka all 100% match
 - 132 of those are adhika/kshaya tithi edge cases (the hardest dates to get right)
-- Full automated scrape: 55,152 days (1900-2050) verified against drikpanchang.com, 99.937% match
+- Full automated scrape: 55,152 days (1900-2050) verified against drikpanchang.com, 99.971% match
 - Malayalam critical time is end of madhyahna = sunrise + 3/5 × daytime (NOT apparent noon)
 - Discovered via 33 boundary cases verified against drikpanchang.com
-- ~24 arcsecond Lahiri ayanamsa difference between SE_SIDM_LAHIRI and drikpanchang → ~8-10 min sankranti time offset
-- Resolved in v0.3.2 by subtracting empirical buffers from critical times (Tamil −8.0 min, Malayalam −9.5 min)
+- ~24 arcsecond Lahiri ayanamsa difference between our implementation and drikpanchang → ~8-10 min sankranti time offset
+- Resolved by subtracting empirical buffers from critical times (Tamil −9.5 min, Malayalam −9.5 min)
 - Edge case scanner: `tools/solar_boundary_scan.c` finds 100 closest sankrantis per calendar for verification
 - Edge case tests: `tests/test_solar_edge.c` — 1,200 assertions (400 entries × 3 checks), 21 corrected from drikpanchang
 - All verified data points saved in `validation/malayalam_boundary_cases.csv`
@@ -165,7 +167,7 @@
 - Solar JSON in `validation/web/data/{se,moshier}/{tamil,bengali,odia,malayalam}/YYYY-MM.json`
 
 ## Drikpanchang.com Full Scrape Validation (Phases 15-16)
-- **Lunisolar**: 55,152 days (1900-2050), 99.937% match (35 boundary edge cases)
+- **Lunisolar**: 55,136/55,152 match (99.971%), 16 sub-minute boundary mismatches
 - **Solar**: Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100%
 - CAPTCHA: hard 200-request per-IP limit; 2s delay works; VPN rotation required
 - `scraper/lunisolar/` and `scraper/solar/` — fetch, parse, compare scripts

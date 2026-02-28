@@ -7,7 +7,7 @@
 | Language | C99 | Chosen for performance and Swiss Ephemeris native compatibility |
 | Ephemeris (default) | Self-contained Moshier library | 1,265 lines, VSOP87 solar + ELP-2000/82 lunar, no external files |
 | Ephemeris (optional) | Swiss Ephemeris | 51K lines, vendored C source, `make USE_SWISSEPH=1` to enable |
-| Ayanamsa | Lahiri | IAU 1976 3D equatorial precession, matches SE_SIDM_LAHIRI |
+| Ayanamsa | Lahiri | IAU 1976 3D equatorial precession |
 | Build | GNU Make | `make` (moshier) or `make USE_SWISSEPH=1` (SE) |
 | Tests | Custom C test harness | Assert macros, no test framework dependency |
 
@@ -28,7 +28,7 @@ hindu-calendar/
 │   ├── moshier.h           # Public API — 8 replacement functions
 │   ├── moshier_jd.c        # JD ↔ Gregorian, day of week
 │   ├── moshier_sun.c       # VSOP87 solar longitude, nutation, delta-T
-│   ├── moshier_moon.c      # Lunar longitude (60-term ELP-2000/82)
+│   ├── moshier_moon.c      # Lunar longitude (DE404 Moshier theory)
 │   ├── moshier_ayanamsa.c  # Lahiri ayanamsa (IAU 1976 precession)
 │   └── moshier_rise.c      # Iterative sunrise/sunset
 ├── lib/swisseph/           # Vendored Swiss Ephemeris C source (optional backend)
@@ -155,15 +155,9 @@ The Saka era began in 78 CE. Vikram Samvat began in 57 BCE. The Hindu new year s
 
 ### Sunrise Calculation
 
-Uses Swiss Ephemeris `swe_rise_trans()` with `SE_BIT_DISC_CENTER` flag (center of solar disc at the horizon, with atmospheric refraction). The search starts from local midnight UT to find the next sunrise.
+Uses **upper limb** sunrise (top edge of the solar disc at the horizon, with atmospheric refraction). This matches drikpanchang.com's sunrise definition. The Moshier backend computes h₀ = −(Sinclair refraction) − (solar semi-diameter) ≈ −0.879°. The SE backend uses `swe_rise_trans()` without the `SE_BIT_DISC_CENTER` flag (upper limb is the default).
 
-```
-geopos = {longitude, latitude, altitude}
-search_start = jd_midnight_ut - utc_offset/24    (convert local midnight to UT)
-swe_rise_trans(search_start, SE_SUN, ..., SE_CALC_RISE | SE_BIT_DISC_CENTER, geopos, ...)
-```
-
-The returned Julian Day is in UT. To display local time: add utc_offset/24, then add 0.5 to convert from the noon-based JD epoch to midnight-based.
+The search starts from local midnight UT to find the next sunrise. The returned Julian Day is in UT. To display local time: add utc_offset/24, then add 0.5 to convert from the noon-based JD epoch to midnight-based.
 
 ### Solar Calendar (Regional Variants)
 
@@ -185,12 +179,12 @@ The solar calendar module computes dates for four Indian regional solar traditio
 
 | Calendar | Critical Time | Rule |
 |----------|---------------|------|
-| **Tamil** | Sunset − 8 min | If sankranti is before (sunset − 8 min), that day starts the new month |
+| **Tamil** | Sunset − 9.5 min | If sankranti is before (sunset − 9.5 min), that day starts the new month |
 | **Bengali** | Midnight + 24 min | Midnight IST with a 24-minute buffer into the next day (R/D edge-case zone) |
 | **Odia** | 22:12 IST (fixed) | Sankranti ≤22:11 IST = current day, ≥22:12 IST = next day |
 | **Malayalam** | End of madhyahna − 9.5 min | sunrise + 3/5 × (sunset − sunrise) minus 9.5 min buffer |
 
-The Tamil and Malayalam buffers compensate for ~24 arcsecond difference between Swiss Ephemeris SE_SIDM_LAHIRI and drikpanchang.com's Lahiri ayanamsa (~8–10 min in sankranti time). Verified against 400 boundary cases (100 per calendar).
+The Tamil and Malayalam buffers compensate for ~24 arcsecond difference between our Lahiri ayanamsa and drikpanchang.com's Lahiri ayanamsa (~8–10 min in sankranti time). Verified against all 1,811 month boundaries per calendar (1900–2050) via drikpanchang.com scrape.
 
 **Regional eras** are computed directly from the Gregorian year:
 
@@ -214,9 +208,9 @@ A self-contained ephemeris implementing the same 8 SE functions used by the proj
 | Component | Algorithm | Precision vs SE |
 |-----------|-----------|----------------|
 | Solar longitude | VSOP87 (135 harmonic terms) | ±1″ |
-| Lunar longitude | ELP-2000/82 (60 Meeus Ch.47 terms) | ±10″ |
+| Lunar longitude | DE404 Moshier theory (full pipeline) | ±0.07″ |
 | Ayanamsa | IAU 1976 3D equatorial precession | ±0.3″ |
-| Sunrise/sunset | Meeus Ch.15 iterative | ±14 seconds |
+| Sunrise/sunset | Meeus Ch.15, Sinclair refraction, upper limb | ±2 seconds |
 | JD conversions | Meeus Ch.7 | Exact |
 
 See [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) for the full solar longitude pipeline, the ayanamsa nutation discovery, and precision analysis.

@@ -68,15 +68,15 @@ The VSOP87 theory computes the heliocentric ecliptic longitude of the Earth-Moon
 
 Each fundamental angle is: `θ_i = mods3600(freq_i × T_vsop) + phase_i` (in arcseconds), then converted to radians. The `sscc()` function pre-computes `sin(k×θ_i)` and `cos(k×θ_i)` for multiples k = 1..max_harmonic[i] using Chebyshev recurrence.
 
-**Harmonic specification:** The `earargs[]` table (819 signed chars) encodes each term as:
+**Harmonic specification:** The `earth_args[]` table (819 signed chars) encodes each term as:
 - `np` = number of planetary arguments (0 = polynomial term, −1 = end)
 - For each argument: harmonic multiplier `j` and planet index `m` (1-based)
 - `nt` = maximum power of T for this term
-- Corresponding coefficient pairs (cos, sin) × (nt+1) read from `eartabl[]`
+- Corresponding coefficient pairs (cos, sin) × (nt+1) read from `earth_coeffs[]`
 
 **Data sizes:**
-- `eartabl[]`: 460 doubles (longitude coefficients in arcseconds)
-- `earargs[]`: 819 signed chars (harmonic specification)
+- `earth_coeffs[]`: 460 doubles (longitude coefficients in arcseconds)
+- `earth_args[]`: 819 signed chars (harmonic specification)
 - `freqs[]`: 9 doubles
 - `phases[]`: 9 doubles
 
@@ -175,7 +175,7 @@ Comparison at representative dates (1900–2050):
 | Lunar longitude | ±0.07″ (RMS) | DE404 Moshier theory (full pipeline) |
 | Sunrise/sunset | ±2 seconds | Sinclair refraction + GAST |
 
-The sidereal solar longitude precision of ±0.5″ translates to ~2 seconds of sankranti timing error — well within the empirical buffer margins for Tamil (−8.0 min) and Malayalam (−9.5 min) solar calendars.
+The sidereal solar longitude precision of ±0.5″ translates to ~2 seconds of sankranti timing error — well within the empirical buffer margins for Tamil (−9.5 min) and Malayalam (−9.5 min) solar calendars.
 
 ## Test Results
 
@@ -208,11 +208,11 @@ All 91 solar-related failures eliminated. The remaining 29 failures were tithi b
 | Solar | 351/351 | **0** |
 | Solar edge | 1,200/1,200 | **0** |
 | Solar Regression | 28,976/28,976 | **0** |
-| Adhika/Kshaya | 17,074/17,076 | 2 |
+| Adhika/Kshaya | 17,076/17,076 | **0** |
 | Other (tithi-based) | — | **0** |
-| **Total** | **53,141/53,143** | **2** |
+| **Total** | **53,143/53,143** | **0** |
 
-DE404 moon pipeline (±0.07″) + Sinclair refraction + GAST eliminated 27 of 29 remaining failures. The 2 irreducible failures: 1965-05-30 (near-midnight-UT sunrise wrap-around, ~16s offset) and 2001-09-20 (tithi boundary within 0.17″ of transition).
+DE404 moon pipeline (±0.07″) + Sinclair refraction + GAST + upper limb sunrise eliminated all remaining failures.
 
 ## Evolution of Solar Longitude Approaches
 
@@ -240,8 +240,8 @@ DE404 moon pipeline (±0.07″) + Sinclair refraction + GAST eliminated 27 of 29
 
 - Lunar longitude: DE404 Moshier pipeline (±0.07″), ported from SE's swemmoon.c
 - Delta-T: SE yearly lookup table (1620–2025)
-- Sunrise: Sinclair refraction (h₀ ≈ −0.612°), GAST, 10 iterations
-- 2 test failures (irreducible edge cases)
+- Sunrise: upper limb (h₀ ≈ −0.879°), Sinclair refraction + solar semi-diameter, GAST, 10 iterations
+- 0 test failures
 
 ## Key Lessons Learned
 
@@ -261,12 +261,12 @@ DE404 moon pipeline (±0.07″) + Sinclair refraction + GAST eliminated 27 of 29
 
 All VSOP87 data was extracted from Swiss Ephemeris source files:
 - **Frequencies and phases**: `lib/swisseph/swemplan.c` lines 88–114
-- **Harmonic coefficients** (`eartabl[]`): `lib/swisseph/swemptab.h` lines 1925–2216
-- **Argument specification** (`earargs[]`): `lib/swisseph/swemptab.h` lines 2802–2938
+- **Harmonic coefficients** (`earth_coeffs[]`): `lib/swisseph/swemptab.h` lines 1925–2216
+- **Argument specification** (`earth_args[]`): `lib/swisseph/swemptab.h` lines 2802–2938
 - **Summation algorithm**: `lib/swisseph/swemplan.c` `swi_moshplan2()` lines 134–264
 - **EMB→Earth correction**: `lib/swisseph/swemplan.c` `embofs_mosh()` lines 416–492
 - **Mass ratio**: `lib/swisseph/sweph.h` `EARTH_MOON_MRAT = 1/0.0123000383`
 
 The `ear404` table structure: `max_harmonic = {1,9,14,17,5,5,2,1,0}`, `max_power_of_t = 4`, 135 total terms (134 periodic + 1 polynomial).
 
-Only the longitude coefficients (`eartabl[]`, 460 doubles) are used. Latitude (`eartabb[]`) and radius (`eartabr[]`) are not needed for solar longitude, saving 920 doubles of data.
+Only the longitude coefficients (`earth_coeffs[]`, 460 doubles) are used. Latitude (`eartabb[]`) and radius (`eartabr[]`) are not needed for solar longitude, saving 920 doubles of data.

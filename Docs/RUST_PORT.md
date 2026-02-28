@@ -177,7 +177,7 @@ All computation is stack-based f64 math. Data tables are `const` statics compile
 
 1. **VSOP87 pointer walking**: The nested loop in the VSOP87 summation walks two arrays (`EARTABL` for coefficients, `EARARGS` for argument indices) with different strides. The `i8` → `usize` conversion for array indexing requires careful sign handling.
 
-2. **DE404 `chewm()` function**: Accumulates table values into moonpol using pointer walking in C. The initial port had a broken version (incorrect index mapping) and a working version. The fix was ensuring the loop counter `m` (0..nangles) maps directly to the ss/cc array index.
+2. **DE404 `accum_series()` function**: Accumulates table values into moonpol using pointer walking in C. The initial port had a broken version (incorrect index mapping) and a working version. The fix was ensuring the loop counter `m` (0..nangles) maps directly to the sin/cos table index.
 
 3. **Mutable state in moon pipeline**: The DE404 pipeline has ~20 mutable fields that persist across calls. These are fields in `MoonState`, not local variables, because intermediate results (mean elements, planetary perturbations) are shared between `moon1()`...`moon4()`.
 

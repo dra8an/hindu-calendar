@@ -20,14 +20,16 @@
 | 12 | Dual-backend validation data | Done | SE + Moshier CSVs, JSON, web backend selector |
 | 13 | Java 21 port | Done | Moshier-only, 227 tests, identical output to C |
 | 14 | Rust port | Done | Moshier-only, 275,396 assertions, identical output to C |
-| 15 | Drikpanchang.com lunisolar scrape | Done | 55,117/55,152 tithi match (99.937%), 35 boundary edge cases |
+| 15 | Drikpanchang.com lunisolar scrape | Done | 55,136/55,152 tithi match (99.971%), 16 boundary edge cases |
+| 17 | Bengali per-rashi tuning | Done | 8 midnight boundary mismatches → 0, all 4 solar calendars 100% |
+| 18 | SE naming cleanup + upper limb sunrise | Done | 35→16 lunisolar mismatches (99.971%) |
 | 16 | Drikpanchang.com solar scrape | Done | Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100% |
 
 ## Test Results
 
-**With Moshier backend** (default `make`): 53,143/53,143 assertions pass (100%). All 55,152 lunisolar days (1900–2050) match drikpanchang.com.
+**With Moshier backend** (default `make`): 53,143/53,143 assertions pass (100%). 55,136 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.971%); 16 sub-minute boundary edge cases remain.
 
-**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 53,143/53,143 assertions pass (100%). SE differs from drikpanchang.com on 2 tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct; these 2 dates are not hit by the sampled regression test.
+**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 53,143/53,143 assertions pass (100%). SE differs from drikpanchang.com on 2 additional tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct.
 
 53,143 assertions across 10 test suites:
 
@@ -83,7 +85,7 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 
 351 unit test assertions + 327 external validation assertions + 28,976 regression assertions + 1,200 edge case assertions across 4 regional solar calendar variants:
 
-- **Tamil** (10 unit + 33 validation + 100 edge case dates): Sankranti boundaries, mid-month, year transitions, all 12 months of 2025, Chithirai 1 across 21 years (Saka era). Critical time adjusted by −8.0 min for ayanamsa difference; 6 boundary dates corrected
+- **Tamil** (10 unit + 33 validation + 100 edge case dates): Sankranti boundaries, mid-month, year transitions, all 12 months of 2025, Chithirai 1 across 21 years (Saka era). Critical time adjusted by −9.5 min for ayanamsa difference; 6 boundary dates corrected
 - **Bengali** (9 unit + 24 validation + 100 edge case dates): Midnight + 24min buffer with tithi-based rule (Sewell & Dikshit, 1896) for edge cases — Karkata always "before midnight", Makara always "after midnight", others check tithi at Hindu sunrise. Per-rashi tuning of critical time and day edge boundaries achieves 100% match (1,811/1,811 months). Boishakh 1 across 12 years, all 12 months of 2025 (Bangabda era)
 - **Odia** (7 unit + 24 validation + 100 edge case dates): Fixed 22:12 IST cutoff, all 12 months of 2025 + 2030 (Saka era). 100/100 edge cases correct — no ayanamsa adjustment needed
 - **Malayalam** (7 unit + 28 validation + 100 edge case dates): End-of-madhyahna critical time, Chingam 1 across 16 years, all 12 months of 2025 (Kollam era). Critical time adjusted by −9.5 min for ayanamsa difference; 15 boundary dates corrected
@@ -95,13 +97,13 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 
 ## Ayanamsa Buffer Adjustments
 
-Swiss Ephemeris SE_SIDM_LAHIRI differs from drikpanchang.com's Lahiri ayanamsa by ~24 arcseconds. At the sun's typical speed (~1°/day), this translates to ~8–10 minutes offset in sankranti times. For dates where the sankranti falls close to the critical time, this offset can flip which civil day "owns" the month boundary.
+Our Lahiri ayanamsa differs from drikpanchang.com's Lahiri ayanamsa by ~24 arcseconds. At the sun's typical speed (~1°/day), this translates to ~8–10 minutes offset in sankranti times. For dates where the sankranti falls close to the critical time, this offset can flip which civil day "owns" the month boundary.
 
 **Empirical findings from 400 boundary cases (100 per calendar):**
 
 | Calendar | Danger zone (delta) | Wrong entries | Buffer applied | Result |
 |----------|-------------------|---------------|----------------|--------|
-| Tamil | 0 to −7.7 min | 6 | −8.0 min from sunset | All 6 fixed |
+| Tamil | 0 to −7.7 min | 6 | −9.5 min from sunset | All 6 fixed |
 | Bengali | Tithi-based rule | 0 | Tithi at Hindu sunrise + Karkata/Makara overrides + per-rashi tuning | 1,811/1,811 correct |
 | Odia | None | 0 | None needed | 100/100 correct |
 | Malayalam | 0 to −9.3 min | 15 | −9.5 min from madhyahna | All 15 fixed |
@@ -117,7 +119,7 @@ The buffer is subtracted from `critical_time_jd()` in `src/solar.c`. This single
 - No kshaya masa detection (extremely rare edge case)
 - UTC offset is manual (no IANA timezone / DST support)
 - Location defaults to New Delhi; no city database
-- Solar calendars fully validated via drikpanchang.com scrape (1,811 months each, 1900–2050): all four calendars achieve 100% match. Tamil and Malayalam use empirical ayanamsa buffers (−8.0 and −9.5 min). Bengali uses per-rashi tuning of critical time and day edge boundaries. See `Docs/DRIKPANCHANG_VALIDATION.md`
+- Solar calendars fully validated via drikpanchang.com scrape (1,811 months each, 1900–2050): all four calendars achieve 100% match. Tamil and Malayalam use empirical ayanamsa buffers (−9.5 min each). Bengali uses per-rashi tuning of critical time and day edge boundaries. See `Docs/DRIKPANCHANG_VALIDATION.md`
 
 ## Dual Backend Architecture
 
