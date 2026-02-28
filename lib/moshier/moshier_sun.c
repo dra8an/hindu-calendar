@@ -57,10 +57,10 @@ static const double phases[9] = {
 };
 
 /* Maximum harmonic for each fundamental frequency (for Earth) */
-static const int ear_max_harmonic[9] = {1, 9, 14, 17, 5, 5, 2, 1, 0};
+static const int earth_max_harm[9] = {1, 9, 14, 17, 5, 5, 2, 1, 0};
 
 /* Earth longitude coefficients: 460 doubles (VSOP87 series) */
-static const double eartabl[] = {
+static const double earth_coeffs[] = {
     -65.54655, -232.74963, 12959774227.57587, 361678.59587,
     2.52679, -4.93511, 2.46852, -8.88928,
     6.66257, -1.94502, 0.66887, -0.06141,
@@ -179,7 +179,7 @@ static const double eartabl[] = {
 };
 
 /* Earth argument table: 819 signed chars (VSOP87 series) */
-static const signed char earargs[] = {
+static const signed char earth_args[] = {
     0, 3,
     3, 4, 3,-8, 4, 3, 5, 2,
     2, 2, 5,-5, 6, 1,
@@ -320,25 +320,25 @@ static const signed char earargs[] = {
 
 /* ===== Sin/cos lookup tables for VSOP87 ===== */
 
-static double ss_tbl[9][24];
-static double cc_tbl[9][24];
+static double sin_tbl[9][24];
+static double cos_tbl[9][24];
 
 /* Precompute sin(k*arg) and cos(k*arg) for k=1..n using recurrence */
 static void sscc(int k, double arg, int n)
 {
     double su = sin(arg), cu = cos(arg);
-    ss_tbl[k][0] = su;
-    cc_tbl[k][0] = cu;
+    sin_tbl[k][0] = su;
+    cos_tbl[k][0] = cu;
     double sv = 2.0 * su * cu;
     double cv = cu * cu - su * su;
-    ss_tbl[k][1] = sv;
-    cc_tbl[k][1] = cv;
+    sin_tbl[k][1] = sv;
+    cos_tbl[k][1] = cv;
     for (int i = 2; i < n; i++) {
         double s = su * cv + cu * sv;
         cv = cu * cv - su * sv;
         sv = s;
-        ss_tbl[k][i] = sv;
-        cc_tbl[k][i] = cv;
+        sin_tbl[k][i] = sv;
+        cos_tbl[k][i] = cv;
     }
 }
 
@@ -350,14 +350,14 @@ static double vsop87_earth_longitude(double jd_tt)
 
     /* Precompute sin/cos of fundamental planetary arguments */
     for (int i = 0; i < 9; i++) {
-        if (ear_max_harmonic[i] > 0) {
+        if (earth_max_harm[i] > 0) {
             double sr = (mods3600(freqs[i] * T) + phases[i]) * STR;
-            sscc(i, sr, ear_max_harmonic[i]);
+            sscc(i, sr, earth_max_harm[i]);
         }
     }
 
-    const signed char *p = earargs;
-    const double *pl = eartabl;
+    const signed char *p = earth_args;
+    const double *pl = earth_coeffs;
     double sl = 0.0;
 
     for (;;) {
@@ -384,9 +384,9 @@ static double vsop87_earth_longitude(double jd_tt)
             if (j) {
                 int k = (j < 0) ? -j : j;
                 k--;
-                double su = ss_tbl[m][k];
+                double su = sin_tbl[m][k];
                 if (j < 0) su = -su;
-                double cu = cc_tbl[m][k];
+                double cu = cos_tbl[m][k];
                 if (k1 == 0) {
                     sv = su; cv = cu; k1 = 1;
                 } else {

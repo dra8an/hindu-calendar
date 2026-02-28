@@ -3,10 +3,10 @@
 
 #include "types.h"
 
-/* Initialize Swiss Ephemeris (Lahiri ayanamsa, optional ephemeris path) */
+/* Initialize ephemeris backend (Lahiri ayanamsa, optional ephemeris path) */
 void astro_init(const char *ephe_path);
 
-/* Close Swiss Ephemeris */
+/* Close ephemeris backend */
 void astro_close(void);
 
 /* Tropical (Sayana) solar longitude (degrees, 0-360) at Julian Day UT.

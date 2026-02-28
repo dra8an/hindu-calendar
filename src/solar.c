@@ -124,7 +124,7 @@ static double critical_time_jd(double jd_midnight_ut, const Location *loc,
     switch (type) {
     case SOLAR_CAL_TAMIL:
         /* Subtract 8.0 min buffer to account for ~24 arcsecond ayanamsa
-         * difference between SE_SIDM_LAHIRI and drikpanchang.com's Lahiri.
+         * difference between our Lahiri and drikpanchang.com's Lahiri.
          * This shifts sankranti times by ~8 min; verified against 100
          * boundary cases — splits the 7.7–8.7 min gap cleanly. */
         return sunset_jd(jd_midnight_ut, loc) - 8.0 / (24.0 * 60.0);
@@ -298,10 +298,12 @@ static double bengali_day_edge_offset(SolarCalendarType type, int rashi)
               * and 1933-10-16 (sank 23:47:54).
               * Safe margin: next Tula at 23:29:55 (2050), 10 min clearance. */
         return 21.0 / (24.0 * 60.0);
-    case 9:  /* Dhanu (Poush): day edge at 23:50 instead of 00:00.
-              * Fixes 1958-12-15 (sank 23:49:08).
-              * Tight margin: nearest ok Dhanu at 23:50:36 (1919), 36 sec clearance. */
-        return 10.0 / (24.0 * 60.0);
+    case 9:  /* Dhanu (Poush): day edge at 23:49 instead of 00:00.
+              * Pushes 1958-12-15 (sank 23:49:08) and 1919 (sank 23:50:36) into
+              * midnight zone, where the tithi rule differentiates them.
+              * Both cross midnight with 11 min edge; tithi rule gives correct
+              * answer for each. */
+        return 11.0 / (24.0 * 60.0);
     }
 
     return 0.0;

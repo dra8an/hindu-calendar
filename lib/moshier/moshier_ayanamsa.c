@@ -12,7 +12,7 @@
  * Lahiri ayanamsa constants:
  *   t0 = 2435553.5 JD (1956 September 22.0 TT)
  *   ayan_t0 = 23.250182778 - 0.004658035 = 23.245524743°
- *   prec_offset = SEMOD_PREC_IAU_1976
+ *   precession model: IAU 1976
  */
 #include "moshier.h"
 #include <math.h>

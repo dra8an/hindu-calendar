@@ -54,12 +54,12 @@ static void test_day_of_week(void)
 {
     printf("\n--- Day of week ---\n");
 
-    /* 2013-01-18 was a Friday. swe_day_of_week: 0=Mon,...,4=Fri */
+    /* 2013-01-18 was a Friday. ISO convention: 0=Mon,...,4=Fri */
     double jd = gregorian_to_jd(2013, 1, 18);
     int dow = day_of_week(jd);
     ASSERT_EQ(dow, 4, "2013-01-18 = Friday (4)");
 
-    /* 2025-01-01 was a Wednesday. swe_day_of_week: 2=Wed */
+    /* 2025-01-01 was a Wednesday. ISO convention: 2=Wed */
     jd = gregorian_to_jd(2025, 1, 1);
     dow = day_of_week(jd);
     ASSERT_EQ(dow, 2, "2025-01-01 = Wednesday (2)");

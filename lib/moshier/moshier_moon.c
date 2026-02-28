@@ -32,35 +32,35 @@ static double mods3600(double x)
 }
 
 /* ---- sin/cos lookup table for multiples of angles ---- */
-static double ss[5][8];
-static double cc[5][8];
+static double sin_tbl[5][8];
+static double cos_tbl[5][8];
 
 static void sscc(int k, double arg, int n)
 {
     double cu = cos(arg), su = sin(arg);
     double cv, sv, s;
     int i;
-    ss[k][0] = su;
-    cc[k][0] = cu;
+    sin_tbl[k][0] = su;
+    cos_tbl[k][0] = cu;
     sv = 2.0 * su * cu;
     cv = cu * cu - su * su;
-    ss[k][1] = sv;
-    cc[k][1] = cv;
+    sin_tbl[k][1] = sv;
+    cos_tbl[k][1] = cv;
     for (i = 2; i < n; i++) {
         s = su * cv + cu * sv;
         cv = cu * cv - su * sv;
         sv = s;
-        ss[k][i] = sv;
-        cc[k][i] = cv;
+        sin_tbl[k][i] = sv;
+        cos_tbl[k][i] = cv;
     }
 }
 
-/* ---- Step through perturbation table, accumulate longitude ---- */
+/* ---- Accumulate longitude from perturbation table ---- */
 /* typflg=1: large lon/rad (4 values per line after angles)
  * typflg=2: small lon/rad (2 values per line after angles)
  * We only accumulate longitude (ans[0]), skip radius. */
-static void chewm(const short *pt, int nlines, int nangles,
-                   int typflg, double *ans)
+static void accum_series(const short *pt, int nlines, int nangles,
+                          int typflg, double *ans)
 {
     int i, j, k, k1, m;
     double cu, su, cv, sv, ff;
@@ -72,8 +72,8 @@ static void chewm(const short *pt, int nlines, int nangles,
             j = *pt++;
             if (j) {
                 k = j < 0 ? -j : j;
-                su = ss[m][k - 1];
-                cu = cc[m][k - 1];
+                su = sin_tbl[m][k - 1];
+                cu = cos_tbl[m][k - 1];
                 if (j < 0) su = -su;
                 if (k1 == 0) {
                     sv = su;
@@ -145,8 +145,8 @@ static const double z[] = {
  * Main longitude + radius perturbation table (118 terms)
  * Format: D, l', l, F, lon_1", lon_.0001", rad_1km, rad_.0001km
  * ================================================================ */
-#define NLR 118
-static const short LR[8 * NLR] = {
+#define MOON_LR_N 118
+static const short moon_lr[8 * MOON_LR_N] = {
 /*               Longitude    Radius
  D  l' l  F    1"  .0001"  1km  .0001km */
  0, 0, 1, 0, 22639, 5858,-20905,-3550,
@@ -270,8 +270,8 @@ static const short LR[8 * NLR] = {
 };
 
 /* T^1 longitude + radius corrections (38 terms) */
-#define NLRT 38
-static const short LRT[8 * NLRT] = {
+#define MOON_LR_T1_N 38
+static const short moon_lr_t1[8 * MOON_LR_T1_N] = {
 /*  Multiply by T
                Longitude    Radius
  D  l' l  F   .1"  .00001" .1km  .00001km */
@@ -316,8 +316,8 @@ static const short LRT[8 * NLRT] = {
 };
 
 /* T^2 longitude + radius corrections (25 terms) */
-#define NLRT2 25
-static const short LRT2[6 * NLRT2] = {
+#define MOON_LR_T2_N 25
+static const short moon_lr_t2[6 * MOON_LR_T2_N] = {
 /*  Multiply by T^2
            Longitude    Radius
  D  l' l  F  .00001" .00001km */
@@ -351,7 +351,7 @@ static const short LRT2[6 * NLRT2] = {
 /* ================================================================
  * Mean element variables (arcseconds)
  * ================================================================ */
-static double SWELP;  /* mean longitude of moon */
+static double LP;  /* mean longitude of moon */
 static double M_sun;  /* mean anomaly of sun (l') */
 static double MP;     /* mean anomaly of moon (l) */
 static double D;      /* mean elongation */
@@ -394,14 +394,14 @@ static void mean_elements(void)
                  + 3.962893294503e-01 * T + 1072260.73512);
 
     /* Mean longitude of moon */
-    SWELP = mods3600(1731456000.0 * fracT + 1108372.83264 * T
+    LP = mods3600(1731456000.0 * fracT + 1108372.83264 * T
                      - 6.784914260953e-01 * T + 785939.95571);
 
     /* Higher degree secular terms (DE404 corrections) */
     NF   += ((z[2] * T + z[1]) * T + z[0]) * T2;
     MP   += ((z[5] * T + z[4]) * T + z[3]) * T2;
     D    += ((z[8] * T + z[7]) * T + z[6]) * T2;
-    SWELP += ((z[11] * T + z[10]) * T + z[9]) * T2;
+    LP += ((z[11] * T + z[10]) * T + z[9]) * T2;
 }
 
 /* ---- Planetary mean longitudes (Laskar, Bretagnon) ---- */
@@ -468,8 +468,8 @@ static double lunar_perturbations(void)
     /* Zero ss/cc arrays (Bhanu Pinnamaneni fix) */
     for (i = 0; i < 5; i++)
         for (j = 0; j < 8; j++) {
-            ss[i][j] = 0;
-            cc[i][j] = 0;
+            sin_tbl[i][j] = 0;
+            cos_tbl[i][j] = 0;
         }
 
     sscc(0, STR * D, 6);
@@ -479,7 +479,7 @@ static double lunar_perturbations(void)
 
     /* ---- T^2 table corrections ---- */
     moonpol0 = 0.0;
-    chewm(LRT2, NLRT2, 4, 2, &moonpol0);
+    accum_series(moon_lr_t2, MOON_LR_T2_N, 4, 2, &moonpol0);
 
     /* ---- Explicit planetary perturbations ---- */
     f_ve = 18.0 * Ve - 16.0 * Ea;
@@ -538,7 +538,7 @@ static double lunar_perturbations(void)
     l_acc += -0.034700 * cg + 0.160041 * sg;
     l2 += z[22] * cg + z[23] * sg;
 
-    g_arg = STR * (SWELP - NF);
+    g_arg = STR * (LP - NF);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.000116 * cg + 7.063040 * sg;
@@ -553,7 +553,7 @@ static double lunar_perturbations(void)
 
     /* ---- T^1 table corrections ---- */
     moonpol0 = 0.0;
-    chewm(LRT, NLRT, 4, 1, &moonpol0);
+    accum_series(moon_lr_t1, MOON_LR_T1_N, 4, 1, &moonpol0);
 
     g_arg = STR * (2.0 * Ve - 3.0 * Ea);
     cg = cos(g_arg);
@@ -645,13 +645,13 @@ static double lunar_perturbations(void)
     g_arg = STR * (Ea - Ju + 4424.04);
     l_acc += 0.63880 * sin(g_arg);
 
-    g_arg = STR * (SWELP + MP - NF + 4.68);
+    g_arg = STR * (LP + MP - NF + 4.68);
     l_acc += 0.49331 * sin(g_arg);
 
-    g_arg = STR * (SWELP - MP - NF + 4.68);
+    g_arg = STR * (LP - MP - NF + 4.68);
     l_acc += 0.4914 * sin(g_arg);
 
-    g_arg = STR * (SWELP + NF + 2.52);
+    g_arg = STR * (LP + NF + 2.52);
     l_acc += 0.36061 * sin(g_arg);
 
     g_arg = STR * (2.0 * Ve - 2.0 * Ea + 736.2);
@@ -719,9 +719,9 @@ static double lunar_perturbations(void)
 
     /* ---- Main perturbation table (118 terms) + final assembly ---- */
     moonpol0 = 0.0;
-    chewm(LR, NLR, 4, 1, &moonpol0);
+    accum_series(moon_lr, MOON_LR_N, 4, 1, &moonpol0);
     l_acc += (((l4 * T + l3) * T + l2) * T + l1) * T * 1.0e-5;
-    moonpol0 = SWELP + l_acc + 1.0e-4 * moonpol0;
+    moonpol0 = LP + l_acc + 1.0e-4 * moonpol0;
 
     return STR * mods3600(moonpol0);
 }
