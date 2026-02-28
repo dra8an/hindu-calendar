@@ -28,8 +28,13 @@ static void check(int condition, const char *msg)
 static const char *find_csv(void)
 {
     static const char *paths[] = {
+#ifdef USE_SWISSEPH
         "validation/se/adhika_kshaya_tithis.csv",
         "../validation/se/adhika_kshaya_tithis.csv",
+#else
+        "validation/moshier/adhika_kshaya_tithis.csv",
+        "../validation/moshier/adhika_kshaya_tithis.csv",
+#endif
         NULL
     };
     for (int i = 0; paths[i]; i++) {
