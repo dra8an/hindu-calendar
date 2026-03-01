@@ -10,10 +10,16 @@ import time
 
 import requests
 
-# --- Cookies for New Delhi + Lahiri ayanamsa ---
+# --- Geoname IDs for supported locations ---
+GEONAME_IDS = {
+    "delhi": "1261481",
+    "nyc": "5128581",
+}
+
+# --- Cookies for Lahiri ayanamsa ---
 COOKIES = {
     "drik-school-name": "amanta",
-    "drik-geoname-id": "1261481",       # New Delhi
+    "drik-geoname-id": "1261481",       # New Delhi (default)
     "drik-language": "en",
     "drik-time-format": "12hour",
     "drik-ayanamsha-type": "chitra-paksha",  # Lahiri
@@ -54,11 +60,21 @@ def is_shutdown():
     return _shutdown
 
 
-def new_session():
-    """Create a new requests session with standard cookies and headers."""
+def get_cookies(location="delhi"):
+    """Return cookies dict for a given location."""
+    geoname_id = GEONAME_IDS.get(location)
+    if not geoname_id:
+        raise ValueError(f"Unknown location: {location!r} (known: {list(GEONAME_IDS)})")
+    cookies = dict(COOKIES)
+    cookies["drik-geoname-id"] = geoname_id
+    return cookies
+
+
+def new_session(location="delhi"):
+    """Create a new requests session with location-specific cookies and headers."""
     s = requests.Session()
     s.headers.update(HEADERS)
-    s.cookies.update(COOKIES)
+    s.cookies.update(get_cookies(location))
     return s
 
 
@@ -79,7 +95,7 @@ def fetch_url(url, output_path, session):
         return "error"
 
 
-def fetch_pages(targets, output_dir, url_fn, delay, label="page"):
+def fetch_pages(targets, output_dir, url_fn, delay, label="page", location="delhi"):
     """Generic page fetcher with resume, CAPTCHA rotation, and shutdown support.
 
     Args:
@@ -88,6 +104,7 @@ def fetch_pages(targets, output_dir, url_fn, delay, label="page"):
         url_fn: callable(key) -> URL string
         delay: seconds between requests
         label: display label for progress messages
+        location: location key for cookies (default: "delhi")
     """
     os.makedirs(output_dir, exist_ok=True)
 
@@ -106,7 +123,7 @@ def fetch_pages(targets, output_dir, url_fn, delay, label="page"):
     eta_hours = remaining * delay / 3600
     print(f"Estimated time: {eta_hours:.1f} hours at {delay}s delay\n")
 
-    session = new_session()
+    session = new_session(location)
     downloaded = 0
     failed = 0
     since_rotate = 0
@@ -122,7 +139,7 @@ def fetch_pages(targets, output_dir, url_fn, delay, label="page"):
 
         # Proactive session rotation to avoid CAPTCHA
         if since_rotate >= SESSION_ROTATE_INTERVAL:
-            session = new_session()
+            session = new_session(location)
             since_rotate = 0
 
         url = url_fn(key)
@@ -142,7 +159,7 @@ def fetch_pages(targets, output_dir, url_fn, delay, label="page"):
         elif result == "captcha":
             # Should be rare with proactive rotation, but handle it anyway
             print(f"\nCAPTCHA hit after {since_rotate} fetches. Rotating session...")
-            session = new_session()
+            session = new_session(location)
             since_rotate = 0
             result = fetch_url(url, output_path, session)
             if result == "ok":

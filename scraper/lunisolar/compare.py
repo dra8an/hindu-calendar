@@ -2,18 +2,18 @@
 """Compare drikpanchang-scraped tithis against our reference CSV.
 
 Loads the parsed drikpanchang CSV (year,month,day,tithi) and compares
-each tithi against validation/moshier/ref_1900_2050.csv.
+each tithi against our generated reference CSV.
 
 Usage:
     python3 -m scraper.lunisolar.compare
+    python3 -m scraper.lunisolar.compare --location nyc
     python3 -m scraper.lunisolar.compare --parsed data/lunisolar/parsed/drikpanchang.csv
-    python3 -m scraper.lunisolar.compare --ref ../validation/se/ref_1900_2050.csv
 """
 
 import argparse
 import csv
 
-from scraper.lunisolar.config import COMPARISON_REPORT, PARSED_CSV, REF_CSV
+from scraper.lunisolar.config import get_paths
 
 
 def load_csv(path, tithi_col="tithi"):
@@ -110,12 +110,22 @@ def compare(parsed_path, ref_path, report_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Compare drikpanchang tithis vs reference")
-    parser.add_argument("--parsed", default=PARSED_CSV)
-    parser.add_argument("--ref", default=REF_CSV)
-    parser.add_argument("--report", default=COMPARISON_REPORT)
+    parser.add_argument("--location", default="delhi", choices=["delhi", "nyc"],
+                        help="Location (default: delhi)")
+    parser.add_argument("--parsed", default=None,
+                        help="Override parsed CSV path")
+    parser.add_argument("--ref", default=None,
+                        help="Override reference CSV path")
+    parser.add_argument("--report", default=None,
+                        help="Override report output path")
     args = parser.parse_args()
 
-    compare(args.parsed, args.ref, args.report)
+    paths = get_paths(args.location)
+    parsed = args.parsed or paths["parsed_csv"]
+    ref = args.ref or paths["ref_csv"]
+    report = args.report or paths["comparison_report"]
+
+    compare(parsed, ref, report)
 
 
 if __name__ == "__main__":

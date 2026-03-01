@@ -2,12 +2,13 @@
 """Fetch raw HTML from drikpanchang.com month panchang pages.
 
 Downloads month panchang pages for every Gregorian month in the specified
-year range. Saves raw HTML to scraper/data/lunisolar/raw/YYYY-MM.html.
+year range. Saves raw HTML to scraper/data/lunisolar/raw/YYYY-MM.html
+(or scraper/data/lunisolar_{location}/raw/ for non-Delhi locations).
 Skips already-downloaded files (resume capability).
 
 Usage:
     python3 -m scraper.lunisolar.fetch
-    python3 -m scraper.lunisolar.fetch --start-year 2024 --end-year 2025 --delay 5
+    python3 -m scraper.lunisolar.fetch --location nyc --start-year 2024 --end-year 2025
     python3 -m scraper.lunisolar.fetch --fetch-days 2025-01-01 2025-01-15
 """
 
@@ -28,15 +29,15 @@ from scraper.lunisolar.config import (
     DEFAULT_DELAY,
     DEFAULT_END_YEAR,
     DEFAULT_START_YEAR,
-    RAW_DIR,
+    get_paths,
 )
 
-# Keep legacy RAW_DAY_DIR for day page support
-RAW_DAY_DIR = os.path.join(os.path.dirname(RAW_DIR), "raw_day")
 
-
-def fetch_month_pages(start_year, end_year, delay):
+def fetch_month_pages(start_year, end_year, delay, location="delhi"):
     """Download month panchang pages for the given year range."""
+    paths = get_paths(location)
+    raw_dir = paths["raw_dir"]
+
     targets = []
     for year in range(start_year, end_year + 1):
         for month in range(1, 13):
@@ -46,18 +47,20 @@ def fetch_month_pages(start_year, end_year, delay):
         year, month = key
         return f"{BASE_URL_MONTH}?date=01/{month:02d}/{year:04d}"
 
-    fetch_pages(targets, RAW_DIR, url_fn, delay, label="month")
+    fetch_pages(targets, raw_dir, url_fn, delay, label="month", location=location)
 
 
-def fetch_day_pages(dates, delay):
+def fetch_day_pages(dates, delay, location="delhi"):
     """Download day panchang pages for specific dates.
 
     Args:
         dates: list of "YYYY-MM-DD" strings
     """
-    os.makedirs(RAW_DAY_DIR, exist_ok=True)
+    paths = get_paths(location)
+    raw_day_dir = os.path.join(paths["data_dir"], "raw_day")
+    os.makedirs(raw_day_dir, exist_ok=True)
 
-    session = new_session()
+    session = new_session(location)
     downloaded = 0
     failed = 0
 
@@ -66,7 +69,7 @@ def fetch_day_pages(dates, delay):
             break
 
         year, month, day = date_str.split("-")
-        output_path = os.path.join(RAW_DAY_DIR, f"{date_str}.html")
+        output_path = os.path.join(raw_day_dir, f"{date_str}.html")
         if os.path.exists(output_path):
             continue
 
@@ -94,18 +97,20 @@ def main():
     install_signal_handlers()
 
     parser = argparse.ArgumentParser(description="Fetch drikpanchang.com lunisolar HTML pages")
+    parser.add_argument("--location", default="delhi", choices=["delhi", "nyc"],
+                        help="Location for drikpanchang cookies (default: delhi)")
     parser.add_argument("--start-year", type=int, default=DEFAULT_START_YEAR)
     parser.add_argument("--end-year", type=int, default=DEFAULT_END_YEAR)
     parser.add_argument("--delay", type=float, default=DEFAULT_DELAY,
-                        help="Seconds between requests (default: 20)")
+                        help="Seconds between requests (default: 5)")
     parser.add_argument("--fetch-days", nargs="*", metavar="YYYY-MM-DD",
                         help="Fetch specific day pages instead of month pages")
     args = parser.parse_args()
 
     if args.fetch_days:
-        fetch_day_pages(args.fetch_days, args.delay)
+        fetch_day_pages(args.fetch_days, args.delay, args.location)
     else:
-        fetch_month_pages(args.start_year, args.end_year, args.delay)
+        fetch_month_pages(args.start_year, args.end_year, args.delay, args.location)
 
 
 if __name__ == "__main__":

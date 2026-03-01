@@ -5,8 +5,8 @@ Extracts tithi (1-30) for each day from month panchang HTML pages.
 
 Usage:
     python3 -m scraper.lunisolar.parse
+    python3 -m scraper.lunisolar.parse --location nyc
     python3 -m scraper.lunisolar.parse --start-year 2024 --end-year 2025
-    python3 -m scraper.lunisolar.parse --output /path/to/output.csv
 """
 
 import argparse
@@ -17,7 +17,7 @@ import sys
 
 from bs4 import BeautifulSoup
 
-from scraper.lunisolar.config import PARSED_CSV, RAW_DIR, tithi_to_number
+from scraper.lunisolar.config import get_paths, tithi_to_number
 
 
 def parse_month_html(html_path, year, month):
@@ -87,7 +87,7 @@ def parse_month_html(html_path, year, month):
     return days
 
 
-def build_csv(start_year, end_year, output_path):
+def build_csv(start_year, end_year, raw_dir, output_path):
     """Parse all available month HTML files and build the CSV."""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
@@ -96,7 +96,7 @@ def build_csv(start_year, end_year, output_path):
 
     for year in range(start_year, end_year + 1):
         for month in range(1, 13):
-            html_path = os.path.join(RAW_DIR, f"{year:04d}-{month:02d}.html")
+            html_path = os.path.join(raw_dir, f"{year:04d}-{month:02d}.html")
             if not os.path.exists(html_path):
                 missing += 1
                 continue
@@ -121,12 +121,18 @@ def build_csv(start_year, end_year, output_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Parse drikpanchang lunisolar HTML -> CSV")
+    parser.add_argument("--location", default="delhi", choices=["delhi", "nyc"],
+                        help="Location (default: delhi)")
     parser.add_argument("--start-year", type=int, default=1900)
     parser.add_argument("--end-year", type=int, default=2050)
-    parser.add_argument("--output", default=PARSED_CSV)
+    parser.add_argument("--output", default=None,
+                        help="Override output path (default: location-specific)")
     args = parser.parse_args()
 
-    build_csv(args.start_year, args.end_year, args.output)
+    paths = get_paths(args.location)
+    output = args.output or paths["parsed_csv"]
+
+    build_csv(args.start_year, args.end_year, paths["raw_dir"], output)
 
 
 if __name__ == "__main__":

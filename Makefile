@@ -39,11 +39,12 @@ TEST_BINS = $(patsubst $(TESTDIR)/%.c,$(BUILDDIR)/%,$(TEST_SRCS))
 # Generator sources
 GEN_REF_SRC = tools/generate_ref_data.c
 GEN_SOLAR_SRC = tools/gen_solar_ref.c
+DST_OBJ = $(BUILDDIR)/dst.o
 
 # Target binary
 TARGET = hindu-calendar
 
-.PHONY: all clean test gen-ref gen-json
+.PHONY: all clean test gen-ref gen-ref-nyc gen-json
 
 all: $(BUILDDIR) $(TARGET)
 
@@ -83,8 +84,8 @@ test: $(TEST_BINS)
 	done
 
 # Generator binaries
-$(BUILDDIR)/gen_ref: $(GEN_REF_SRC) $(EPH_OBJS) $(APP_OBJS) | $(BUILDDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(LDFLAGS)
+$(BUILDDIR)/gen_ref: $(GEN_REF_SRC) $(EPH_OBJS) $(APP_OBJS) $(DST_OBJ) | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(DST_OBJ) $(LDFLAGS)
 
 $(BUILDDIR)/gen_solar_ref: $(GEN_SOLAR_SRC) $(EPH_OBJS) $(APP_OBJS) | $(BUILDDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(LDFLAGS)
@@ -100,6 +101,11 @@ gen-ref: $(BUILDDIR)/gen_ref $(BUILDDIR)/gen_solar_ref
 	./$(BUILDDIR)/gen_ref -o validation/$(GEN_BACKEND)
 	./$(BUILDDIR)/gen_solar_ref -o validation/$(GEN_BACKEND)
 	python3 tools/extract_adhika_kshaya.py validation/$(GEN_BACKEND)/ref_1900_2050.csv validation/$(GEN_BACKEND)/adhika_kshaya_tithis.csv
+
+gen-ref-nyc: $(BUILDDIR)/gen_ref
+	mkdir -p validation/$(GEN_BACKEND)/nyc
+	./$(BUILDDIR)/gen_ref -l 40.7128,-74.0060 -tz us_eastern -o validation/$(GEN_BACKEND)/nyc
+	python3 tools/extract_adhika_kshaya.py validation/$(GEN_BACKEND)/nyc/ref_1900_2050.csv validation/$(GEN_BACKEND)/nyc/adhika_kshaya_tithis.csv
 
 gen-json:
 	python3 tools/csv_to_json.py --backend $(GEN_BACKEND)

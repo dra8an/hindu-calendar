@@ -5,6 +5,9 @@ import os
 # --- Paths ---
 LUNISOLAR_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRAPER_DIR = os.path.dirname(LUNISOLAR_DIR)
+PROJECT_DIR = os.path.dirname(SCRAPER_DIR)
+
+# Default paths (Delhi) — kept for backward compatibility
 DATA_DIR = os.path.join(SCRAPER_DIR, "data", "lunisolar")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
 PARSED_DIR = os.path.join(DATA_DIR, "parsed")
@@ -12,8 +15,37 @@ PARSED_CSV = os.path.join(PARSED_DIR, "drikpanchang.csv")
 COMPARISON_REPORT = os.path.join(DATA_DIR, "comparison_report.txt")
 
 # Reference CSV from our C code
-PROJECT_DIR = os.path.dirname(SCRAPER_DIR)
 REF_CSV = os.path.join(PROJECT_DIR, "validation", "moshier", "ref_1900_2050.csv")
+
+
+def get_paths(location="delhi"):
+    """Return location-specific paths dict.
+
+    Args:
+        location: "delhi" or "nyc"
+
+    Returns:
+        dict with keys: data_dir, raw_dir, parsed_dir, parsed_csv,
+                        comparison_report, ref_csv
+    """
+    if location == "delhi":
+        suffix = "lunisolar"
+        ref_subdir = "moshier"
+    else:
+        suffix = f"lunisolar_{location}"
+        ref_subdir = f"moshier/{location}"
+
+    data_dir = os.path.join(SCRAPER_DIR, "data", suffix)
+    parsed_dir = os.path.join(data_dir, "parsed")
+    return {
+        "data_dir": data_dir,
+        "raw_dir": os.path.join(data_dir, "raw"),
+        "parsed_dir": parsed_dir,
+        "parsed_csv": os.path.join(parsed_dir, "drikpanchang.csv"),
+        "comparison_report": os.path.join(data_dir, "comparison_report.txt"),
+        "ref_csv": os.path.join(PROJECT_DIR, "validation", ref_subdir, "ref_1900_2050.csv"),
+    }
+
 
 # --- URLs ---
 BASE_URL_MONTH = "https://www.drikpanchang.com/panchang/month-panchang.html"
