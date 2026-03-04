@@ -63,6 +63,9 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.c | $(BUILDDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # Test binaries
+$(BUILDDIR)/test_nyc: $(TESTDIR)/test_nyc.c $(EPH_OBJS) $(APP_OBJS) $(DST_OBJ) | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(DST_OBJ) $(LDFLAGS)
+
 $(BUILDDIR)/test_%: $(TESTDIR)/test_%.c $(EPH_OBJS) $(APP_OBJS) | $(BUILDDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(LDFLAGS)
 

@@ -694,7 +694,7 @@ Four regional variants are covered here, all sharing the same astronomical basis
 |----------|--------|--------------|-----|------------|
 | Tamil | Tamil Nadu | Sunset | Saka | Mesha (rashi 1) |
 | Bengali | West Bengal | Midnight + 24 min | Bangabda | Mesha (rashi 1) |
-| Odia | Odisha | Fixed 22:12 IST | Saka | Mesha (rashi 1) |
+| Odia | Odisha | Fixed 22:12 IST | Amli | Mesha (rashi 1) |
 | Malayalam | Kerala | End of madhyahna (3/5 of daytime) | Kollam | Simha (rashi 5) |
 
 ### 4.2 Sankranti Finding
@@ -911,7 +911,7 @@ Mesha (rashi 1), typically around April 14 (Pohela Boishakh).
 | 11. Falgun | Kumbha |
 | 12. Choitro | Meena |
 
-### 4.6 Odia Solar Calendar (Saka) — [Wikipedia](https://en.wikipedia.org/wiki/Odia_calendar)
+### 4.6 Odia Solar Calendar (Amli) — [Wikipedia](https://en.wikipedia.org/wiki/Odia_calendar)
 
 #### Critical Time: Fixed 22:12 IST
 
@@ -1081,7 +1081,7 @@ All four solar calendars share the same core algorithm, parameterized by a confi
 |----------|------------|-------------|-----------------|----------|
 | Tamil | 1 (Mesha) | 78 | 79 | Saka |
 | Bengali | 1 (Mesha) | 593 | 594 | Bangabda |
-| Odia | 1 (Mesha) | 78 | 79 | Saka |
+| Odia | 1 (Mesha) | 593 | 594 | Amli |
 | Malayalam | 5 (Simha) | 824 | 825 | Kollam |
 
 - `first_rashi`: The rashi that begins month 1 of the year
@@ -1427,7 +1427,7 @@ For solar calendars, the critical time rules were discovered through systematic 
 4. **Analyze failures**: plot failed cases by IST time, fraction of daytime, etc. to find the true pattern
 5. **Iterate**: refine the hypothesis and verify new batches
 
-This process typically took 3–5 iterations per calendar to converge on the correct rule. See the [Odia](#46-odia-solar-calendar-saka) and [Malayalam](#47-malayalam-solar-calendar-kollam) sections for detailed accounts.
+This process typically took 3–5 iterations per calendar to converge on the correct rule. See the [Odia](#46-odia-solar-calendar-amli) and [Malayalam](#47-malayalam-solar-calendar-kollam) sections for detailed accounts.
 
 ### 6.5 Regression Testing
 
@@ -1556,7 +1556,7 @@ Note: The regional month number differs from the rashi number for Malayalam (bec
 |----------|----------|--------------------|--------------------|------------|
 | Tamil | Saka | GY − 78 | GY − 79 | Mesha |
 | Bengali | Bangabda | GY − 593 | GY − 594 | Mesha |
-| Odia | Saka | GY − 78 | GY − 79 | Mesha |
+| Odia | Amli | GY − 593 | GY − 594 | Mesha |
 | Malayalam | Kollam | GY − 824 | GY − 825 | Simha |
 | Lunisolar | Saka | See Kali Ahargana formula | | Chaitra |
 | Lunisolar | Vikram Samvat | Saka + 135 | | Chaitra |

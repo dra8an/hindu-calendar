@@ -25,7 +25,7 @@ The **only significant difference** between the four calendars is the "critical 
 |----------|-------------|-----|-------|------------|
 | **Bengali** | Midnight (start of day)* | Bangabda | Saka - 515 | Mesha (Boishakh, ~Apr 14) |
 | **Tamil** | Sunset (current day) | Saka | Saka | Mesha (Chithirai, ~Apr 14) |
-| **Odia** | Sunrise (next morning) | Saka | Saka | Mesha (Baisakha, ~Apr 14) |
+| **Odia** | Sunrise (next morning) | Amli | Saka - 515 | Mesha (Baisakha, ~Apr 14) |
 | **Malayalam** | Apparent noon (~12:00-1:12 PM) | Kollam | Saka + 823 | Simha (Chingam, ~Aug 17) |
 
 *Bengali has special edge-case rules when sankranti falls between 11:36 PM and 12:24 AM.
@@ -182,7 +182,7 @@ Malayalam months 9-12: Medam, Edavam, Mithunam, Karkadakam (corresponding to Mes
 Era offsets from Saka:
 - Bengali (Bangabda): Saka - 515
 - Tamil: Saka (no offset)
-- Odia: Saka (no offset, though some use Vilayati era)
+- Odia (Amli): Saka - 515 (same offset as Bengali/Bangabda)
 - Malayalam (Kollam): Saka + 823
 
 ### Phase 2: Tests (`tests/test_solar.c`)
@@ -282,7 +282,7 @@ The plan said to derive eras from Saka year with an offset. This was wrong — e
 |----------|------|--------|
 | Tamil (Saka) | Saka (no offset) | `gy - 78` on/after Mesha, `gy - 79` before |
 | Bengali (Bangabda) | Saka - 515 | `gy - 593` on/after Mesha, `gy - 594` before |
-| Odia (Saka) | Saka (no offset) | `gy - 78` on/after Mesha, `gy - 79` before |
+| Odia (Amli) | Saka - 515 | `gy - 593` on/after Mesha, `gy - 594` before |
 | Malayalam (Kollam) | Saka + 823 | `gy - 824` on/after Simha, `gy - 825` before |
 
 The plan's "Saka + 823" formula would give Kollam ~2769 for year 2025, when the correct value is ~1200. Kollam era is not derived from Saka at all.

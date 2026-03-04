@@ -111,34 +111,34 @@ static struct {
     /* ==== Odia: all 12 months of 2025 ==== */
     /* Verified against drikpanchang.com Oriya Panji */
 
-    {2025,  1, 14, SOLAR_CAL_ODIA, 10, 1, 1946},  /* Magha */
-    {2025,  2, 12, SOLAR_CAL_ODIA, 11, 1, 1946},  /* Phalguna */
-    {2025,  3, 14, SOLAR_CAL_ODIA, 12, 1, 1946},  /* Chaitra */
-    {2025,  4, 14, SOLAR_CAL_ODIA,  1, 1, 1947},  /* Baisakha */
-    {2025,  5, 15, SOLAR_CAL_ODIA,  2, 1, 1947},  /* Jyeshtha */
-    {2025,  6, 15, SOLAR_CAL_ODIA,  3, 1, 1947},  /* Ashadha */
-    {2025,  7, 16, SOLAR_CAL_ODIA,  4, 1, 1947},  /* Shravana */
-    {2025,  8, 17, SOLAR_CAL_ODIA,  5, 1, 1947},  /* Bhadrapada */
-    {2025,  9, 17, SOLAR_CAL_ODIA,  6, 1, 1947},  /* Ashvina */
-    {2025, 10, 17, SOLAR_CAL_ODIA,  7, 1, 1947},  /* Kartika */
-    {2025, 11, 16, SOLAR_CAL_ODIA,  8, 1, 1947},  /* Margashirsha */
-    {2025, 12, 16, SOLAR_CAL_ODIA,  9, 1, 1947},  /* Pausha */
+    {2025,  1, 14, SOLAR_CAL_ODIA, 10, 1, 1431},  /* Magha */
+    {2025,  2, 12, SOLAR_CAL_ODIA, 11, 1, 1431},  /* Phalguna */
+    {2025,  3, 14, SOLAR_CAL_ODIA, 12, 1, 1431},  /* Chaitra */
+    {2025,  4, 14, SOLAR_CAL_ODIA,  1, 1, 1432},  /* Baisakha */
+    {2025,  5, 15, SOLAR_CAL_ODIA,  2, 1, 1432},  /* Jyeshtha */
+    {2025,  6, 15, SOLAR_CAL_ODIA,  3, 1, 1432},  /* Ashadha */
+    {2025,  7, 16, SOLAR_CAL_ODIA,  4, 1, 1432},  /* Shravana */
+    {2025,  8, 17, SOLAR_CAL_ODIA,  5, 1, 1432},  /* Bhadrapada */
+    {2025,  9, 17, SOLAR_CAL_ODIA,  6, 1, 1432},  /* Ashvina */
+    {2025, 10, 17, SOLAR_CAL_ODIA,  7, 1, 1432},  /* Kartika */
+    {2025, 11, 16, SOLAR_CAL_ODIA,  8, 1, 1432},  /* Margashirsha */
+    {2025, 12, 16, SOLAR_CAL_ODIA,  9, 1, 1432},  /* Pausha */
 
     /* ==== Odia: all 12 months of 2030 ==== */
     /* Verified against drikpanchang.com Oriya Panji */
 
-    {2030,  1, 14, SOLAR_CAL_ODIA, 10, 1, 1951},  /* Magha */
-    {2030,  2, 13, SOLAR_CAL_ODIA, 11, 1, 1951},  /* Phalguna */
-    {2030,  3, 15, SOLAR_CAL_ODIA, 12, 1, 1951},  /* Chaitra */
-    {2030,  4, 14, SOLAR_CAL_ODIA,  1, 1, 1952},  /* Baisakha */
-    {2030,  5, 15, SOLAR_CAL_ODIA,  2, 1, 1952},  /* Jyeshtha */
-    {2030,  6, 15, SOLAR_CAL_ODIA,  3, 1, 1952},  /* Ashadha */
-    {2030,  7, 17, SOLAR_CAL_ODIA,  4, 1, 1952},  /* Shravana */
-    {2030,  8, 17, SOLAR_CAL_ODIA,  5, 1, 1952},  /* Bhadrapada */
-    {2030,  9, 17, SOLAR_CAL_ODIA,  6, 1, 1952},  /* Ashvina */
-    {2030, 10, 17, SOLAR_CAL_ODIA,  7, 1, 1952},  /* Kartika */
-    {2030, 11, 16, SOLAR_CAL_ODIA,  8, 1, 1952},  /* Margashirsha */
-    {2030, 12, 16, SOLAR_CAL_ODIA,  9, 1, 1952},  /* Pausha */
+    {2030,  1, 14, SOLAR_CAL_ODIA, 10, 1, 1436},  /* Magha */
+    {2030,  2, 13, SOLAR_CAL_ODIA, 11, 1, 1436},  /* Phalguna */
+    {2030,  3, 15, SOLAR_CAL_ODIA, 12, 1, 1436},  /* Chaitra */
+    {2030,  4, 14, SOLAR_CAL_ODIA,  1, 1, 1437},  /* Baisakha */
+    {2030,  5, 15, SOLAR_CAL_ODIA,  2, 1, 1437},  /* Jyeshtha */
+    {2030,  6, 15, SOLAR_CAL_ODIA,  3, 1, 1437},  /* Ashadha */
+    {2030,  7, 17, SOLAR_CAL_ODIA,  4, 1, 1437},  /* Shravana */
+    {2030,  8, 17, SOLAR_CAL_ODIA,  5, 1, 1437},  /* Bhadrapada */
+    {2030,  9, 17, SOLAR_CAL_ODIA,  6, 1, 1437},  /* Ashvina */
+    {2030, 10, 17, SOLAR_CAL_ODIA,  7, 1, 1437},  /* Kartika */
+    {2030, 11, 16, SOLAR_CAL_ODIA,  8, 1, 1437},  /* Margashirsha */
+    {2030, 12, 16, SOLAR_CAL_ODIA,  9, 1, 1437},  /* Pausha */
 
     /* ==== Malayalam: Chingam 1 (month 1) across 1950-2030, every 5 years ==== */
     /* Verified against prokerala.com Malayalam calendar */

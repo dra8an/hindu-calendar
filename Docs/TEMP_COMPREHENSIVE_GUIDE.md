@@ -113,7 +113,7 @@ The document will have 7 major sections plus appendices, estimated ~2,500-3,000 
   - Month names: Boishakh, Joishtho, Asharh, Srabon, Bhadro, Ashshin, Kartik, Ogrohaeon, Poush, Magh, Falgun, Choitro
   - Step-by-step conversion + pseudocode
   - Worked example
-- **4.6 Odia Solar Calendar (Saka)**
+- **4.6 Odia Solar Calendar (Amli)**
   - Critical time: **fixed 22:12 IST** — sankranti at/before 22:11 = current day, at/after 22:12 = next day
   - Discovery story: midnight → apparent midnight → fixed offset → fixed IST (4 stages, 35 boundary cases)
   - Era: Saka (same as Tamil)

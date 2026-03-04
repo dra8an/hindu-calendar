@@ -85,8 +85,9 @@
   - **Odia**: fixed 22:12 IST cutoff — 100/100 edge cases correct, no ayanamsa adjustment needed
   - **Malayalam**: end of madhyahna − 9.5 min (ayanamsa buffer) = sunrise + 3/5 × (sunset − sunrise) − 9.5 min — splits 9.3–10.0 min danger zone, fixes 15 boundary dates
 - Era offsets (from Gregorian year):
-  - Tamil/Odia (Saka): gy - 78 on/after Mesha, gy - 79 before
+  - Tamil (Saka): gy - 78 on/after Mesha, gy - 79 before
   - Bengali (Bangabda): gy - 593 on/after Mesha, gy - 594 before
+  - Odia (Amli): gy - 593 on/after Mesha, gy - 594 before (same offset as Bengali)
   - Malayalam (Kollam): gy - 824 on/after Simha, gy - 825 before
 - Malayalam unique: year starts at Simha (rashi 5), months rotated accordingly
 - CLI: `./hindu-calendar -s tamil|bengali|odia|malayalam [-y Y] [-m M] [-d D]`

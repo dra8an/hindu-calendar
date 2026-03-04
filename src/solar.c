@@ -89,13 +89,13 @@ typedef struct {
  * Era offsets from Gregorian year:
  *   Tamil (Saka):     gy - 78  on/after Mesha, gy - 79 before
  *   Bengali (Bangabda): gy - 593 on/after Mesha, gy - 594 before
- *   Odia (Saka):      gy - 78  on/after Mesha, gy - 79 before
+ *   Odia (Amli):      gy - 593 on/after Mesha, gy - 594 before
  *   Malayalam (Kollam): gy - 824 on/after Simha, gy - 825 before
  */
 static const SolarCalendarConfig SOLAR_CONFIGS[] = {
     { SOLAR_CAL_TAMIL,     1,  78,   79,  TAMIL_MONTHS,     "Saka"     },
     { SOLAR_CAL_BENGALI,   1,  593,  594, BENGALI_MONTHS,   "Bangabda" },
-    { SOLAR_CAL_ODIA,      1,  78,   79,  ODIA_MONTHS,      "Saka"     },
+    { SOLAR_CAL_ODIA,      1,  593,  594, ODIA_MONTHS,      "Amli"     },
     { SOLAR_CAL_MALAYALAM, 5,  824,  825, MALAYALAM_MONTHS,  "Kollam"   },
 };
 
