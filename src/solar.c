@@ -79,6 +79,7 @@ static const char *MALAYALAM_MONTHS[] = {
 typedef struct {
     SolarCalendarType type;
     int first_rashi;             /* Rashi that starts month 1 (1=Mesha, 5=Simha) */
+    int year_start_rashi;        /* Rashi where year number increments (usually == first_rashi) */
     int gy_offset_on;            /* regional_year = gy - gy_offset_on (on/after year start) */
     int gy_offset_before;        /* regional_year = gy - gy_offset_before (before year start) */
     const char *const *months;   /* Regional month names array */
@@ -89,14 +90,14 @@ typedef struct {
  * Era offsets from Gregorian year:
  *   Tamil (Saka):     gy - 78  on/after Mesha, gy - 79 before
  *   Bengali (Bangabda): gy - 593 on/after Mesha, gy - 594 before
- *   Odia (Amli):      gy - 593 on/after Mesha, gy - 594 before
+ *   Odia (Amli):      gy - 592 on/after Kanya, gy - 593 before
  *   Malayalam (Kollam): gy - 824 on/after Simha, gy - 825 before
  */
 static const SolarCalendarConfig SOLAR_CONFIGS[] = {
-    { SOLAR_CAL_TAMIL,     1,  78,   79,  TAMIL_MONTHS,     "Saka"     },
-    { SOLAR_CAL_BENGALI,   1,  593,  594, BENGALI_MONTHS,   "Bangabda" },
-    { SOLAR_CAL_ODIA,      1,  593,  594, ODIA_MONTHS,      "Amli"     },
-    { SOLAR_CAL_MALAYALAM, 5,  824,  825, MALAYALAM_MONTHS,  "Kollam"   },
+    { SOLAR_CAL_TAMIL,     1, 1,  78,   79,  TAMIL_MONTHS,     "Saka"     },
+    { SOLAR_CAL_BENGALI,   1, 1,  593,  594, BENGALI_MONTHS,   "Bangabda" },
+    { SOLAR_CAL_ODIA,      1, 6,  592,  593, ODIA_MONTHS,      "Amli"     },
+    { SOLAR_CAL_MALAYALAM, 5, 5,  824,  825, MALAYALAM_MONTHS,  "Kollam"   },
 };
 
 static const SolarCalendarConfig *get_config(SolarCalendarType type)
@@ -421,9 +422,9 @@ static int solar_year(double jd_ut, const Location *loc,
     jd_to_gregorian(jd_ut, &gy, &gm, &gd);
 
     /* Find the year-start sankranti for this Gregorian year.
-     * first_rashi 1 (Mesha) ~ April 14, first_rashi 5 (Simha) ~ August 17. */
-    double target_long = (double)(cfg->first_rashi - 1) * 30.0;
-    int approx_greg_month = 3 + cfg->first_rashi; /* Mesha=4, Simha=8 */
+     * year_start_rashi 1 (Mesha) ~ April, 5 (Simha) ~ August, 6 (Kanya) ~ September. */
+    double target_long = (double)(cfg->year_start_rashi - 1) * 30.0;
+    int approx_greg_month = 3 + cfg->year_start_rashi; /* Mesha=4, Simha=8, Kanya=9 */
     if (approx_greg_month > 12) approx_greg_month -= 12;
 
     double jd_year_start_est = gregorian_to_jd(gy, approx_greg_month, 14);
@@ -432,7 +433,7 @@ static int solar_year(double jd_ut, const Location *loc,
     /* Determine which civil day "owns" the year-start sankranti,
      * using the same critical-time rule as the calendar. */
     int ysy, ysm, ysd;
-    sankranti_to_civil_day(jd_year_start, loc, type, cfg->first_rashi,
+    sankranti_to_civil_day(jd_year_start, loc, type, cfg->year_start_rashi,
                            &ysy, &ysm, &ysd);
     double jd_year_civil = gregorian_to_jd(ysy, ysm, ysd);
 
@@ -512,14 +513,15 @@ void solar_to_gregorian(const SolarDate *sd, SolarCalendarType type,
 
     /* Convert regional year back to Gregorian year.
      * The year-start sankranti falls in approximately:
-     *   Mesha (first_rashi=1): April of gy
-     *   Simha (first_rashi=5): August of gy
-     * Months after the year start that wrap past December fall in gy+1. */
+     *   Mesha (year_start_rashi=1): April of gy
+     *   Simha (year_start_rashi=5): August of gy
+     *   Kanya (year_start_rashi=6): September of gy
+     * Months before the year-start rashi fall in the next Gregorian year. */
     int gy = sd->year + cfg->gy_offset_on;
 
     /* Approximate Gregorian month for this rashi: rashi 1=Apr, 2=May, ..., 9=Dec, 10=Jan+1, etc. */
     int rashi_greg_month = 3 + rashi;  /* Mesha(1)=Apr(4), ..., Dhanu(9)=Dec(12) */
-    int start_greg_month = 3 + cfg->first_rashi;  /* Year-start approx greg month */
+    int start_greg_month = 3 + cfg->year_start_rashi;  /* Year-start approx greg month */
 
     if (rashi_greg_month > 12 && start_greg_month <= 12) {
         /* This rashi falls in Jan-Mar of the next Gregorian year */
@@ -528,7 +530,8 @@ void solar_to_gregorian(const SolarDate *sd, SolarCalendarType type,
                rashi_greg_month < start_greg_month) {
         /* This rashi falls before the year-start month in the same year,
          * meaning it's actually in the next Gregorian year
-         * (e.g., Malayalam: Mesha(Apr) in a year starting Simha(Aug)) */
+         * (e.g., Malayalam: Mesha(Apr) in a year starting Simha(Aug),
+         *  or Odia: Mesha(Apr) in a year starting Kanya(Sep)) */
         gy++;
     }
 

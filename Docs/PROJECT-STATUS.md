@@ -87,7 +87,7 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 
 - **Tamil** (10 unit + 33 validation + 100 edge case dates): Sankranti boundaries, mid-month, year transitions, all 12 months of 2025, Chithirai 1 across 21 years (Saka era). Critical time adjusted by −9.5 min for ayanamsa difference; 6 boundary dates corrected
 - **Bengali** (9 unit + 24 validation + 100 edge case dates): Midnight + 24min buffer with tithi-based rule (Sewell & Dikshit, 1896) for edge cases — Karkata always "before midnight", Makara always "after midnight", others check tithi at Hindu sunrise. Per-rashi tuning of critical time and day edge boundaries achieves 100% match (1,811/1,811 months). Boishakh 1 across 12 years, all 12 months of 2025 (Bangabda era)
-- **Odia** (7 unit + 24 validation + 100 edge case dates): Fixed 22:12 IST cutoff, all 12 months of 2025 + 2030 (Amli era, gy−593). 100/100 edge cases correct — no ayanamsa adjustment needed
+- **Odia** (7 unit + 24 validation + 100 edge case dates): Fixed 22:12 IST cutoff, all 12 months of 2025 + 2030 (Amli era, year starts at Kanya ~Sep, gy−592/593). 100/100 edge cases correct — no ayanamsa adjustment needed
 - **Malayalam** (7 unit + 28 validation + 100 edge case dates): End-of-madhyahna critical time, Chingam 1 across 16 years, all 12 months of 2025 (Kollam era). Critical time adjusted by −9.5 min for ayanamsa difference; 15 boundary dates corrected
 - Roundtrip tests: `gregorian_to_solar()` → `solar_to_gregorian()` for all 33 unit test dates
 - Sankranti precision: Mesha Sankranti 2025 longitude error < 0.0001°

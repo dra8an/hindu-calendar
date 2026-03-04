@@ -192,7 +192,7 @@ The Tamil and Malayalam buffers compensate for ~24 arcsecond difference between 
 |----------|-----|---------------------|-------------------|----------------|
 | Tamil | Saka | gy - 78 | gy - 79 | Mesha (~Apr 14) |
 | Bengali | Bangabda | gy - 593 | gy - 594 | Mesha (~Apr 14) |
-| Odia | Amli | gy - 593 | gy - 594 | Mesha (~Apr 14) |
+| Odia | Amli | gy - 592 | gy - 593 | Kanya (~Sep 17) |
 | Malayalam | Kollam | gy - 824 | gy - 825 | Simha (~Aug 17) |
 
 **Malayalam** is unique: its year starts at Simha (Leo, rashi 5) instead of Mesha (Aries, rashi 1). Month numbering rotates so that Chingam (Simha) = month 1, Kanni (Kanya) = month 2, ..., Karkadakam (Karka) = month 12.

@@ -87,7 +87,7 @@
 - Era offsets (from Gregorian year):
   - Tamil (Saka): gy - 78 on/after Mesha, gy - 79 before
   - Bengali (Bangabda): gy - 593 on/after Mesha, gy - 594 before
-  - Odia (Amli): gy - 593 on/after Mesha, gy - 594 before (same offset as Bengali)
+  - Odia (Amli): gy - 592 on/after Kanya, gy - 593 before. Year starts at Kanya (rashi 6, ~Sep)
   - Malayalam (Kollam): gy - 824 on/after Simha, gy - 825 before
 - Malayalam unique: year starts at Simha (rashi 5), months rotated accordingly
 - CLI: `./hindu-calendar -s tamil|bengali|odia|malayalam [-y Y] [-m M] [-d D]`

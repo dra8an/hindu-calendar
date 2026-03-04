@@ -1081,7 +1081,7 @@ All four solar calendars share the same core algorithm, parameterized by a confi
 |----------|------------|-------------|-----------------|----------|
 | Tamil | 1 (Mesha) | 78 | 79 | Saka |
 | Bengali | 1 (Mesha) | 593 | 594 | Bangabda |
-| Odia | 1 (Mesha) | 593 | 594 | Amli |
+| Odia | 6 (Kanya) | 592 | 593 | Amli |
 | Malayalam | 5 (Simha) | 824 | 825 | Kollam |
 
 - `first_rashi`: The rashi that begins month 1 of the year
@@ -1556,7 +1556,7 @@ Note: The regional month number differs from the rashi number for Malayalam (bec
 |----------|----------|--------------------|--------------------|------------|
 | Tamil | Saka | GY − 78 | GY − 79 | Mesha |
 | Bengali | Bangabda | GY − 593 | GY − 594 | Mesha |
-| Odia | Amli | GY − 593 | GY − 594 | Mesha |
+| Odia | Amli | GY − 592 | GY − 593 | Kanya |
 | Malayalam | Kollam | GY − 824 | GY − 825 | Simha |
 | Lunisolar | Saka | See Kali Ahargana formula | | Chaitra |
 | Lunisolar | Vikram Samvat | Saka + 135 | | Chaitra |
