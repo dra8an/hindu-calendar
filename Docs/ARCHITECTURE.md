@@ -21,7 +21,7 @@ hindu-calendar/
 │   ├── date_utils.h/.c     # Julian Day / Gregorian helpers (#ifdef selects backend)
 │   ├── tithi.h/.c          # Tithi (lunar day) calculation
 │   ├── masa.h/.c           # Month determination (lunisolar)
-│   ├── solar.h/.c          # Solar calendar (Tamil, Bengali, Odia, Malayalam)
+│   ├── solar.h/.c          # Solar calendar (Tamil, Bengali, Odia, Malayalam, month_start/length)
 │   ├── panchang.h/.c       # High-level panchang and display
 │   └── main.c              # CLI entry point
 ├── lib/moshier/            # Self-contained Moshier ephemeris (default backend)
@@ -196,6 +196,8 @@ The Tamil and Malayalam buffers compensate for ~24 arcsecond difference between 
 | Malayalam | Kollam | gy - 824 | gy - 825 | Simha (~Aug 17) |
 
 **Malayalam** is unique: its year starts at Simha (Leo, rashi 5) instead of Mesha (Aries, rashi 1). Month numbering rotates so that Chingam (Simha) = month 1, Kanni (Kanya) = month 2, ..., Karkadakam (Karka) = month 12.
+
+**Month start and length**: `solar_month_start(month, year, type, loc)` returns the JD of the first civil day of any solar month using the forward sankranti pipeline. `solar_month_length()` is defined as the JD difference between consecutive month starts. Both validated to 100% match against 7,248 drikpanchang.com month start dates (1,812 per calendar, 1900-2050). See `Docs/SOLAR_MONTH_API.md` for full details.
 
 ## Ephemeris Backends
 

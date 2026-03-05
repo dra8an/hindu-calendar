@@ -296,6 +296,63 @@ static void test_month_names(void)
     check(strcmp(solar_era_name(SOLAR_CAL_MALAYALAM), "Kollam") == 0, "Malayalam era = Kollam");
 }
 
+/* ---- solar_month_start / solar_month_length tests ----
+ * Validated against drikpanchang.com scraped month start dates.
+ */
+static void test_month_start_and_length(void)
+{
+    Location loc = DEFAULT_LOCATION;
+    char buf[256];
+
+    /* Test data: {calendar, month, year, expected_gy, expected_gm, expected_gd, expected_length}
+     * All verified against drikpanchang.com scraped data (1,812 months per calendar). */
+    static struct {
+        SolarCalendarType type;
+        int month, year;
+        int gy, gm, gd;
+        int length;
+    } cases[] = {
+        /* Tamil — verified against drikpanchang.com scraped data */
+        { SOLAR_CAL_TAMIL,     1, 1947,  2025,  4, 14, 31 },  /* Chithirai 2025 */
+        { SOLAR_CAL_TAMIL,    10, 1946,  2025,  1, 14, 30 },  /* Thai (Jan) */
+        { SOLAR_CAL_TAMIL,    12, 1946,  2025,  3, 15, 30 },  /* Panguni (Mar) → year boundary */
+        { SOLAR_CAL_TAMIL,     5, 1947,  2025,  8, 17, 31 },  /* Aavani (Aug) */
+        /* Bengali — verified against drikpanchang.com scraped data */
+        { SOLAR_CAL_BENGALI,   1, 1432,  2025,  4, 15, 30 },  /* Boishakh 2025 */
+        { SOLAR_CAL_BENGALI,  12, 1431,  2025,  3, 15, 31 },  /* Choitro (Mar) */
+        { SOLAR_CAL_BENGALI,   6, 1432,  2025,  9, 18, 30 },  /* Ashshin (Sep) */
+        { SOLAR_CAL_BENGALI,   9, 1432,  2025, 12, 17, 29 },  /* Poush (Dec) */
+        /* Odia — verified against drikpanchang.com scraped data */
+        { SOLAR_CAL_ODIA,      1, 1432,  2025,  4, 14, 31 },  /* Baisakha */
+        { SOLAR_CAL_ODIA,      6, 1433,  2025,  9, 17, 30 },  /* Ashvina (year start) */
+        { SOLAR_CAL_ODIA,     12, 1432,  2025,  3, 14, 31 },  /* Chaitra (before year start) */
+        { SOLAR_CAL_ODIA,     10, 1432,  2025,  1, 14, 29 },  /* Magha (Jan) */
+        /* Malayalam — verified against drikpanchang.com scraped data */
+        { SOLAR_CAL_MALAYALAM, 1, 1200,  2024,  8, 17, 31 },  /* Chingam (Aug) */
+        { SOLAR_CAL_MALAYALAM, 2, 1200,  2024,  9, 17, 30 },  /* Kanni (Sep) */
+        { SOLAR_CAL_MALAYALAM, 9, 1200,  2025,  4, 14, 31 },  /* Medam (Apr, next GY) */
+        { SOLAR_CAL_MALAYALAM,12, 1200,  2025,  7, 17, 31 },  /* Karkadakam (Jul) */
+    };
+    int n = sizeof(cases) / sizeof(cases[0]);
+
+    printf("\n--- solar_month_start / solar_month_length ---\n");
+    for (int i = 0; i < n; i++) {
+        double jd = solar_month_start(cases[i].month, cases[i].year, cases[i].type, &loc);
+        int gy, gm, gd;
+        jd_to_gregorian(jd, &gy, &gm, &gd);
+
+        snprintf(buf, sizeof(buf), "month_start(%d,%d,%d): expected %d-%02d-%02d got %d-%02d-%02d",
+                 cases[i].type, cases[i].month, cases[i].year,
+                 cases[i].gy, cases[i].gm, cases[i].gd, gy, gm, gd);
+        check(gy == cases[i].gy && gm == cases[i].gm && gd == cases[i].gd, buf);
+
+        int len = solar_month_length(cases[i].month, cases[i].year, cases[i].type, &loc);
+        snprintf(buf, sizeof(buf), "month_length(%d,%d,%d): expected %d got %d",
+                 cases[i].type, cases[i].month, cases[i].year, cases[i].length, len);
+        check(len == cases[i].length, buf);
+    }
+}
+
 int main(void)
 {
     astro_init(NULL);
@@ -304,6 +361,7 @@ int main(void)
     test_month_names();
     test_gregorian_to_solar();
     test_solar_to_gregorian_roundtrip();
+    test_month_start_and_length();
 
     astro_close();
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.10.0 — 2026-03-05
+
+### Added
+
+- **`solar_month_start()` API**: Returns the Julian Day of the first civil day of any solar month. Uses the forward sankranti pipeline with verification against `gregorian_to_solar()` for boundary edge case consistency
+- **`solar_month_length()` API**: Returns the number of days in a solar month (29-32). Defined as the JD difference between consecutive `solar_month_start()` calls, with correct year wrapping for all calendars including Odia (year increments at month 6)
+- **Odia era fix**: Changed from Saka (offset 78/79) to Amli (offset 592/593). Year now correctly starts at Kanya (~September) via new `year_start_rashi` config field. See `Docs/ODIA_YEAR_ADJUSTMENT.md`
+- **NYC lunisolar validation**: 55,118/55,152 days match drikpanchang.com (99.938%) for New York City location. See `Docs/NYC_VALIDATION.md`
+- 32 new test assertions for `solar_month_start()`/`solar_month_length()` across all 4 calendars
+- Both APIs validated to 100% match against 7,248 drikpanchang.com scraped month start dates (1,812 per calendar, 1900-2050)
+
+### Documentation
+
+- Created `Docs/SOLAR_MONTH_API.md`: Full API reference, implementation details, year wrapping logic, validation results
+- Created `Docs/ODIA_YEAR_ADJUSTMENT.md`: Detailed explanation of the Odia era and year-start fixes
+- Created `Docs/NYC_VALIDATION.md`: NYC validation results and comparison with Delhi
+- Updated `Docs/ARCHITECTURE.md`, `Docs/PROJECT-STATUS.md`, `Docs/SOLAR_PLAN.md`, `CHANGELOG.md`
+
 ## 0.9.0 — 2026-02-22
 
 ### Added

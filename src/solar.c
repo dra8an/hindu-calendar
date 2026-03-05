@@ -562,3 +562,78 @@ const char *solar_era_name(SolarCalendarType type)
 {
     return get_config(type)->era_name;
 }
+
+double solar_month_start(int month, int year, SolarCalendarType type,
+                         const Location *loc)
+{
+    const SolarCalendarConfig *cfg = get_config(type);
+
+    /* Convert regional month to rashi */
+    int rashi = month + cfg->first_rashi - 1;
+    if (rashi > 12) rashi -= 12;
+
+    /* Approximate Gregorian year/month for this rashi.
+     * Compute from the year-start position to correctly handle all wrapping
+     * cases (Odia: year starts at Kanya/Sep; Malayalam: year starts at
+     * Simha/Aug, so months 9-12 wrap into Apr-Jul of the next Greg year). */
+    int year_start_month = ((cfg->year_start_rashi - cfg->first_rashi) % 12) + 1;
+    int months_past = month - year_start_month;
+    if (months_past < 0) months_past += 12;
+
+    int gy = year + cfg->gy_offset_on;
+    int gm_start = 3 + cfg->year_start_rashi;
+    if (gm_start > 12) { gm_start -= 12; gy++; }
+    int approx_gm = gm_start + months_past;
+    while (approx_gm > 12) { approx_gm -= 12; gy++; }
+
+    double jd_approx = gregorian_to_jd(gy, approx_gm, 14);
+
+    /* Find exact sankranti for this rashi */
+    double target = (double)(rashi - 1) * 30.0;
+    double jd_sk = sankranti_jd(jd_approx, target);
+
+    /* Determine which civil day owns this sankranti */
+    int cy, cm, cd;
+    sankranti_to_civil_day(jd_sk, loc, type, rashi, &cy, &cm, &cd);
+    double jd_civil = gregorian_to_jd(cy, cm, cd);
+
+    /* Verify against gregorian_to_solar() — the forward pipeline validated
+     * to 100% match against drikpanchang.com.  On rare Bengali/Tamil/Malayalam
+     * boundary cases, sankranti_to_civil_day() and bengali_rashi_correction()
+     * can disagree on which civil day owns a boundary sankranti.  Adjust ±1
+     * day if the forward function says this day belongs to a different month. */
+    SolarDate check = gregorian_to_solar(cy, cm, cd, loc, type);
+    if (check.month != month) {
+        /* Try the next day */
+        int ny, nm, nd;
+        jd_to_gregorian(jd_civil + 1.0, &ny, &nm, &nd);
+        check = gregorian_to_solar(ny, nm, nd, loc, type);
+        if (check.month == month)
+            return jd_civil + 1.0;
+
+        /* Try the previous day */
+        jd_to_gregorian(jd_civil - 1.0, &ny, &nm, &nd);
+        check = gregorian_to_solar(ny, nm, nd, loc, type);
+        if (check.month == month)
+            return jd_civil - 1.0;
+    }
+
+    return jd_civil;
+}
+
+int solar_month_length(int month, int year, SolarCalendarType type,
+                       const Location *loc)
+{
+    double jd_start = solar_month_start(month, year, type, loc);
+
+    int next_month = (month == 12) ? 1 : month + 1;
+    /* Year increments when crossing the last month of the regional year */
+    const SolarCalendarConfig *cfg = get_config(type);
+    int year_start_month = ((cfg->year_start_rashi - cfg->first_rashi) % 12) + 1;
+    int last_month = (year_start_month == 1) ? 12 : year_start_month - 1;
+    int next_year = (month == last_month) ? year + 1 : year;
+
+    double jd_end = solar_month_start(next_month, next_year, type, loc);
+
+    return (int)(jd_end - jd_start);
+}

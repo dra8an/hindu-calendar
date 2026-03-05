@@ -27,11 +27,11 @@
 
 ## Test Results
 
-**With Moshier backend** (default `make`): 53,143/53,143 assertions pass (100%). 55,136 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.971%); 16 sub-minute boundary edge cases remain.
+**With Moshier backend** (default `make`): 53,286/53,286 assertions pass (100%). 55,136 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.971%); 16 sub-minute boundary edge cases remain.
 
-**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 53,143/53,143 assertions pass (100%). SE differs from drikpanchang.com on 2 additional tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct.
+**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 53,286/53,286 assertions pass (100%). SE differs from drikpanchang.com on 2 additional tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct.
 
-53,143 assertions across 10 test suites:
+53,286 assertions across 11 test suites:
 
 | Suite | Assertions | What it tests |
 |-------|------------|---------------|
@@ -41,7 +41,7 @@
 | test_validation | 744 | **External validation**: 186 dates verified against drikpanchang.com x 4 checks |
 | test_csv_regression | 4,416 | **Regression**: 1,104 sampled days from generated CSV (1900-2050) x 4 checks |
 | test_adhika_kshaya | 17,076 | **Regression**: all 4,269 adhika/kshaya tithi edge-case days (1900-2050) x 4 checks |
-| test_solar | 351 | **Solar calendars**: dates across 4 regional variants + roundtrip + sankranti precision + month/era names + Odia/Malayalam boundary cases |
+| test_solar | 383 | **Solar calendars**: dates across 4 regional variants + roundtrip + sankranti precision + month/era names + Odia/Malayalam boundary cases + month_start/month_length |
 | test_solar_validation | 327 | **External validation**: month-start dates verified against drikpanchang.com/prokerala.com for all 4 solar calendars |
 | test_solar_regression | 28,976 | **Regression**: 1,811 months x 4 calendars checked against generated CSVs (1900-2050) |
 | test_solar_edge | 1,200 | **Edge cases**: 100 closest-to-critical-time sankrantis per calendar (400 total), 21 corrected from drikpanchang.com verification (Tamil/Malayalam), 23 Bengali entries updated for tithi-based rule |
@@ -83,7 +83,7 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 
 ## Solar Calendar Validation
 
-351 unit test assertions + 327 external validation assertions + 28,976 regression assertions + 1,200 edge case assertions across 4 regional solar calendar variants:
+383 unit test assertions + 327 external validation assertions + 28,976 regression assertions + 1,200 edge case assertions across 4 regional solar calendar variants:
 
 - **Tamil** (10 unit + 33 validation + 100 edge case dates): Sankranti boundaries, mid-month, year transitions, all 12 months of 2025, Chithirai 1 across 21 years (Saka era). Critical time adjusted by −9.5 min for ayanamsa difference; 6 boundary dates corrected
 - **Bengali** (9 unit + 24 validation + 100 edge case dates): Midnight + 24min buffer with tithi-based rule (Sewell & Dikshit, 1896) for edge cases — Karkata always "before midnight", Makara always "after midnight", others check tithi at Hindu sunrise. Per-rashi tuning of critical time and day edge boundaries achieves 100% match (1,811/1,811 months). Boishakh 1 across 12 years, all 12 months of 2025 (Bangabda era)
@@ -94,6 +94,7 @@ A browser-based tool for manual month-by-month comparison against drikpanchang.c
 - Month names and era names verified for all 4 calendars
 - Malayalam madhyahna rule (3/5 of daytime) verified correct against prokerala.com for all 5 edge cases in 2025 where noon and midnight rules disagree
 - Regression CSVs: 1,811 months per calendar (1900-2050), checked for month/year/day consistency
+- `solar_month_start()` and `solar_month_length()`: 7,248/7,248 month start dates match drikpanchang.com scraped data across all 4 calendars (see `Docs/SOLAR_MONTH_API.md`)
 
 ## Ayanamsa Buffer Adjustments
 

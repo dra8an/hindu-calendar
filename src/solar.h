@@ -25,4 +25,14 @@ const char *solar_month_name(int month, SolarCalendarType type);
 /* Regional era name string. */
 const char *solar_era_name(SolarCalendarType type);
 
+/* JD of the first civil day of a solar month (1-indexed).
+ * Uses the forward sankranti pipeline to find the exact month boundary. */
+double solar_month_start(int month, int year, SolarCalendarType type,
+                         const Location *loc);
+
+/* Number of days in a solar month (29-32).
+ * Defined as solar_month_start(next) - solar_month_start(this). */
+int solar_month_length(int month, int year, SolarCalendarType type,
+                       const Location *loc);
+
 #endif /* SOLAR_H */

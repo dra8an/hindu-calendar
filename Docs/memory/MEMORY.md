@@ -78,6 +78,9 @@
 
 ## Solar Calendar Module
 - `src/solar.h` + `src/solar.c` — 4 regional variants: Tamil, Bengali, Odia, Malayalam
+- `solar_month_start(month, year, type, loc)` — JD of first civil day. Forward sankranti pipeline + `gregorian_to_solar()` verification. 7,248/7,248 match drikpanchang.com
+- `solar_month_length(month, year, type, loc)` — days in month (29-32). Year wrapping: Odia at month 5→6, others at 12→1
+- **CRITICAL**: Location struct has 4 fields: `{lat, lon, altitude, utc_offset}`. Use `DEFAULT_LOCATION`. Three-field init sets utc_offset=0
 - Sankranti finding: bisection on sidereal solar longitude (50 iterations, ~3ns precision)
 - Critical time rules (which civil day "owns" a sankranti):
   - **Tamil**: sunset − 9.5 min (ayanamsa buffer) — tuned for upper limb sunset, 100% match
