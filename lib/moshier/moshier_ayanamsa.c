@@ -1,6 +1,14 @@
 /*
  * moshier_ayanamsa.c — Lahiri ayanamsa
  *
+ * [COMPONENT: IAU 1976 precession]
+ * Source: Lieske, J.H. et al. (1977), "Expressions for the precession
+ *         quantities based upon the IAU (1976) system of astronomical
+ *         constants", A&A 58, 1-16
+ * License: Uncopyrightable scientific constants
+ * Extent: iau1976_precession_angles(), precess_equatorial(),
+ *         obliquity_iau1976(), moshier_ayanamsa() — entire file
+ *
  * Computes the Lahiri (Chitrapaksha) ayanamsa using IAU 1976 precession:
  *   1. Take the vernal point at the target date as Cartesian (1, 0, 0)
  *   2. Precess from target date → J2000 using current precession model

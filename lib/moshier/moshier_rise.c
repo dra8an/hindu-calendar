@@ -1,8 +1,15 @@
 /*
  * moshier_rise.c — Sunrise and sunset calculation
  *
- * Algorithm from Meeus, "Astronomical Algorithms", 2nd ed., Ch. 15.
- * Iterative method using hour angle computation.
+ * [COMPONENT: Meeus algorithms — Sunrise/sunset]
+ * Source: Meeus, "Astronomical Algorithms", 2nd ed., Ch. 15
+ * License: 17 USC 102(b) — mathematical formulas not copyrightable
+ * Extent: sidereal_time_0h(), rise_set_for_date(), rise_set()
+ *
+ * [COMPONENT: Sinclair refraction]
+ * Source: Sinclair, A.T. (1982), NAO Technical Note No. 59
+ * License: Uncopyrightable physical formula
+ * Extent: sinclair_refraction_horizon() (line 39)
  *
  * Configuration: upper limb with atmospheric refraction
  *   h₀ = Sinclair refraction at horizon (~-0.612°) - solar semi-diameter (~-0.267°)

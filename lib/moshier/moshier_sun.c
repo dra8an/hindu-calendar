@@ -39,7 +39,15 @@ static double mods3600(double x)
     return x - 1.296e6 * floor(x / 1.296e6);
 }
 
-/* ===== VSOP87 data tables for Earth (Bretagnon & Francou 1988) ===== */
+/* ===== VSOP87 data tables for Earth (Bretagnon & Francou 1988) =====
+ *
+ * [COMPONENT: VSOP87 coefficients]
+ * Source: Bretagnon & Francou, "VSOP87", A&A 202, 309 (1988)
+ * Via: Moshier's plan404 package (ear404.c) → SE's swemptab.h
+ * License: Uncopyrightable scientific data (freely distributed by IMCCE/CDS)
+ * Extent: freqs[9], phases[9], earth_max_harm[9], earth_coeffs[460],
+ *         earth_args[819] — lines 46–319
+ */
 
 /* Fundamental planetary frequencies in arcseconds per 10000 Julian years
  * (Simon et al 1994) */
@@ -318,7 +326,14 @@ static const signed char earth_args[] = {
     -1
 };
 
-/* ===== Sin/cos lookup tables for VSOP87 ===== */
+/* ===== VSOP87 evaluation engine =====
+ *
+ * [COMPONENT: VSOP87 evaluation loop]
+ * Source: Moshier's plan404 package (gplan.c, gplan() function)
+ * Via: SE's swemplan.c
+ * License: Moshier "may be used freely" + explicit BSD grants
+ * Extent: sscc(), vsop87_earth_longitude() — lines 327–412
+ */
 
 static double sin_tbl[9][24];
 static double cos_tbl[9][24];
@@ -411,7 +426,14 @@ static double vsop87_earth_longitude(double jd_tt)
     return sl;  /* arcseconds, heliocentric ecliptic J2000 */
 }
 
-/* ===== EMB→Earth correction ===== */
+/* ===== EMB→Earth correction =====
+ *
+ * [COMPONENT: EMB→Earth correction]
+ * Source: Moshier's plan404 package (gplan.c)
+ * Via: SE's swemplan.c embofs_mosh()
+ * License: Moshier "may be used freely" + explicit BSD grants
+ * Extent: emb_earth_correction() — lines 419–486
+ */
 
 /* Simplified Moon series for EMB→Earth correction — ecliptic of date.
  * Returns correction to heliocentric ecliptic longitude in radians.
@@ -489,8 +511,12 @@ static double emb_earth_correction(double jd_tt, double L_emb_rad)
 
 /* Delta-T approximation: TT - UT in seconds
  * Polynomial fits from Meeus Ch. 10 / USNO tables */
-/* Delta-T lookup table (seconds), yearly from 1900.0 to 2050.0.
- * Sources: IERS observations (1900-2023), polynomial extrapolation (2024-2050). */
+/* [COMPONENT: IERS delta-T data]
+ * Source: IERS Bulletins (observations 1900-2023), polynomial extrapolation (2024-2050)
+ * Via: SE's delta-T yearly lookup table
+ * License: Uncopyrightable observational facts (IERS open access policy)
+ * Extent: dt_tab[151], delta_t_seconds() — lines 494–542
+ */
 #define DT_TAB_START 1900
 #define DT_TAB_END   2050
 #define DT_TAB_SIZE  (DT_TAB_END - DT_TAB_START + 1) /* 151 entries */
@@ -553,9 +579,13 @@ static double normalize_deg(double d)
     return d;
 }
 
-/* Nutation in longitude (Δψ) and obliquity (Δε) in degrees.
- * Meeus Ch. 22, Table 22.A — 13-term IAU 1980 nutation model.
- * Coefficients in 0.0001 arcseconds. */
+/* [COMPONENT: Meeus algorithms — Nutation]
+ * Source: Meeus, "Astronomical Algorithms", 2nd ed., Ch. 22, Table 22.A
+ * License: 17 USC 102(b) — mathematical formulas not copyrightable
+ * Extent: nutation() — lines 559–609
+ *
+ * Nutation in longitude (Δψ) and obliquity (Δε) in degrees.
+ * 13-term IAU 1980 nutation model. Coefficients in 0.0001 arcseconds. */
 static void nutation(double jd_tt, double *dpsi, double *deps)
 {
     double T = (jd_tt - 2451545.0) / 36525.0;
@@ -608,7 +638,11 @@ static void nutation(double jd_tt, double *dpsi, double *deps)
     *deps = sum_deps * 0.0001 / 3600.0;
 }
 
-/* Mean obliquity of the ecliptic in degrees (Meeus Ch. 22, Laskar) */
+/* [COMPONENT: Meeus algorithms — Obliquity]
+ * Source: Meeus Ch. 22, Laskar's polynomial
+ * License: 17 USC 102(b) — mathematical formulas not copyrightable
+ * Extent: mean_obliquity() — lines 612–628
+ */
 static double mean_obliquity(double jd_tt)
 {
     double T = (jd_tt - 2451545.0) / 36525.0;

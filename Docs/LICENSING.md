@@ -131,6 +131,33 @@ observational data table in our library is free to implement in original code.
 
 ---
 
+## Code Location Map
+
+Each licensing component is marked in the source code with a `[COMPONENT: ...]`
+comment. The table below gives the exact file, functions, and approximate line
+ranges for each component.
+
+| Component | File | Functions / Data | Lines (approx) |
+|-----------|------|-----------------|-----------------|
+| **VSOP87 coefficients** | `moshier_sun.c` | `freqs[9]`, `phases[9]`, `earth_max_harm[9]`, `earth_coeffs[460]`, `earth_args[819]` | 46–319 |
+| **VSOP87 evaluation loop** | `moshier_sun.c` | `sscc()`, `vsop87_earth_longitude()` | 327–412 |
+| **DE404 lunar data tables** | `moshier_moon.c` | `z[25]`, `moon_lr[118×8]`, `moon_lr_t1[38×8]`, `moon_lr_t2[25×6]` | 111–349 |
+| **DE404 lunar pipeline** | `moshier_moon.c` | `mean_elements()`, `mean_elements_pl()`, `lunar_perturbations()`, `moshier_lunar_longitude()` | 367–785 |
+| **EMB→Earth correction** | `moshier_sun.c` | `emb_earth_correction()` | 419–486 |
+| **Meeus algorithms** | `moshier_jd.c` | `moshier_julday()`, `moshier_revjul()`, `moshier_day_of_week()` | entire file |
+| | `moshier_sun.c` | `nutation()` (Ch. 22, Table 22.A) | 559–609 |
+| | `moshier_sun.c` | `mean_obliquity()` (Ch. 22, Laskar) | 612–628 |
+| | `moshier_rise.c` | `sidereal_time_0h()`, `rise_set_for_date()`, `rise_set()` (Ch. 15) | 46–170 |
+| **IAU 1976 precession** | `moshier_ayanamsa.c` | `iau1976_precession_angles()`, `precess_equatorial()`, `obliquity_iau1976()`, `moshier_ayanamsa()` | entire file |
+| **Sinclair refraction** | `moshier_rise.c` | `sinclair_refraction_horizon()` | 39–44 |
+| **IERS delta-T data** | `moshier_sun.c` | `dt_tab[151]`, `delta_t_seconds()` | 494–542 |
+
+All file paths are relative to `lib/moshier/`. Line numbers are approximate and
+may shift as the code evolves; search for `[COMPONENT: ...]` comments to find
+the exact locations.
+
+---
+
 ## Component-by-Component Analysis
 
 ### 1. VSOP87 Solar Theory (moshier_sun.c)

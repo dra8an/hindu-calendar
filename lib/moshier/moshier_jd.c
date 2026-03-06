@@ -1,7 +1,10 @@
 /*
  * moshier_jd.c — Julian Day <-> Gregorian calendar conversion
  *
- * Algorithms from Meeus, "Astronomical Algorithms", 2nd ed., Ch. 7.
+ * [COMPONENT: Meeus algorithms — JD conversion]
+ * Source: Meeus, "Astronomical Algorithms", 2nd ed., Ch. 7
+ * License: 17 USC 102(b) — mathematical formulas not copyrightable
+ * Extent: entire file (moshier_julday, moshier_revjul, moshier_day_of_week)
  */
 #include "moshier.h"
 #include <math.h>

@@ -103,8 +103,15 @@ static void accum_series(const short *pt, int nlines, int nangles,
 }
 
 /* ================================================================
- * DE404 least-squares corrections (34,247 lunar positions)
- * Replaces corresponding terms in mean elements.
+ * [COMPONENT: DE404 lunar data tables]
+ * Source: Moshier's DE404 fit (1995) — least-squares fit of ELP2000-85
+ *         to JPL DE404 numerical ephemeris (34,247 positions)
+ * Via: SE's swemmoon.c
+ * License: Moshier "may be used freely" + explicit BSD grants;
+ *          numerical data are uncopyrightable scientific facts
+ * Extent: z[25], moon_lr[118×8], moon_lr_t1[38×8], moon_lr_t2[25×6]
+ *         — lines 111–349
+ *
  * z[0..11]: scaled in arc seconds
  * z[12..24]: longitude perturbation terms (arc seconds × 10^5)
  * ================================================================ */
@@ -362,6 +369,16 @@ static double T, T2;
 static double Ve, Ea, Ma, Ju, Sa;
 
 /* (Perturbation accumulators are local to lunar_perturbations.) */
+
+/* ================================================================
+ * [COMPONENT: DE404 lunar pipeline]
+ * Source: Moshier's cmoon/selenog packages (1991-1995)
+ * Via: SE's swemmoon.c (Koch restructured as moon1-moon4; we merged
+ *      back into single lunar_perturbations())
+ * License: Moshier "may be used freely" + explicit BSD grants
+ * Extent: mean_elements(), mean_elements_pl(), lunar_perturbations(),
+ *         moshier_lunar_longitude() — lines 367–785
+ * ================================================================ */
 
 /* ---- Mean elements (DE404) ---- */
 static void mean_elements(void)
