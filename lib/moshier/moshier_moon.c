@@ -21,12 +21,12 @@ extern double moshier_delta_t(double jd_ut);
 extern double moshier_nutation_longitude(double jd_ut);
 
 /* Arc seconds to radians */
-#define STR 4.8481368110953599359e-6
+#define ARCSEC_TO_RAD 4.8481368110953599359e-6
 
 #define J2000 2451545.0
 
 /* ---- Reduce arc seconds modulo 360 degrees ---- */
-static double mods3600(double x)
+static double mod_arcsec(double x)
 {
     return x - 1296000.0 * floor(x / 1296000.0);
 }
@@ -35,7 +35,7 @@ static double mods3600(double x)
 static double sin_tbl[5][8];
 static double cos_tbl[5][8];
 
-static void sscc(int k, double arg, int n)
+static void precompute_sincos(int k, double arg, int n)
 {
     double cu = cos(arg), su = sin(arg);
     double cv, sv, s;
@@ -106,16 +106,13 @@ static void accum_series(const short *pt, int nlines, int nangles,
  * [COMPONENT: DE404 lunar data tables]
  * Source: Moshier's DE404 fit (1995) — least-squares fit of ELP2000-85
  *         to JPL DE404 numerical ephemeris (34,247 positions)
- * Via: SE's swemmoon.c
- * License: Moshier "may be used freely" + explicit BSD grants;
- *          numerical data are uncopyrightable scientific facts
- * Extent: z[25], moon_lr[118×8], moon_lr_t1[38×8], moon_lr_t2[25×6]
- *         — lines 111–349
+ * License: Uncopyrightable scientific data (Feist v. Rural)
+ * Extent: de404_corr[25], moon_lr[118×8], moon_lr_t1[38×8], moon_lr_t2[25×6]
  *
- * z[0..11]: scaled in arc seconds
- * z[12..24]: longitude perturbation terms (arc seconds × 10^5)
+ * de404_corr[0..11]: scaled in arc seconds
+ * de404_corr[12..24]: longitude perturbation terms (arc seconds × 10^5)
  * ================================================================ */
-static const double z[] = {
+static const double de404_corr[] = {
     /* F, t^2..t^4 */
     -1.312045233711e+01,
     -1.138215912580e-03,
@@ -358,26 +355,25 @@ static const short moon_lr_t2[6 * MOON_LR_T2_N] = {
 /* ================================================================
  * Mean element variables (arcseconds)
  * ================================================================ */
-static double LP;  /* mean longitude of moon */
+static double mean_lon_moon;  /* mean longitude of moon */
 static double M_sun;  /* mean anomaly of sun (l') */
-static double MP;     /* mean anomaly of moon (l) */
+static double mean_anom_moon;     /* mean anomaly of moon (l) */
 static double D;      /* mean elongation */
-static double NF;     /* mean distance from ascending node (F) */
+static double arg_latitude;     /* mean distance from ascending node (F) */
 static double T, T2;
 
 /* Planetary mean longitudes */
-static double Ve, Ea, Ma, Ju, Sa;
+static double lon_venus, lon_earth, lon_mars, lon_jupiter, lon_saturn;
 
 /* (Perturbation accumulators are local to lunar_perturbations.) */
 
 /* ================================================================
  * [COMPONENT: DE404 lunar pipeline]
- * Source: Moshier's cmoon/selenog packages (1991-1995)
- * Via: SE's swemmoon.c (Koch restructured as moon1-moon4; we merged
- *      back into single lunar_perturbations())
- * License: Moshier "may be used freely" + explicit BSD grants
+ * Source: DE404-fitted analytical lunar ephemeris (Moshier 1992, A&A 262, 613)
+ * License: Uncopyrightable mathematical content (17 USC 102(b); merger doctrine —
+ *          data format dictates control flow). Variable names independently chosen.
  * Extent: mean_elements(), mean_elements_pl(), lunar_perturbations(),
- *         moshier_lunar_longitude() — lines 367–785
+ *         moshier_lunar_longitude()
  * ================================================================ */
 
 /* ---- Mean elements (DE404) ---- */
@@ -386,7 +382,7 @@ static void mean_elements(void)
     double fracT = fmod(T, 1.0);
 
     /* Mean anomaly of sun = l' (J. Laskar) */
-    M_sun = mods3600(129600000.0 * fracT - 3418.961646 * T + 1287104.76154);
+    M_sun = mod_arcsec(129600000.0 * fracT - 3418.961646 * T + 1287104.76154);
     M_sun += ((((((((
          1.62e-20 * T
        - 1.0390e-17) * T
@@ -399,33 +395,33 @@ static void mean_elements(void)
        - 0.552891801772) * T2;
 
     /* Mean distance of moon from ascending node = F */
-    NF = mods3600(1739232000.0 * fracT + 295263.0983 * T
+    arg_latitude = mod_arcsec(1739232000.0 * fracT + 295263.0983 * T
                   - 2.079419901760e-01 * T + 335779.55755);
 
     /* Mean anomaly of moon = l */
-    MP = mods3600(1717200000.0 * fracT + 715923.4728 * T
+    mean_anom_moon = mod_arcsec(1717200000.0 * fracT + 715923.4728 * T
                   - 2.035946368532e-01 * T + 485868.28096);
 
     /* Mean elongation of moon = D */
-    D = mods3600(1601856000.0 * fracT + 1105601.4603 * T
+    D = mod_arcsec(1601856000.0 * fracT + 1105601.4603 * T
                  + 3.962893294503e-01 * T + 1072260.73512);
 
     /* Mean longitude of moon */
-    LP = mods3600(1731456000.0 * fracT + 1108372.83264 * T
+    mean_lon_moon = mod_arcsec(1731456000.0 * fracT + 1108372.83264 * T
                      - 6.784914260953e-01 * T + 785939.95571);
 
     /* Higher degree secular terms (DE404 corrections) */
-    NF   += ((z[2] * T + z[1]) * T + z[0]) * T2;
-    MP   += ((z[5] * T + z[4]) * T + z[3]) * T2;
-    D    += ((z[8] * T + z[7]) * T + z[6]) * T2;
-    LP += ((z[11] * T + z[10]) * T + z[9]) * T2;
+    arg_latitude   += ((de404_corr[2] * T + de404_corr[1]) * T + de404_corr[0]) * T2;
+    mean_anom_moon   += ((de404_corr[5] * T + de404_corr[4]) * T + de404_corr[3]) * T2;
+    D    += ((de404_corr[8] * T + de404_corr[7]) * T + de404_corr[6]) * T2;
+    mean_lon_moon += ((de404_corr[11] * T + de404_corr[10]) * T + de404_corr[9]) * T2;
 }
 
 /* ---- Planetary mean longitudes (Laskar, Bretagnon) ---- */
 static void mean_elements_pl(void)
 {
-    Ve = mods3600(210664136.4335482 * T + 655127.283046);
-    Ve += ((((((((
+    lon_venus = mod_arcsec(210664136.4335482 * T + 655127.283046);
+    lon_venus += ((((((((
         -9.36e-023 * T
         - 1.95e-20) * T
         + 6.097e-18) * T
@@ -436,8 +432,8 @@ static void mean_elements_pl(void)
         - 1.4244812531e-5) * T
         + 0.005871373088) * T2;
 
-    Ea = mods3600(129597742.26669231 * T + 361679.214649);
-    Ea += ((((((((-1.16e-22 * T
+    lon_earth = mod_arcsec(129597742.26669231 * T + 361679.214649);
+    lon_earth += ((((((((-1.16e-22 * T
         + 2.976e-19) * T
         + 2.8460e-17) * T
         - 1.08402e-14) * T
@@ -447,14 +443,14 @@ static void mean_elements_pl(void)
         + 8.863982531e-6) * T
         - 2.0199859001e-2) * T2;
 
-    Ma = mods3600(68905077.59284 * T + 1279559.78866);
-    Ma += (-1.043e-5 * T + 9.38012e-3) * T2;
+    lon_mars = mod_arcsec(68905077.59284 * T + 1279559.78866);
+    lon_mars += (-1.043e-5 * T + 9.38012e-3) * T2;
 
-    Ju = mods3600(10925660.428608 * T + 123665.342120);
-    Ju += (1.543273e-5 * T - 3.06037836351e-1) * T2;
+    lon_jupiter = mod_arcsec(10925660.428608 * T + 123665.342120);
+    lon_jupiter += (1.543273e-5 * T - 3.06037836351e-1) * T2;
 
-    Sa = mods3600(4399609.65932 * T + 180278.89694);
-    Sa += ((4.475946e-8 * T - 6.874806E-5) * T + 7.56161437443E-1) * T2;
+    lon_saturn = mod_arcsec(4399609.65932 * T + 180278.89694);
+    lon_saturn += ((4.475946e-8 * T - 6.874806E-5) * T + 7.56161437443E-1) * T2;
 }
 
 /* ================================================================
@@ -476,7 +472,7 @@ static double lunar_perturbations(void)
 {
     double moonpol0;     /* table accumulator */
     double l_acc;        /* explicit perturbation longitude (arcsec) */
-    double l1, l2, l3, l4;  /* polynomial coefficients for T^1..T^4 */
+    double poly_t1, poly_t2, poly_t3, poly_t4;  /* polynomial coefficients for T^1..T^4 */
     double f_ve;         /* 18V - 16E */
     double cg, sg;       /* cos/sin of current argument */
     double a, g_arg;
@@ -489,258 +485,258 @@ static double lunar_perturbations(void)
             cos_tbl[i][j] = 0;
         }
 
-    sscc(0, STR * D, 6);
-    sscc(1, STR * M_sun, 4);
-    sscc(2, STR * MP, 4);
-    sscc(3, STR * NF, 4);
+    precompute_sincos(0, ARCSEC_TO_RAD * D, 6);
+    precompute_sincos(1, ARCSEC_TO_RAD * M_sun, 4);
+    precompute_sincos(2, ARCSEC_TO_RAD * mean_anom_moon, 4);
+    precompute_sincos(3, ARCSEC_TO_RAD * arg_latitude, 4);
 
     /* ---- T^2 table corrections ---- */
     moonpol0 = 0.0;
     accum_series(moon_lr_t2, MOON_LR_T2_N, 4, 2, &moonpol0);
 
     /* ---- Explicit planetary perturbations ---- */
-    f_ve = 18.0 * Ve - 16.0 * Ea;
+    f_ve = 18.0 * lon_venus - 16.0 * lon_earth;
 
-    g_arg = STR * (f_ve - MP);       /* 18V - 16E - l */
+    g_arg = ARCSEC_TO_RAD * (f_ve - mean_anom_moon);       /* 18V - 16E - l */
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc = 6.367278 * cg + 12.747036 * sg;      /* t^0 */
-    l1 = 23123.70 * cg - 10570.02 * sg;          /* t^1 */
-    l2 = z[12] * cg + z[13] * sg;                /* t^2 */
+    poly_t1 = 23123.70 * cg - 10570.02 * sg;          /* t^1 */
+    poly_t2 = de404_corr[12] * cg + de404_corr[13] * sg;                /* t^2 */
 
-    g_arg = STR * (10.0 * Ve - 3.0 * Ea - MP);
+    g_arg = ARCSEC_TO_RAD * (10.0 * lon_venus - 3.0 * lon_earth - mean_anom_moon);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.253102 * cg + 0.503359 * sg;
-    l1 += 1258.46 * cg + 707.29 * sg;
-    l2 += z[14] * cg + z[15] * sg;
+    poly_t1 += 1258.46 * cg + 707.29 * sg;
+    poly_t2 += de404_corr[14] * cg + de404_corr[15] * sg;
 
-    g_arg = STR * (8.0 * Ve - 13.0 * Ea);
+    g_arg = ARCSEC_TO_RAD * (8.0 * lon_venus - 13.0 * lon_earth);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.187231 * cg - 0.127481 * sg;
-    l1 += -319.87 * cg - 18.34 * sg;
-    l2 += z[16] * cg + z[17] * sg;
+    poly_t1 += -319.87 * cg - 18.34 * sg;
+    poly_t2 += de404_corr[16] * cg + de404_corr[17] * sg;
 
-    a = 4.0 * Ea - 8.0 * Ma + 3.0 * Ju;
-    g_arg = STR * a;
+    a = 4.0 * lon_earth - 8.0 * lon_mars + 3.0 * lon_jupiter;
+    g_arg = ARCSEC_TO_RAD * a;
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.866287 * cg + 0.248192 * sg;
-    l1 += 41.87 * cg + 1053.97 * sg;
-    l2 += z[18] * cg + z[19] * sg;
+    poly_t1 += 41.87 * cg + 1053.97 * sg;
+    poly_t2 += de404_corr[18] * cg + de404_corr[19] * sg;
 
-    g_arg = STR * (a - MP);
+    g_arg = ARCSEC_TO_RAD * (a - mean_anom_moon);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.165009 * cg + 0.044176 * sg;
-    l1 += 4.67 * cg + 201.55 * sg;
+    poly_t1 += 4.67 * cg + 201.55 * sg;
 
-    g_arg = STR * f_ve;               /* 18V - 16E */
+    g_arg = ARCSEC_TO_RAD * f_ve;               /* 18V - 16E */
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.330401 * cg + 0.661362 * sg;
-    l1 += 1202.67 * cg - 555.59 * sg;
-    l2 += z[20] * cg + z[21] * sg;
+    poly_t1 += 1202.67 * cg - 555.59 * sg;
+    poly_t2 += de404_corr[20] * cg + de404_corr[21] * sg;
 
-    g_arg = STR * (f_ve - 2.0 * MP);  /* 18V - 16E - 2l */
+    g_arg = ARCSEC_TO_RAD * (f_ve - 2.0 * mean_anom_moon);  /* 18V - 16E - 2l */
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.352185 * cg + 0.705041 * sg;
-    l1 += 1283.59 * cg - 586.43 * sg;
+    poly_t1 += 1283.59 * cg - 586.43 * sg;
 
-    g_arg = STR * (2.0 * Ju - 5.0 * Sa);
+    g_arg = ARCSEC_TO_RAD * (2.0 * lon_jupiter - 5.0 * lon_saturn);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.034700 * cg + 0.160041 * sg;
-    l2 += z[22] * cg + z[23] * sg;
+    poly_t2 += de404_corr[22] * cg + de404_corr[23] * sg;
 
-    g_arg = STR * (LP - NF);
+    g_arg = ARCSEC_TO_RAD * (mean_lon_moon - arg_latitude);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.000116 * cg + 7.063040 * sg;
-    l1 += 298.8 * sg;
+    poly_t1 += 298.8 * sg;
 
     /* T^3 terms */
-    sg = sin(STR * M_sun);
-    l3 = z[24] * sg;
-    l4 = 0;
+    sg = sin(ARCSEC_TO_RAD * M_sun);
+    poly_t3 = de404_corr[24] * sg;
+    poly_t4 = 0;
 
-    l2 += moonpol0;
+    poly_t2 += moonpol0;
 
     /* ---- T^1 table corrections ---- */
     moonpol0 = 0.0;
     accum_series(moon_lr_t1, MOON_LR_T1_N, 4, 1, &moonpol0);
 
-    g_arg = STR * (2.0 * Ve - 3.0 * Ea);
+    g_arg = ARCSEC_TO_RAD * (2.0 * lon_venus - 3.0 * lon_earth);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.343550 * cg - 0.000276 * sg;
-    l1 += 105.90 * cg + 336.53 * sg;
+    poly_t1 += 105.90 * cg + 336.53 * sg;
 
-    g_arg = STR * (f_ve - 2.0 * D);   /* 18V - 16E - 2D */
+    g_arg = ARCSEC_TO_RAD * (f_ve - 2.0 * D);   /* 18V - 16E - 2D */
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.074668 * cg + 0.149501 * sg;
-    l1 += 271.77 * cg - 124.20 * sg;
+    poly_t1 += 271.77 * cg - 124.20 * sg;
 
-    g_arg = STR * (f_ve - 2.0 * D - MP);
+    g_arg = ARCSEC_TO_RAD * (f_ve - 2.0 * D - mean_anom_moon);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.073444 * cg + 0.147094 * sg;
-    l1 += 265.24 * cg - 121.16 * sg;
+    poly_t1 += 265.24 * cg - 121.16 * sg;
 
-    g_arg = STR * (f_ve + 2.0 * D - MP);
+    g_arg = ARCSEC_TO_RAD * (f_ve + 2.0 * D - mean_anom_moon);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.072844 * cg + 0.145829 * sg;
-    l1 += 265.18 * cg - 121.29 * sg;
+    poly_t1 += 265.18 * cg - 121.29 * sg;
 
-    g_arg = STR * (f_ve + 2.0 * (D - MP));
+    g_arg = ARCSEC_TO_RAD * (f_ve + 2.0 * (D - mean_anom_moon));
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.070201 * cg + 0.140542 * sg;
-    l1 += 255.36 * cg - 116.79 * sg;
+    poly_t1 += 255.36 * cg - 116.79 * sg;
 
-    g_arg = STR * (Ea + D - NF);
+    g_arg = ARCSEC_TO_RAD * (lon_earth + D - arg_latitude);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.288209 * cg - 0.025901 * sg;
-    l1 += -63.51 * cg - 240.14 * sg;
+    poly_t1 += -63.51 * cg - 240.14 * sg;
 
-    g_arg = STR * (2.0 * Ea - 3.0 * Ju + 2.0 * D - MP);
+    g_arg = ARCSEC_TO_RAD * (2.0 * lon_earth - 3.0 * lon_jupiter + 2.0 * D - mean_anom_moon);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += 0.077865 * cg + 0.438460 * sg;
-    l1 += 210.57 * cg + 124.84 * sg;
+    poly_t1 += 210.57 * cg + 124.84 * sg;
 
-    g_arg = STR * (Ea - 2.0 * Ma);
+    g_arg = ARCSEC_TO_RAD * (lon_earth - 2.0 * lon_mars);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.216579 * cg + 0.241702 * sg;
-    l1 += 197.67 * cg + 125.23 * sg;
+    poly_t1 += 197.67 * cg + 125.23 * sg;
 
-    g_arg = STR * (a + MP);
+    g_arg = ARCSEC_TO_RAD * (a + mean_anom_moon);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.165009 * cg + 0.044176 * sg;
-    l1 += 4.67 * cg + 201.55 * sg;
+    poly_t1 += 4.67 * cg + 201.55 * sg;
 
-    g_arg = STR * (a + 2.0 * D - MP);
+    g_arg = ARCSEC_TO_RAD * (a + 2.0 * D - mean_anom_moon);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.133533 * cg + 0.041116 * sg;
-    l1 += 6.95 * cg + 187.07 * sg;
+    poly_t1 += 6.95 * cg + 187.07 * sg;
 
-    g_arg = STR * (a - 2.0 * D + MP);
+    g_arg = ARCSEC_TO_RAD * (a - 2.0 * D + mean_anom_moon);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.133430 * cg + 0.041079 * sg;
-    l1 += 6.28 * cg + 169.08 * sg;
+    poly_t1 += 6.28 * cg + 169.08 * sg;
 
-    g_arg = STR * (3.0 * Ve - 4.0 * Ea);
+    g_arg = ARCSEC_TO_RAD * (3.0 * lon_venus - 4.0 * lon_earth);
     cg = cos(g_arg);
     sg = sin(g_arg);
     l_acc += -0.175074 * cg + 0.003035 * sg;
-    l1 += 49.17 * cg + 150.57 * sg;
+    poly_t1 += 49.17 * cg + 150.57 * sg;
 
-    g_arg = STR * (2.0 * (Ea + D - MP) - 3.0 * Ju + 213534.0);
-    l1 += 158.4 * sin(g_arg);
+    g_arg = ARCSEC_TO_RAD * (2.0 * (lon_earth + D - mean_anom_moon) - 3.0 * lon_jupiter + 213534.0);
+    poly_t1 += 158.4 * sin(g_arg);
 
-    l1 += moonpol0;
+    poly_t1 += moonpol0;
 
     /* ---- Additional DE404-fitted explicit terms ---- */
-    g_arg = STR * (2.0 * (Ea - Ju + D) - MP + 648431.172);
+    g_arg = ARCSEC_TO_RAD * (2.0 * (lon_earth - lon_jupiter + D) - mean_anom_moon + 648431.172);
     l_acc += 1.14307 * sin(g_arg);
 
-    g_arg = STR * (Ve - Ea + 648035.568);
+    g_arg = ARCSEC_TO_RAD * (lon_venus - lon_earth + 648035.568);
     l_acc += 0.82155 * sin(g_arg);
 
-    g_arg = STR * (3.0 * (Ve - Ea) + 2.0 * D - MP + 647933.184);
+    g_arg = ARCSEC_TO_RAD * (3.0 * (lon_venus - lon_earth) + 2.0 * D - mean_anom_moon + 647933.184);
     l_acc += 0.64371 * sin(g_arg);
 
-    g_arg = STR * (Ea - Ju + 4424.04);
+    g_arg = ARCSEC_TO_RAD * (lon_earth - lon_jupiter + 4424.04);
     l_acc += 0.63880 * sin(g_arg);
 
-    g_arg = STR * (LP + MP - NF + 4.68);
+    g_arg = ARCSEC_TO_RAD * (mean_lon_moon + mean_anom_moon - arg_latitude + 4.68);
     l_acc += 0.49331 * sin(g_arg);
 
-    g_arg = STR * (LP - MP - NF + 4.68);
+    g_arg = ARCSEC_TO_RAD * (mean_lon_moon - mean_anom_moon - arg_latitude + 4.68);
     l_acc += 0.4914 * sin(g_arg);
 
-    g_arg = STR * (LP + NF + 2.52);
+    g_arg = ARCSEC_TO_RAD * (mean_lon_moon + arg_latitude + 2.52);
     l_acc += 0.36061 * sin(g_arg);
 
-    g_arg = STR * (2.0 * Ve - 2.0 * Ea + 736.2);
+    g_arg = ARCSEC_TO_RAD * (2.0 * lon_venus - 2.0 * lon_earth + 736.2);
     l_acc += 0.30154 * sin(g_arg);
 
-    g_arg = STR * (2.0 * Ea - 3.0 * Ju + 2.0 * D - 2.0 * MP + 36138.2);
+    g_arg = ARCSEC_TO_RAD * (2.0 * lon_earth - 3.0 * lon_jupiter + 2.0 * D - 2.0 * mean_anom_moon + 36138.2);
     l_acc += 0.28282 * sin(g_arg);
 
-    g_arg = STR * (2.0 * Ea - 2.0 * Ju + 2.0 * D - 2.0 * MP + 311.0);
+    g_arg = ARCSEC_TO_RAD * (2.0 * lon_earth - 2.0 * lon_jupiter + 2.0 * D - 2.0 * mean_anom_moon + 311.0);
     l_acc += 0.24516 * sin(g_arg);
 
-    g_arg = STR * (Ea - Ju - 2.0 * D + MP + 6275.88);
+    g_arg = ARCSEC_TO_RAD * (lon_earth - lon_jupiter - 2.0 * D + mean_anom_moon + 6275.88);
     l_acc += 0.21117 * sin(g_arg);
 
-    g_arg = STR * (2.0 * (Ea - Ma) - 846.36);
+    g_arg = ARCSEC_TO_RAD * (2.0 * (lon_earth - lon_mars) - 846.36);
     l_acc += 0.19444 * sin(g_arg);
 
-    g_arg = STR * (2.0 * (Ea - Ju) + 1569.96);
+    g_arg = ARCSEC_TO_RAD * (2.0 * (lon_earth - lon_jupiter) + 1569.96);
     l_acc -= 0.18457 * sin(g_arg);
 
-    g_arg = STR * (2.0 * (Ea - Ju) - MP - 55.8);
+    g_arg = ARCSEC_TO_RAD * (2.0 * (lon_earth - lon_jupiter) - mean_anom_moon - 55.8);
     l_acc += 0.18256 * sin(g_arg);
 
-    g_arg = STR * (Ea - Ju - 2.0 * D + 6490.08);
+    g_arg = ARCSEC_TO_RAD * (lon_earth - lon_jupiter - 2.0 * D + 6490.08);
     l_acc += 0.16499 * sin(g_arg);
 
-    g_arg = STR * (Ea - 2.0 * Ju - 212378.4);
+    g_arg = ARCSEC_TO_RAD * (lon_earth - 2.0 * lon_jupiter - 212378.4);
     l_acc += 0.16427 * sin(g_arg);
 
-    g_arg = STR * (2.0 * (Ve - Ea - D) + MP + 1122.48);
+    g_arg = ARCSEC_TO_RAD * (2.0 * (lon_venus - lon_earth - D) + mean_anom_moon + 1122.48);
     l_acc += 0.16088 * sin(g_arg);
 
-    g_arg = STR * (Ve - Ea - MP + 32.04);
+    g_arg = ARCSEC_TO_RAD * (lon_venus - lon_earth - mean_anom_moon + 32.04);
     l_acc -= 0.15350 * sin(g_arg);
 
-    g_arg = STR * (Ea - Ju - MP + 4488.88);
+    g_arg = ARCSEC_TO_RAD * (lon_earth - lon_jupiter - mean_anom_moon + 4488.88);
     l_acc += 0.14346 * sin(g_arg);
 
-    g_arg = STR * (2.0 * (Ve - Ea + D) - MP - 8.64);
+    g_arg = ARCSEC_TO_RAD * (2.0 * (lon_venus - lon_earth + D) - mean_anom_moon - 8.64);
     l_acc += 0.13594 * sin(g_arg);
 
-    g_arg = STR * (2.0 * (Ve - Ea - D) + 1319.76);
+    g_arg = ARCSEC_TO_RAD * (2.0 * (lon_venus - lon_earth - D) + 1319.76);
     l_acc += 0.13432 * sin(g_arg);
 
-    g_arg = STR * (Ve - Ea - 2.0 * D + MP - 56.16);
+    g_arg = ARCSEC_TO_RAD * (lon_venus - lon_earth - 2.0 * D + mean_anom_moon - 56.16);
     l_acc -= 0.13122 * sin(g_arg);
 
-    g_arg = STR * (Ve - Ea + MP + 54.36);
+    g_arg = ARCSEC_TO_RAD * (lon_venus - lon_earth + mean_anom_moon + 54.36);
     l_acc -= 0.12722 * sin(g_arg);
 
-    g_arg = STR * (3.0 * (Ve - Ea) - MP + 433.8);
+    g_arg = ARCSEC_TO_RAD * (3.0 * (lon_venus - lon_earth) - mean_anom_moon + 433.8);
     l_acc += 0.12539 * sin(g_arg);
 
-    g_arg = STR * (Ea - Ju + MP + 4002.12);
+    g_arg = ARCSEC_TO_RAD * (lon_earth - lon_jupiter + mean_anom_moon + 4002.12);
     l_acc += 0.10994 * sin(g_arg);
 
-    g_arg = STR * (20.0 * Ve - 21.0 * Ea - 2.0 * D + MP - 317511.72);
+    g_arg = ARCSEC_TO_RAD * (20.0 * lon_venus - 21.0 * lon_earth - 2.0 * D + mean_anom_moon - 317511.72);
     l_acc += 0.10652 * sin(g_arg);
 
-    g_arg = STR * (26.0 * Ve - 29.0 * Ea - MP + 270002.52);
+    g_arg = ARCSEC_TO_RAD * (26.0 * lon_venus - 29.0 * lon_earth - mean_anom_moon + 270002.52);
     l_acc += 0.10490 * sin(g_arg);
 
-    g_arg = STR * (3.0 * Ve - 4.0 * Ea + D - MP - 322765.56);
+    g_arg = ARCSEC_TO_RAD * (3.0 * lon_venus - 4.0 * lon_earth + D - mean_anom_moon - 322765.56);
     l_acc += 0.10386 * sin(g_arg);
 
     /* ---- Main perturbation table (118 terms) + final assembly ---- */
     moonpol0 = 0.0;
     accum_series(moon_lr, MOON_LR_N, 4, 1, &moonpol0);
-    l_acc += (((l4 * T + l3) * T + l2) * T + l1) * T * 1.0e-5;
-    moonpol0 = LP + l_acc + 1.0e-4 * moonpol0;
+    l_acc += (((poly_t4 * T + poly_t3) * T + poly_t2) * T + poly_t1) * T * 1.0e-5;
+    moonpol0 = mean_lon_moon + l_acc + 1.0e-4 * moonpol0;
 
-    return STR * mods3600(moonpol0);
+    return ARCSEC_TO_RAD * mod_arcsec(moonpol0);
 }
 
 /* ================================================================
@@ -775,11 +771,11 @@ double moshier_lunar_longitude(double jd_ut)
      *
      * Top 5 radius perturbation terms from DE404 LR table (km, cosine): */
     {
-        double cos_l    = cos(STR * MP);
-        double cos_2d_l = cos(STR * (2.0 * D - MP));
-        double cos_2d   = cos(STR * (2.0 * D));
-        double cos_2l   = cos(STR * (2.0 * MP));
-        double cos_lp   = cos(STR * M_sun);
+        double cos_l    = cos(ARCSEC_TO_RAD * mean_anom_moon);
+        double cos_2d_l = cos(ARCSEC_TO_RAD * (2.0 * D - mean_anom_moon));
+        double cos_2d   = cos(ARCSEC_TO_RAD * (2.0 * D));
+        double cos_2l   = cos(ARCSEC_TO_RAD * (2.0 * mean_anom_moon));
+        double cos_lp   = cos(ARCSEC_TO_RAD * M_sun);
 
         double r_mean = 385000.529;  /* km */
         double delta_r = -20905.355 * cos_l

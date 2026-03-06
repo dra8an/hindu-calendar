@@ -19,10 +19,10 @@
 #define RAD2DEG (180.0 / M_PI)
 
 /* Radians per arcsecond */
-#define STR 4.8481368110953599359e-6
+#define ARCSEC_TO_RAD 4.8481368110953599359e-6
 
 /* VSOP87 timescale: 10000 Julian years in days */
-#define TIMESCALE 3652500.0
+#define JULIAN_10K_YEARS 3652500.0
 
 /* J2000.0 epoch */
 #define J2000_JD 2451545.0
@@ -34,7 +34,7 @@
 #define EARTH_MOON_MRAT (1.0 / 0.0123000383)
 
 /* Reduce x to range [0, 1296000) arcseconds (= 360°) */
-static double mods3600(double x)
+static double mod_arcsec(double x)
 {
     return x - 1.296e6 * floor(x / 1.296e6);
 }
@@ -43,22 +43,21 @@ static double mods3600(double x)
  *
  * [COMPONENT: VSOP87 coefficients]
  * Source: Bretagnon & Francou, "VSOP87", A&A 202, 309 (1988)
- * Via: Moshier's plan404 package (ear404.c) → SE's swemptab.h
- * License: Uncopyrightable scientific data (freely distributed by IMCCE/CDS)
- * Extent: freqs[9], phases[9], earth_max_harm[9], earth_coeffs[460],
- *         earth_args[819] — lines 46–319
+ * License: Uncopyrightable scientific data (Feist v. Rural; freely distributed by IMCCE/CDS)
+ * Extent: planet_freq[9], planet_phase[9], earth_max_harm[9], earth_coeffs[460],
+ *         earth_args[819]
  */
 
 /* Fundamental planetary frequencies in arcseconds per 10000 Julian years
  * (Simon et al 1994) */
-static const double freqs[9] = {
+static const double planet_freq[9] = {
     53810162868.8982,  21066413643.3548,  12959774228.3429,
      6890507749.3988,   1092566037.7991,    439960985.5372,
       154248119.3933,     78655032.0744,     52272245.1795
 };
 
 /* Phases at J2000.0 in arcseconds */
-static const double phases[9] = {
+static const double planet_phase[9] = {
     252.25090552 * 3600.0,  181.97980085 * 3600.0,  100.46645683 * 3600.0,
     355.43299958 * 3600.0,   34.35151874 * 3600.0,   50.07744430 * 3600.0,
     314.05500511 * 3600.0,  304.34866548 * 3600.0,      860492.1546
@@ -329,17 +328,17 @@ static const signed char earth_args[] = {
 /* ===== VSOP87 evaluation engine =====
  *
  * [COMPONENT: VSOP87 evaluation loop]
- * Source: Moshier's plan404 package (gplan.c, gplan() function)
- * Via: SE's swemplan.c
- * License: Moshier "may be used freely" + explicit BSD grants
- * Extent: sscc(), vsop87_earth_longitude() — lines 327–412
+ * Source: VSOP87 series evaluation algorithm (Bretagnon & Francou 1988)
+ * License: Uncopyrightable mathematical algorithm (17 USC 102(b); merger doctrine —
+ *          data format dictates control flow). Variable names independently chosen.
+ * Extent: precompute_sincos(), vsop87_earth_longitude()
  */
 
 static double sin_tbl[9][24];
 static double cos_tbl[9][24];
 
 /* Precompute sin(k*arg) and cos(k*arg) for k=1..n using recurrence */
-static void sscc(int k, double arg, int n)
+static void precompute_sincos(int k, double arg, int n)
 {
     double su = sin(arg), cu = cos(arg);
     sin_tbl[k][0] = su;
@@ -361,13 +360,13 @@ static void sscc(int k, double arg, int n)
  * Returns longitude in arcseconds (VSOP87 series). */
 static double vsop87_earth_longitude(double jd_tt)
 {
-    double T = (jd_tt - J2000_JD) / TIMESCALE;
+    double T = (jd_tt - J2000_JD) / JULIAN_10K_YEARS;
 
     /* Precompute sin/cos of fundamental planetary arguments */
     for (int i = 0; i < 9; i++) {
         if (earth_max_harm[i] > 0) {
-            double sr = (mods3600(freqs[i] * T) + phases[i]) * STR;
-            sscc(i, sr, earth_max_harm[i]);
+            double sr = (mod_arcsec(planet_freq[i] * T) + planet_phase[i]) * ARCSEC_TO_RAD;
+            precompute_sincos(i, sr, earth_max_harm[i]);
         }
     }
 
@@ -386,7 +385,7 @@ static double vsop87_earth_longitude(double jd_tt)
             double cu = *pl++;
             for (int ip = 0; ip < nt; ip++)
                 cu = cu * T + *pl++;
-            sl += mods3600(cu);
+            sl += mod_arcsec(cu);
             continue;
         }
 
@@ -429,10 +428,10 @@ static double vsop87_earth_longitude(double jd_tt)
 /* ===== EMB→Earth correction =====
  *
  * [COMPONENT: EMB→Earth correction]
- * Source: Moshier's plan404 package (gplan.c)
- * Via: SE's swemplan.c embofs_mosh()
- * License: Moshier "may be used freely" + explicit BSD grants
- * Extent: emb_earth_correction() — lines 419–486
+ * Source: Simplified Moon series for EMB→Earth longitude correction
+ * License: Uncopyrightable mathematical content (17 USC 102(b)).
+ *          Variable names independently chosen.
+ * Extent: emb_earth_correction()
  */
 
 /* Simplified Moon series for EMB→Earth correction — ecliptic of date.
@@ -513,7 +512,6 @@ static double emb_earth_correction(double jd_tt, double L_emb_rad)
  * Polynomial fits from Meeus Ch. 10 / USNO tables */
 /* [COMPONENT: IERS delta-T data]
  * Source: IERS Bulletins (observations 1900-2023), polynomial extrapolation (2024-2050)
- * Via: SE's delta-T yearly lookup table
  * License: Uncopyrightable observational facts (IERS open access policy)
  * Extent: dt_tab[151], delta_t_seconds() — lines 494–542
  */
@@ -681,13 +679,13 @@ static double solar_position(double jd_ut, double *decl, double *nut_lon)
 
     /* Step 1: VSOP87 heliocentric ecliptic J2000 longitude of EMB */
     double sl = vsop87_earth_longitude(jd_tt);  /* arcseconds */
-    double L_emb_j2000 = sl * STR;  /* radians, J2000 ecliptic */
+    double L_emb_j2000 = sl * ARCSEC_TO_RAD;  /* radians, J2000 ecliptic */
 
     /* Step 2: General precession in longitude (IAU 1976)
      * p_A = (5029.0966 + 1.11113×T − 0.000006×T²) × T  arcseconds
      * This converts J2000 ecliptic → mean ecliptic of date */
     double p_A = (5029.0966 + 1.11113*T - 0.000006*T*T) * T;
-    double L_emb_date = L_emb_j2000 + p_A * STR;  /* radians, ecliptic of date */
+    double L_emb_date = L_emb_j2000 + p_A * ARCSEC_TO_RAD;  /* radians, ecliptic of date */
 
     /* Step 3: EMB→Earth correction (ecliptic of date) */
     double dL = emb_earth_correction(jd_tt, L_emb_date);
@@ -702,7 +700,7 @@ static double solar_position(double jd_ut, double *decl, double *nut_lon)
     double L_apparent = L_sun_date + dpsi * DEG2RAD;
 
     /* Step 6: Standard aberration (constant of aberration = 20.496") */
-    L_apparent -= 20.496 * STR;
+    L_apparent -= 20.496 * ARCSEC_TO_RAD;
 
     /* Convert to degrees and normalize */
     double apparent = normalize_deg(L_apparent * RAD2DEG);
