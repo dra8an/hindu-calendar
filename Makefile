@@ -32,9 +32,12 @@ APP_SRCS = $(SRCDIR)/astro.c $(SRCDIR)/date_utils.c $(SRCDIR)/tithi.c \
 APP_OBJS = $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(APP_SRCS))
 MAIN_OBJ = $(BUILDDIR)/main.o
 
-# Test sources
-TEST_SRCS = $(wildcard $(TESTDIR)/test_*.c)
+# Test sources (exclude benchmark)
+TEST_SRCS = $(filter-out $(TESTDIR)/test_perf.c,$(wildcard $(TESTDIR)/test_*.c))
 TEST_BINS = $(patsubst $(TESTDIR)/%.c,$(BUILDDIR)/%,$(TEST_SRCS))
+
+# Benchmark
+BENCH_BIN = $(BUILDDIR)/test_perf
 
 # Generator sources
 GEN_REF_SRC = tools/generate_ref_data.c
@@ -44,7 +47,7 @@ DST_OBJ = $(BUILDDIR)/dst.o
 # Target binary
 TARGET = hindu-calendar
 
-.PHONY: all clean test gen-ref gen-ref-nyc gen-json
+.PHONY: all clean test bench report gen-ref gen-ref-nyc gen-json
 
 all: $(BUILDDIR) $(TARGET)
 
@@ -85,6 +88,11 @@ test: $(TEST_BINS)
 		./$$t || exit 1; \
 		echo ""; \
 	done
+
+bench: $(BENCH_BIN)
+	@./$(BENCH_BIN)
+
+report: test bench
 
 # Generator binaries
 $(BUILDDIR)/gen_ref: $(GEN_REF_SRC) $(EPH_OBJS) $(APP_OBJS) $(DST_OBJ) | $(BUILDDIR)
