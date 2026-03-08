@@ -19,6 +19,10 @@ int solar_rashi(double jd_ut);
 /* Determine the lunar month (masa) for a given Gregorian date. */
 MasaInfo masa_for_date(int year, int month, int day, const Location *loc);
 
+/* Same as masa_for_date() but takes a pre-computed sunrise JD to avoid
+ * redundant sunrise computation. */
+MasaInfo masa_for_date_at(double jd_rise, const Location *loc);
+
 /* Saka year for a given date and masa number. */
 int hindu_year_saka(double jd_ut, int masa_num);
 

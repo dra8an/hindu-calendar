@@ -187,7 +187,11 @@ double sankranti_jd(double jd_approx, double target_longitude)
     /* If lo is already past the target, widen bracket */
     if (diff_lo >= 0) lo -= 30.0;
 
-    /* 50 iterations of bisection gives precision ~40 days / 2^50 ~ 3e-14 days ~ 3 ns */
+    /* Early exit threshold: 1 millisecond = ~1.16e-8 days.
+     * 50 iterations give nanosecond precision; millisecond is sufficient
+     * for critical time comparison. */
+    double threshold = 1e-3 / 86400.0;
+
     for (int i = 0; i < 50; i++) {
         double mid = (lo + hi) / 2.0;
         double lon = solar_longitude_sidereal(mid);
@@ -200,6 +204,8 @@ double sankranti_jd(double jd_approx, double target_longitude)
             hi = mid;
         else
             lo = mid;
+
+        if (hi - lo < threshold) break;
     }
 
     return (lo + hi) / 2.0;
@@ -406,6 +412,19 @@ static int rashi_to_regional_month(int rashi, SolarCalendarType type)
     return m;
 }
 
+/* ---- Solar year cache ----
+ * Cache the year-start civil JD for a (calendar_type, gregorian_year) pair.
+ * The civil JD is the same for all dates in the same Gregorian year;
+ * the before/after comparison still runs per call. */
+
+static struct {
+    SolarCalendarType type;
+    int greg_year;
+    double jd_year_civil;
+    int gy_offset_on;
+    int gy_offset_before;
+} year_cache = {0, 0, 0, 0, 0};
+
 /* ---- Solar year computation ----
  *
  * Each calendar has its own era, derived directly from the Gregorian year:
@@ -421,21 +440,31 @@ static int solar_year(double jd_ut, const Location *loc,
     int gy, gm, gd;
     jd_to_gregorian(jd_ut, &gy, &gm, &gd);
 
-    /* Find the year-start sankranti for this Gregorian year.
-     * year_start_rashi 1 (Mesha) ~ April, 5 (Simha) ~ August, 6 (Kanya) ~ September. */
-    double target_long = (double)(cfg->year_start_rashi - 1) * 30.0;
-    int approx_greg_month = 3 + cfg->year_start_rashi; /* Mesha=4, Simha=8, Kanya=9 */
-    if (approx_greg_month > 12) approx_greg_month -= 12;
+    double jd_year_civil;
 
-    double jd_year_start_est = gregorian_to_jd(gy, approx_greg_month, 14);
-    double jd_year_start = sankranti_jd(jd_year_start_est, target_long);
+    /* Check cache: same calendar type and Gregorian year */
+    if (year_cache.type == type && year_cache.greg_year == gy) {
+        jd_year_civil = year_cache.jd_year_civil;
+    } else {
+        /* Find the year-start sankranti for this Gregorian year. */
+        double target_long = (double)(cfg->year_start_rashi - 1) * 30.0;
+        int approx_greg_month = 3 + cfg->year_start_rashi;
+        if (approx_greg_month > 12) approx_greg_month -= 12;
 
-    /* Determine which civil day "owns" the year-start sankranti,
-     * using the same critical-time rule as the calendar. */
-    int ysy, ysm, ysd;
-    sankranti_to_civil_day(jd_year_start, loc, type, cfg->year_start_rashi,
-                           &ysy, &ysm, &ysd);
-    double jd_year_civil = gregorian_to_jd(ysy, ysm, ysd);
+        double jd_year_start_est = gregorian_to_jd(gy, approx_greg_month, 14);
+        double jd_year_start = sankranti_jd(jd_year_start_est, target_long);
+
+        int ysy, ysm, ysd;
+        sankranti_to_civil_day(jd_year_start, loc, type, cfg->year_start_rashi,
+                               &ysy, &ysm, &ysd);
+        jd_year_civil = gregorian_to_jd(ysy, ysm, ysd);
+
+        year_cache.type = type;
+        year_cache.greg_year = gy;
+        year_cache.jd_year_civil = jd_year_civil;
+        year_cache.gy_offset_on = cfg->gy_offset_on;
+        year_cache.gy_offset_before = cfg->gy_offset_before;
+    }
 
     if (jd_greg_date >= jd_year_civil) {
         return gy - cfg->gy_offset_on;
@@ -443,6 +472,20 @@ static int solar_year(double jd_ut, const Location *loc,
         return gy - cfg->gy_offset_before;
     }
 }
+
+/* ---- Sankranti cache ----
+ *
+ * Consecutive days almost always share the same rashi (~30/31 days per sign).
+ * Cache the last (type, rashi, sankranti_jd, civil_day_jd) to avoid redundant
+ * 50-iteration bisections. Keyed on (calendar_type, rashi). */
+
+static struct {
+    SolarCalendarType type;
+    int rashi;
+    double jd_sankranti;
+    int civil_y, civil_m, civil_d;
+    double jd_civil;
+} sank_cache = {0, 0, 0, 0, 0, 0, 0};
 
 /* ---- Public API ---- */
 
@@ -465,19 +508,42 @@ SolarDate gregorian_to_solar(int year, int month, int day,
     bengali_rashi_correction(type, jd_crit, &rashi, &lon);
     sd.rashi = rashi;
 
-    /* Find the sankranti that started this month */
-    double target = (rashi - 1) * 30.0;
-    double degrees_past = lon - target;
-    if (degrees_past < 0) degrees_past += 360.0;
-    double jd_est = jd_crit - degrees_past;
-    sd.jd_sankranti = sankranti_jd(jd_est, target);
-
-    /* Find the civil day of that sankranti */
+    /* Find the sankranti that started this month — check cache first.
+     * Cache is valid if same type, same rashi, and the cached sankranti
+     * is within ~35 days before the current date (same solar month). */
     int sy, sm, s_day;
-    sankranti_to_civil_day(sd.jd_sankranti, loc, type, rashi, &sy, &sm, &s_day);
+    double jd_month_start;
+    int cache_hit = (sank_cache.type == type && sank_cache.rashi == rashi &&
+                     sank_cache.jd_sankranti > 0 &&
+                     jd > sank_cache.jd_civil &&
+                     jd - sank_cache.jd_civil < 35.0);
+
+    if (cache_hit) {
+        sd.jd_sankranti = sank_cache.jd_sankranti;
+        sy = sank_cache.civil_y;
+        sm = sank_cache.civil_m;
+        s_day = sank_cache.civil_d;
+        jd_month_start = sank_cache.jd_civil;
+    } else {
+        double target = (rashi - 1) * 30.0;
+        double degrees_past = lon - target;
+        if (degrees_past < 0) degrees_past += 360.0;
+        double jd_est = jd_crit - degrees_past;
+        sd.jd_sankranti = sankranti_jd(jd_est, target);
+
+        sankranti_to_civil_day(sd.jd_sankranti, loc, type, rashi, &sy, &sm, &s_day);
+        jd_month_start = gregorian_to_jd(sy, sm, s_day);
+
+        sank_cache.type = type;
+        sank_cache.rashi = rashi;
+        sank_cache.jd_sankranti = sd.jd_sankranti;
+        sank_cache.civil_y = sy;
+        sank_cache.civil_m = sm;
+        sank_cache.civil_d = s_day;
+        sank_cache.jd_civil = jd_month_start;
+    }
 
     /* Day within solar month = days since month start + 1 */
-    double jd_month_start = gregorian_to_jd(sy, sm, s_day);
     sd.day = (int)(jd - jd_month_start) + 1;
 
     /* Bengali tithi-based rule may push the month start past our date.
@@ -491,12 +557,21 @@ SolarDate gregorian_to_solar(int year, int month, int day,
                                &sy, &sm, &s_day);
         jd_month_start = gregorian_to_jd(sy, sm, s_day);
         sd.day = (int)(jd - jd_month_start) + 1;
+
+        /* Update cache with corrected values */
+        sank_cache.type = type;
+        sank_cache.rashi = rashi;
+        sank_cache.jd_sankranti = sd.jd_sankranti;
+        sank_cache.civil_y = sy;
+        sank_cache.civil_m = sm;
+        sank_cache.civil_d = s_day;
+        sank_cache.jd_civil = jd_month_start;
     }
 
     /* Regional month number */
     sd.month = rashi_to_regional_month(rashi, type);
 
-    /* Year */
+    /* Year (solar_year has its own internal cache) */
     sd.year = solar_year(jd_crit, loc, jd, type);
 
     return sd;

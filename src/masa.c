@@ -82,22 +82,27 @@ int solar_rashi(double jd_ut)
     return rashi;
 }
 
-MasaInfo masa_for_date(int year, int month, int day, const Location *loc)
+/* Static new moon cache: consecutive days usually bracket the same pair. */
+static double cached_last_nm = 0, cached_next_nm = 0;
+
+static MasaInfo masa_compute(double jd_rise)
 {
     MasaInfo info = {0};
-
-    double jd = gregorian_to_jd(year, month, day);
-    double jd_rise = sunrise_jd(jd, loc);
-    if (jd_rise <= 0) {
-        jd_rise = jd + 0.5 - loc->utc_offset / 24.0;
-    }
 
     /* Get tithi at sunrise for search hint */
     int t = tithi_at_moment(jd_rise);
 
-    /* Find the new moons bracketing this date */
-    double last_nm = new_moon_before(jd_rise, t);
-    double next_nm = new_moon_after(jd_rise, t);
+    /* Check cache: if jd_rise is between cached new moons, reuse them */
+    double last_nm, next_nm;
+    if (cached_last_nm > 0 && jd_rise > cached_last_nm && jd_rise < cached_next_nm) {
+        last_nm = cached_last_nm;
+        next_nm = cached_next_nm;
+    } else {
+        last_nm = new_moon_before(jd_rise, t);
+        next_nm = new_moon_after(jd_rise, t);
+        cached_last_nm = last_nm;
+        cached_next_nm = next_nm;
+    }
 
     info.jd_start = last_nm;
     info.jd_end = next_nm;
@@ -109,10 +114,7 @@ MasaInfo masa_for_date(int year, int month, int day, const Location *loc)
     /* Adhika (leap) month: same rashi at both new moons */
     info.is_adhika = (rashi_last == rashi_next) ? 1 : 0;
 
-    /* Month name = rashi + 1 (Mesha=1 → Chaitra=1, etc.)
-     * The mapping is: the month is named after the rashi that
-     * the sun is in (or will next enter) during this lunar month.
-     * Specifically: month_name = rashi_at_last_new_moon + 1 (mod 12) */
+    /* Month name = rashi + 1 (Mesha=1 → Chaitra=1, etc.) */
     int masa_num = rashi_last + 1;
     if (masa_num > 12) masa_num -= 12;
     info.name = (MasaName)masa_num;
@@ -122,6 +124,22 @@ MasaInfo masa_for_date(int year, int month, int day, const Location *loc)
     info.year_vikram = hindu_year_vikram(info.year_saka);
 
     return info;
+}
+
+MasaInfo masa_for_date(int year, int month, int day, const Location *loc)
+{
+    double jd = gregorian_to_jd(year, month, day);
+    double jd_rise = sunrise_jd(jd, loc);
+    if (jd_rise <= 0) {
+        jd_rise = jd + 0.5 - loc->utc_offset / 24.0;
+    }
+    return masa_compute(jd_rise);
+}
+
+MasaInfo masa_for_date_at(double jd_rise, const Location *loc)
+{
+    (void)loc;
+    return masa_compute(jd_rise);
 }
 
 int hindu_year_saka(double jd_ut, int masa_num)

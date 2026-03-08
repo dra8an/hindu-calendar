@@ -21,25 +21,34 @@ HinduDate gregorian_to_hindu(int year, int month, int day, const Location *loc)
 {
     HinduDate hd = {0};
 
-    /* Get tithi at sunrise */
-    TithiInfo ti = tithi_at_sunrise(year, month, day, loc);
+    /* Compute sunrise once for today */
+    double jd = gregorian_to_jd(year, month, day);
+    double jd_rise = sunrise_jd(jd, loc);
+    if (jd_rise <= 0) {
+        jd_rise = jd + 0.5 - loc->utc_offset / 24.0;
+    }
 
-    /* Get masa */
-    MasaInfo mi = masa_for_date(year, month, day, loc);
+    /* Lightweight tithi: just the number, no boundary finding */
+    int t = tithi_num_at_jd(jd_rise);
+    hd.paksha = (t <= 15) ? SHUKLA_PAKSHA : KRISHNA_PAKSHA;
+    hd.tithi = (t <= 15) ? t : t - 15;
+
+    /* Get masa using pre-computed sunrise */
+    MasaInfo mi = masa_for_date_at(jd_rise, loc);
 
     hd.masa = mi.name;
     hd.is_adhika_masa = mi.is_adhika;
     hd.year_saka = mi.year_saka;
     hd.year_vikram = mi.year_vikram;
 
-    hd.paksha = ti.paksha;
-    hd.tithi = ti.paksha_tithi;
-
     /* Check for adhika tithi: same tithi as previous day's sunrise */
-    if (day > 1) {
-        TithiInfo ti_prev = tithi_at_sunrise(year, month, day - 1, loc);
-        hd.is_adhika_tithi = (ti.tithi_num == ti_prev.tithi_num) ? 1 : 0;
+    double jd_prev = jd - 1.0;
+    double jd_rise_prev = sunrise_jd(jd_prev, loc);
+    if (jd_rise_prev <= 0) {
+        jd_rise_prev = jd_prev + 0.5 - loc->utc_offset / 24.0;
     }
+    int t_prev = tithi_num_at_jd(jd_rise_prev);
+    hd.is_adhika_tithi = (t == t_prev) ? 1 : 0;
 
     return hd;
 }

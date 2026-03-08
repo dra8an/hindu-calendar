@@ -15,6 +15,10 @@ int tithi_at_moment(double jd_ut);
  * Fills in TithiInfo including tithi boundaries and kshaya detection. */
 TithiInfo tithi_at_sunrise(int year, int month, int day, const Location *loc);
 
+/* Tithi number at a pre-computed sunrise JD.
+ * Lightweight version: no boundary finding, no kshaya check. */
+int tithi_num_at_jd(double jd_sunrise);
+
 /* Find the exact Julian Day when a tithi boundary occurs.
  * Searches between jd_start and jd_end for the moment when
  * the lunar phase crosses the boundary for target_tithi.

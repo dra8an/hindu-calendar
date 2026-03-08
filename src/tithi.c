@@ -20,6 +20,11 @@ int tithi_at_moment(double jd_ut)
     return t;
 }
 
+int tithi_num_at_jd(double jd_sunrise)
+{
+    return tithi_at_moment(jd_sunrise);
+}
+
 double find_tithi_boundary(double jd_start, double jd_end, int target_tithi)
 {
     /* The boundary for target_tithi is at phase = (target_tithi - 1) * 12 degrees.
@@ -30,6 +35,10 @@ double find_tithi_boundary(double jd_start, double jd_end, int target_tithi)
     /* Bisection: find JD where lunar_phase == target_phase */
     double lo = jd_start;
     double hi = jd_end;
+
+    /* Early exit threshold: 1 second = ~1.16e-5 days.
+     * 50 iterations give nanosecond precision; sub-second is sufficient. */
+    double threshold = 1.0 / 86400.0;
 
     for (int i = 0; i < 50; i++) {
         double mid = (lo + hi) / 2.0;
@@ -45,6 +54,8 @@ double find_tithi_boundary(double jd_start, double jd_end, int target_tithi)
             hi = mid;
         else
             lo = mid;
+
+        if (hi - lo < threshold) break;
     }
 
     return (lo + hi) / 2.0;
