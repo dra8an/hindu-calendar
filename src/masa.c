@@ -166,3 +166,106 @@ int hindu_year_vikram(int saka_year)
 {
     return saka_year + 135;
 }
+
+double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
+                             const Location *loc)
+{
+    /* Step 1: Estimate approximate Gregorian date in the target month.
+     * Masa 1 (Chaitra) ≈ April, Masa 2 (Vaishakha) ≈ May, etc. */
+    int gy = saka_year + 78;
+    int approx_gm = (int)masa + 3;
+    if (approx_gm > 12) {
+        approx_gm -= 12;
+        gy++;
+    }
+
+    /* Start at the 15th of the estimated month */
+    int est_y = gy, est_m = approx_gm, est_d = 15;
+    MasaInfo mi = masa_for_date(est_y, est_m, est_d, loc);
+
+    /* Step 2-3: Navigate using new moon boundaries.
+     * Each MasaInfo has jd_start/jd_end (new moons bracketing the month).
+     * To go forward, jump past jd_end; to go backward, jump before jd_start. */
+    for (int attempt = 0; attempt < 14; attempt++) {
+        if (mi.name == masa && mi.is_adhika == is_adhika &&
+            mi.year_saka == saka_year) {
+            break;  /* Found it */
+        }
+
+        /* Determine which direction to search */
+        int target_ord = saka_year * 13 + (int)masa + (is_adhika ? 0 : 1);
+        int cur_ord = mi.year_saka * 13 + (int)mi.name + (mi.is_adhika ? 0 : 1);
+
+        double jd_nav;
+        if (target_ord > cur_ord) {
+            /* Need to go forward — jump 1 day past end of current month */
+            jd_nav = mi.jd_end + 1.0;
+        } else {
+            /* Need to go backward — jump 1 day before start of current month */
+            jd_nav = mi.jd_start - 1.0;
+        }
+        jd_to_gregorian(jd_nav, &est_y, &est_m, &est_d);
+        mi = masa_for_date(est_y, est_m, est_d, loc);
+    }
+
+    /* Verify we found the right month */
+    if (mi.name != masa || mi.is_adhika != is_adhika ||
+        mi.year_saka != saka_year) {
+        return 0;  /* Not found */
+    }
+
+    /* Step 4: Find the first civil day of this month.
+     * mi.jd_start is the new moon (Amavasya). The next day is typically
+     * Shukla Pratipada, the first day of the new month. */
+    int nm_y, nm_m, nm_d;
+    jd_to_gregorian(mi.jd_start, &nm_y, &nm_m, &nm_d);
+
+    /* Try the Amavasya day itself — if new moon is well before sunrise,
+     * this day may already belong to the new month */
+    MasaInfo check = masa_for_date(nm_y, nm_m, nm_d, loc);
+    if (check.name == masa && check.is_adhika == is_adhika &&
+        check.year_saka == saka_year) {
+        return gregorian_to_jd(nm_y, nm_m, nm_d);
+    }
+
+    /* Try the next day (most common case) */
+    double jd_next = gregorian_to_jd(nm_y, nm_m, nm_d) + 1;
+    int ny, nmm, nd;
+    jd_to_gregorian(jd_next, &ny, &nmm, &nd);
+    check = masa_for_date(ny, nmm, nd, loc);
+    if (check.name == masa && check.is_adhika == is_adhika &&
+        check.year_saka == saka_year) {
+        return jd_next;
+    }
+
+    /* Try day after that (rare edge case) */
+    jd_next += 1;
+    jd_to_gregorian(jd_next, &ny, &nmm, &nd);
+    check = masa_for_date(ny, nmm, nd, loc);
+    if (check.name == masa && check.is_adhika == is_adhika &&
+        check.year_saka == saka_year) {
+        return jd_next;
+    }
+
+    return 0;  /* Should not happen */
+}
+
+int lunisolar_month_length(MasaName masa, int saka_year, int is_adhika,
+                           const Location *loc)
+{
+    double jd_start = lunisolar_month_start(masa, saka_year, is_adhika, loc);
+    if (jd_start == 0) return 0;
+
+    /* Check days 28-31 from start to find where the month changes */
+    for (int d = 28; d <= 31; d++) {
+        double jd = jd_start + d;
+        int gy, gm, gd;
+        jd_to_gregorian(jd, &gy, &gm, &gd);
+        MasaInfo mi = masa_for_date(gy, gm, gd, loc);
+        if (mi.name != masa || mi.is_adhika != is_adhika) {
+            return d;
+        }
+    }
+
+    return 0;  /* Should not happen */
+}

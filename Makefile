@@ -42,6 +42,7 @@ BENCH_BIN = $(BUILDDIR)/test_perf
 # Generator sources
 GEN_REF_SRC = tools/generate_ref_data.c
 GEN_SOLAR_SRC = tools/gen_solar_ref.c
+GEN_LUNISOLAR_SRC = tools/gen_lunisolar_months.c
 DST_OBJ = $(BUILDDIR)/dst.o
 
 # Target binary
@@ -101,16 +102,20 @@ $(BUILDDIR)/gen_ref: $(GEN_REF_SRC) $(EPH_OBJS) $(APP_OBJS) $(DST_OBJ) | $(BUILD
 $(BUILDDIR)/gen_solar_ref: $(GEN_SOLAR_SRC) $(EPH_OBJS) $(APP_OBJS) | $(BUILDDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(LDFLAGS)
 
+$(BUILDDIR)/gen_lunisolar_months: $(GEN_LUNISOLAR_SRC) $(EPH_OBJS) $(APP_OBJS) | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(EPH_OBJS) $(APP_OBJS) $(LDFLAGS)
+
 ifdef USE_SWISSEPH
   GEN_BACKEND = se
 else
   GEN_BACKEND = moshier
 endif
 
-gen-ref: $(BUILDDIR)/gen_ref $(BUILDDIR)/gen_solar_ref
+gen-ref: $(BUILDDIR)/gen_ref $(BUILDDIR)/gen_solar_ref $(BUILDDIR)/gen_lunisolar_months
 	mkdir -p validation/$(GEN_BACKEND)
 	./$(BUILDDIR)/gen_ref -o validation/$(GEN_BACKEND)
 	./$(BUILDDIR)/gen_solar_ref -o validation/$(GEN_BACKEND)
+	./$(BUILDDIR)/gen_lunisolar_months -o validation/$(GEN_BACKEND)
 	python3 tools/extract_adhika_kshaya.py validation/$(GEN_BACKEND)/ref_1900_2050.csv validation/$(GEN_BACKEND)/adhika_kshaya_tithis.csv
 
 gen-ref-nyc: $(BUILDDIR)/gen_ref

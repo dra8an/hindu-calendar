@@ -29,4 +29,14 @@ int hindu_year_saka(double jd_ut, int masa_num);
 /* Vikram Samvat year for a given Saka year. */
 int hindu_year_vikram(int saka_year);
 
+/* Find the JD of the first civil day of a lunisolar month.
+ * Returns 0 if the month is not found (invalid input). */
+double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
+                             const Location *loc);
+
+/* Length in days of a lunisolar month (29 or 30).
+ * Returns 0 if the month is not found. */
+int lunisolar_month_length(MasaName masa, int saka_year, int is_adhika,
+                           const Location *loc);
+
 #endif /* MASA_H */
