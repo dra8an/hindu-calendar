@@ -672,7 +672,8 @@ static double mean_obliquity(double jd_tt)
  *   5. Nutation (Δψ)
  *   6. Aberration (-20.496")
  */
-static double solar_position(double jd_ut, double *decl, double *nut_lon)
+static double solar_position(double jd_ut, double *decl, double *nut_lon,
+                             double *true_obliq_out)
 {
     double jd_tt = jd_ut_to_tt(jd_ut);
     double T = (jd_tt - J2000_JD) / 36525.0;  /* Julian centuries from J2000 (TT) */
@@ -707,11 +708,16 @@ static double solar_position(double jd_ut, double *decl, double *nut_lon)
 
     if (nut_lon) *nut_lon = dpsi;
 
-    if (decl) {
+    if (decl || true_obliq_out) {
         double eps0 = mean_obliquity(jd_tt);
         double eps = (eps0 + deps) * DEG2RAD;
-        double lam = apparent * DEG2RAD;
-        *decl = asin(sin(eps) * sin(lam)) * RAD2DEG;
+
+        if (decl) {
+            double lam = apparent * DEG2RAD;
+            *decl = asin(sin(eps) * sin(lam)) * RAD2DEG;
+        }
+
+        if (true_obliq_out) *true_obliq_out = eps;
     }
 
     return apparent;
@@ -719,28 +725,52 @@ static double solar_position(double jd_ut, double *decl, double *nut_lon)
 
 /* ===== Public API ===== */
 
+/* Forward declarations */
+void moshier_solar_ra_dec(double jd_ut, double *ra_out, double *decl_out);
+void moshier_solar_ra_dec_nut(double jd_ut, double *ra_out, double *decl_out,
+                              double *dpsi_out, double *eps0_out);
+
 double moshier_solar_longitude(double jd_ut)
 {
-    return solar_position(jd_ut, NULL, NULL);
+    return solar_position(jd_ut, NULL, NULL, NULL);
 }
 
 double moshier_solar_declination(double jd_ut)
 {
     double decl;
-    solar_position(jd_ut, &decl, NULL);
+    solar_position(jd_ut, &decl, NULL, NULL);
     return decl;
 }
 
 double moshier_solar_ra(double jd_ut)
 {
-    double jd_tt = jd_ut_to_tt(jd_ut);
-    double dpsi, deps;
-    nutation(jd_tt, &dpsi, &deps);
-    double eps0 = mean_obliquity(jd_tt);
-    double eps = (eps0 + deps) * DEG2RAD;
-    double lam = moshier_solar_longitude(jd_ut) * DEG2RAD;
-    double ra = atan2(cos(eps) * sin(lam), cos(lam)) * RAD2DEG;
-    return normalize_deg(ra);
+    double ra, decl;
+    moshier_solar_ra_dec(jd_ut, &ra, &decl);
+    return ra;
+}
+
+/* Combined RA + Declination + optional nutation from a single solar_position() call.
+ * Avoids the duplicate VSOP87 + nutation pipeline that occurs when
+ * moshier_solar_ra() and moshier_solar_declination() are called separately. */
+void moshier_solar_ra_dec_nut(double jd_ut, double *ra_out, double *decl_out,
+                              double *dpsi_out, double *eps0_out)
+{
+    double decl, true_eps, dpsi;
+    double lon = solar_position(jd_ut, &decl, &dpsi, &true_eps);
+
+    /* Compute RA from apparent longitude + true obliquity (already in radians) */
+    double lam = lon * DEG2RAD;
+    double ra = atan2(cos(true_eps) * sin(lam), cos(lam)) * RAD2DEG;
+
+    *ra_out = normalize_deg(ra);
+    *decl_out = decl;
+    if (dpsi_out) *dpsi_out = dpsi;
+    if (eps0_out) *eps0_out = mean_obliquity(jd_ut_to_tt(jd_ut));
+}
+
+void moshier_solar_ra_dec(double jd_ut, double *ra_out, double *decl_out)
+{
+    moshier_solar_ra_dec_nut(jd_ut, ra_out, decl_out, NULL, NULL);
 }
 
 double moshier_nutation_longitude(double jd_ut)

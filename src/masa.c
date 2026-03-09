@@ -43,16 +43,18 @@ double new_moon_before(double jd_ut, int tithi_hint)
     /* Approximate start: go back roughly tithi_hint days */
     double start = jd_ut - tithi_hint;
 
-    /* Sample lunar phase at 17 points spanning (start-2) to (start+2) */
-    double x[17], y[17];
-    for (int i = 0; i < 17; i++) {
-        x[i] = -2.0 + i * 0.25;
+    /* Sample lunar phase at 9 points spanning (start-2) to (start+2).
+     * 9 points with 0.5-day spacing covers a 4-day window, sufficient
+     * because the new moon estimate from the tithi hint is within ~1 day. */
+    double x[9], y[9];
+    for (int i = 0; i < 9; i++) {
+        x[i] = -2.0 + i * 0.5;
         y[i] = lunar_phase(start + x[i]);
     }
-    unwrap_angles(y, 17);
+    unwrap_angles(y, 9);
 
     /* New moon = lunar phase of 360 degrees (= 0 wrapped) */
-    double y0 = inverse_lagrange(x, y, 17, 360.0);
+    double y0 = inverse_lagrange(x, y, 9, 360.0);
     return start + y0;
 }
 
@@ -61,14 +63,14 @@ double new_moon_after(double jd_ut, int tithi_hint)
     /* Approximate start: go forward roughly (30 - tithi_hint) days */
     double start = jd_ut + (30 - tithi_hint);
 
-    double x[17], y[17];
-    for (int i = 0; i < 17; i++) {
-        x[i] = -2.0 + i * 0.25;
+    double x[9], y[9];
+    for (int i = 0; i < 9; i++) {
+        x[i] = -2.0 + i * 0.5;
         y[i] = lunar_phase(start + x[i]);
     }
-    unwrap_angles(y, 17);
+    unwrap_angles(y, 9);
 
-    double y0 = inverse_lagrange(x, y, 17, 360.0);
+    double y0 = inverse_lagrange(x, y, 9, 360.0);
     return start + y0;
 }
 
@@ -82,8 +84,10 @@ int solar_rashi(double jd_ut)
     return rashi;
 }
 
-/* Static new moon cache: consecutive days usually bracket the same pair. */
+/* Static new moon cache: consecutive days usually bracket the same pair.
+ * Extended with rashi cache to avoid redundant solar_rashi() calls. */
 static double cached_last_nm = 0, cached_next_nm = 0;
+static int cached_rashi_last = 0, cached_rashi_next = 0;
 
 static MasaInfo masa_compute(double jd_rise)
 {
@@ -94,22 +98,25 @@ static MasaInfo masa_compute(double jd_rise)
 
     /* Check cache: if jd_rise is between cached new moons, reuse them */
     double last_nm, next_nm;
+    int rashi_last, rashi_next;
     if (cached_last_nm > 0 && jd_rise > cached_last_nm && jd_rise < cached_next_nm) {
         last_nm = cached_last_nm;
         next_nm = cached_next_nm;
+        rashi_last = cached_rashi_last;
+        rashi_next = cached_rashi_next;
     } else {
         last_nm = new_moon_before(jd_rise, t);
         next_nm = new_moon_after(jd_rise, t);
+        rashi_last = solar_rashi(last_nm);
+        rashi_next = solar_rashi(next_nm);
         cached_last_nm = last_nm;
         cached_next_nm = next_nm;
+        cached_rashi_last = rashi_last;
+        cached_rashi_next = rashi_next;
     }
 
     info.jd_start = last_nm;
     info.jd_end = next_nm;
-
-    /* Determine rashi at each new moon */
-    int rashi_last = solar_rashi(last_nm);
-    int rashi_next = solar_rashi(next_nm);
 
     /* Adhika (leap) month: same rashi at both new moons */
     info.is_adhika = (rashi_last == rashi_next) ? 1 : 0;

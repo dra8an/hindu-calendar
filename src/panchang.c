@@ -17,6 +17,12 @@ static int days_in_month(int year, int month)
     return mdays[month];
 }
 
+/* Cache for previous day's sunrise and tithi, avoiding redundant
+ * sunrise_jd() + tithi_num_at_jd() when iterating consecutive days. */
+static double cached_jd_base = 0;     /* JD at 0h of cached day */
+static double cached_jd_rise = 0;     /* sunrise JD of cached day */
+static int    cached_tithi = 0;       /* tithi at cached sunrise */
+
 HinduDate gregorian_to_hindu(int year, int month, int day, const Location *loc)
 {
     HinduDate hd = {0};
@@ -41,14 +47,25 @@ HinduDate gregorian_to_hindu(int year, int month, int day, const Location *loc)
     hd.year_saka = mi.year_saka;
     hd.year_vikram = mi.year_vikram;
 
-    /* Check for adhika tithi: same tithi as previous day's sunrise */
+    /* Check for adhika tithi: same tithi as previous day's sunrise.
+     * Use cache to avoid redundant sunrise computation on consecutive days. */
+    int t_prev;
     double jd_prev = jd - 1.0;
-    double jd_rise_prev = sunrise_jd(jd_prev, loc);
-    if (jd_rise_prev <= 0) {
-        jd_rise_prev = jd_prev + 0.5 - loc->utc_offset / 24.0;
+    if (cached_jd_base > 0 && fabs(jd_prev - cached_jd_base) < 0.01) {
+        t_prev = cached_tithi;
+    } else {
+        double jd_rise_prev = sunrise_jd(jd_prev, loc);
+        if (jd_rise_prev <= 0) {
+            jd_rise_prev = jd_prev + 0.5 - loc->utc_offset / 24.0;
+        }
+        t_prev = tithi_num_at_jd(jd_rise_prev);
     }
-    int t_prev = tithi_num_at_jd(jd_rise_prev);
     hd.is_adhika_tithi = (t == t_prev) ? 1 : 0;
+
+    /* Save today's data for tomorrow's adhika check */
+    cached_jd_base = jd;
+    cached_jd_rise = jd_rise;
+    cached_tithi = t;
 
     return hd;
 }

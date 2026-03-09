@@ -30,6 +30,9 @@
 /* Forward declarations for helpers in moshier_sun.c */
 extern double moshier_solar_declination(double jd_ut);
 extern double moshier_solar_ra(double jd_ut);
+extern void   moshier_solar_ra_dec(double jd_ut, double *ra, double *decl);
+extern void   moshier_solar_ra_dec_nut(double jd_ut, double *ra, double *decl,
+                                       double *dpsi, double *eps0);
 extern double moshier_nutation_longitude(double jd_ut);
 extern double moshier_mean_obliquity(double jd_ut);
 
@@ -66,16 +69,13 @@ static double rise_set_for_date(double jd_0h, double lon, double lat, double h0,
 {
     double phi = lat * DEG2RAD;
 
-    /* Compute apparent sidereal time at 0h UT (GAST = GMST + eq. equinoxes) */
+    /* Compute apparent sidereal time at 0h UT (GAST = GMST + eq. equinoxes).
+     * Get RA, Dec, nutation, and obliquity from a single solar_position() call. */
     double theta0 = sidereal_time_0h(jd_0h);
     double jd_noon = jd_0h + 0.5;
-    double dpsi = moshier_nutation_longitude(jd_noon);  /* degrees */
-    double eps = moshier_mean_obliquity(jd_noon);        /* degrees */
+    double ra, decl, dpsi, eps;
+    moshier_solar_ra_dec_nut(jd_noon, &ra, &decl, &dpsi, &eps);
     theta0 += dpsi * cos(eps * DEG2RAD);  /* equation of equinoxes */
-
-    /* Initial estimate using noon position */
-    double ra = moshier_solar_ra(jd_noon);
-    double decl = moshier_solar_declination(jd_noon);
 
     /* Hour angle (Meeus eq. 15.1) */
     double cos_H0 = (sin(h0 * DEG2RAD) - sin(phi) * sin(decl * DEG2RAD))
@@ -108,9 +108,9 @@ static double rise_set_for_date(double jd_0h, double lon, double lat, double h0,
     for (int iter = 0; iter < 10; iter++) {
         double jd_trial = jd_0h + m;
 
-        /* Recompute solar position at trial time */
-        double ra_i = moshier_solar_ra(jd_trial);
-        double decl_i = moshier_solar_declination(jd_trial);
+        /* Recompute solar position at trial time (combined call) */
+        double ra_i, decl_i;
+        moshier_solar_ra_dec(jd_trial, &ra_i, &decl_i);
 
         /* Local sidereal time */
         double theta = theta0 + 360.985647 * m;
