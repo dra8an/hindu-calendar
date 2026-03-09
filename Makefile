@@ -33,11 +33,12 @@ APP_OBJS = $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(APP_SRCS))
 MAIN_OBJ = $(BUILDDIR)/main.o
 
 # Test sources (exclude benchmark)
-TEST_SRCS = $(filter-out $(TESTDIR)/test_perf.c,$(wildcard $(TESTDIR)/test_*.c))
+TEST_SRCS = $(filter-out $(TESTDIR)/test_perf.c $(TESTDIR)/test_perf_random.c,$(wildcard $(TESTDIR)/test_*.c))
 TEST_BINS = $(patsubst $(TESTDIR)/%.c,$(BUILDDIR)/%,$(TEST_SRCS))
 
 # Benchmark
 BENCH_BIN = $(BUILDDIR)/test_perf
+BENCH_RAND_BIN = $(BUILDDIR)/test_perf_random
 
 # Generator sources
 GEN_REF_SRC = tools/generate_ref_data.c
@@ -92,6 +93,9 @@ test: $(TEST_BINS)
 
 bench: $(BENCH_BIN)
 	@./$(BENCH_BIN)
+
+bench-random: $(BENCH_RAND_BIN)
+	@./$(BENCH_RAND_BIN)
 
 report: test bench
 

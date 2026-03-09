@@ -2,18 +2,38 @@
 
 ## Cumulative Results
 
-**26x overall speedup** across two phases (123.6s → 4.7s for 275,760 calendar conversions):
+**27x overall speedup** across two phases (123.6s → 4.5s for 275,760 calendar conversions):
 
-| Calendar | Original | Phase 1 | Phase 2 | Total Speedup |
-|----------|----------|---------|---------|---------------|
-| Lunisolar | 1,044 | 90 | **25** | **42x** |
-| Tamil | 301 | 40 | **19** | **16x** |
-| Bengali | 219 | 5.0 | **4.2** | **52x** |
-| Odia | 205 | 4.5 | **3.8** | **54x** |
-| Malayalam | 471 | 83 | **34** | **14x** |
-| **Total** | **123.6s** | **12.2s** | **4.7s** | **26x** |
+| Calendar | Original | Phase 1 | Phase 2 | Random | Seq Speedup | Rand Speedup |
+|----------|----------|---------|---------|--------|-------------|--------------|
+| Lunisolar | 1,044 μs | 90 μs | **23 μs** | 112 μs | **45x** | **9.3x** |
+| Tamil | 301 μs | 40 μs | **18 μs** | 160 μs | **17x** | **1.9x** |
+| Bengali | 219 μs | 5.0 μs | **4.1 μs** | 125 μs | **53x** | **1.8x** |
+| Odia | 205 μs | 4.5 μs | **3.7 μs** | 117 μs | **55x** | **1.8x** |
+| Malayalam | 471 μs | 83 μs | **32 μs** | 201 μs | **15x** | **2.3x** |
 
-All values in microseconds per day (55,152 days × 5 calendars = 275,760 conversions).
+Per-day cost in microseconds (μs). Each column benchmarks 55,152 days × 5 calendars = 275,760 conversions.
+
+Total wall-clock time (55,152 days per calendar):
+
+| Calendar | Original | Phase 1 | Phase 2 | Random |
+|----------|----------|---------|---------|--------|
+| Lunisolar | 57.6s | 5.0s | 1.3s | 6.2s |
+| Tamil | 16.6s | 2.2s | 1.0s | 8.8s |
+| Bengali | 12.1s | 0.3s | 0.2s | 6.9s |
+| Odia | 11.3s | 0.2s | 0.2s | 6.4s |
+| Malayalam | 26.0s | 4.6s | 1.8s | 11.1s |
+| **Total** | **123.6s** | **12.2s** | **4.5s** | **39.4s** |
+
+- **Phase 2 (sequential)**: The dominant use case — panchang generation, validation, benchmarks.
+  Caches hit ~97% of the time due to consecutive-day iteration.
+- **Random access**: Same 55,152 days per calendar, Fisher-Yates shuffled (seed=42).
+  All caches miss on nearly every call, isolating the unconditional improvements
+  (early bisection termination, combined RA+Dec, reduced Lagrange).
+
+The 3.1x random-access speedup comes entirely from algorithmic improvements that
+apply regardless of access pattern. The remaining ~9x gap between random and
+sequential is the cache benefit.
 
 Zero regressions: all 58,983 test assertions pass across 12 test suites.
 
