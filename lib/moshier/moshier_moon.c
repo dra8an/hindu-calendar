@@ -146,8 +146,16 @@ static const double de404_corr[] = {
 };
 
 /* ================================================================
- * Main longitude + radius perturbation table (118 terms)
+ * Main longitude + radius perturbation table (118 terms, T^0)
  * Format: D, l', l, F, lon_1", lon_.0001", rad_1km, rad_.0001km
+ *
+ * Each row is a periodic term: amplitude × sin(n₁D + n₂l' + n₃l + n₄F).
+ * Longitude amplitude = (col5 + col6/10000) arcseconds.
+ *
+ * Largest terms:
+ *   (0,0,1,0)  22639.6"  Equation of center — elliptical orbit shape (~6.3°)
+ *   (2,0,-1,0)  4586.4"  Evection — Sun modulates orbital eccentricity (~1.27°)
+ *   (2,0,0,0)   2370.0"  Variation — Sun accelerates Moon near new/full (~0.66°)
  * ================================================================ */
 #define MOON_LR_N 118
 static const short moon_lr[8 * MOON_LR_N] = {
@@ -273,7 +281,10 @@ static const short moon_lr[8 * MOON_LR_N] = {
  4,-1,-3, 0,     0,  998,     0,    0,
 };
 
-/* T^1 longitude + radius corrections (38 terms) */
+/* T^1 longitude + radius corrections (38 terms)
+ * Multiplied by T (centuries from J2000). Captures slow drift of perturbation
+ * amplitudes — e.g., Earth's decreasing orbital eccentricity changes the
+ * Sun's perturbation strength. Amplitudes ~100x smaller than main table. */
 #define MOON_LR_T1_N 38
 static const short moon_lr_t1[8 * MOON_LR_T1_N] = {
 /*  Multiply by T
@@ -319,7 +330,9 @@ static const short moon_lr_t1[8 * MOON_LR_T1_N] = {
  2,-2,-2, 0,     0, -148,     0, -170,
 };
 
-/* T^2 longitude + radius corrections (25 terms) */
+/* T^2 longitude + radius corrections (25 terms)
+ * Multiplied by T². Second-order secular changes. Amplitudes ~10,000x smaller
+ * than main table. Reduced format (6 values/row instead of 8). */
 #define MOON_LR_T2_N 25
 static const short moon_lr_t2[6 * MOON_LR_T2_N] = {
 /*  Multiply by T^2
@@ -354,12 +367,30 @@ static const short moon_lr_t2[6 * MOON_LR_T2_N] = {
 
 /* ================================================================
  * Mean element variables (arcseconds)
+ *
+ * The four fundamental arguments of lunar theory. All periodic terms
+ * in the Moon's longitude are expressed as integer combinations of
+ * these angles (e.g., 2D - l gives the evection term).
+ *
+ *   D  — Mean elongation: average angular distance between Moon and Sun.
+ *         ~445,267°/century. New moon occurs when D ≡ 0° (mod 360°).
+ *
+ *   l  — Mean anomaly of the Moon: position along elliptical orbit from
+ *         perigee (closest approach). ~477,199°/century. Controls the
+ *         largest perturbation: equation of center (~6.3° amplitude).
+ *
+ *   l' — Mean anomaly of the Sun: position along orbit from perihelion.
+ *         ~35,999°/century. Controls evection and other solar perturbations.
+ *
+ *   F  — Argument of latitude: angular distance from ascending node (where
+ *         Moon's orbital plane crosses the ecliptic). ~483,202°/century.
+ *         Controls latitude and some longitude terms.
  * ================================================================ */
-static double mean_lon_moon;  /* mean longitude of moon */
-static double M_sun;  /* mean anomaly of sun (l') */
-static double mean_anom_moon;     /* mean anomaly of moon (l) */
-static double D;      /* mean elongation */
-static double arg_latitude;     /* mean distance from ascending node (F) */
+static double mean_lon_moon;  /* mean longitude of moon (L) */
+static double M_sun;          /* mean anomaly of sun (l') */
+static double mean_anom_moon; /* mean anomaly of moon (l) */
+static double D;              /* mean elongation */
+static double arg_latitude;   /* argument of latitude (F) */
 static double T, T2;
 
 /* Planetary mean longitudes */
@@ -381,7 +412,8 @@ static void mean_elements(void)
 {
     double fracT = fmod(T, 1.0);
 
-    /* Mean anomaly of sun = l' (J. Laskar) */
+    /* Mean anomaly of sun = l' (J. Laskar)
+     * Sun's position along its orbit from perihelion (~35,999°/century) */
     M_sun = mod_arcsec(129600000.0 * fracT - 3418.961646 * T + 1287104.76154);
     M_sun += ((((((((
          1.62e-20 * T
@@ -394,15 +426,19 @@ static void mean_elements(void)
        + 1.4732069041e-4) * T
        - 0.552891801772) * T2;
 
-    /* Mean distance of moon from ascending node = F */
+    /* Argument of latitude = F
+     * Moon's angular distance from ascending node (~483,202°/century) */
     arg_latitude = mod_arcsec(1739232000.0 * fracT + 295263.0983 * T
                   - 2.079419901760e-01 * T + 335779.55755);
 
-    /* Mean anomaly of moon = l */
+    /* Mean anomaly of moon = l
+     * Moon's position along elliptical orbit from perigee (~477,199°/century) */
     mean_anom_moon = mod_arcsec(1717200000.0 * fracT + 715923.4728 * T
                   - 2.035946368532e-01 * T + 485868.28096);
 
-    /* Mean elongation of moon = D */
+    /* Mean elongation = D
+     * Average angular distance between Moon and Sun (~445,267°/century).
+     * New moon when D ≡ 0° (mod 360°) */
     D = mod_arcsec(1601856000.0 * fracT + 1105601.4603 * T
                  + 3.962893294503e-01 * T + 1072260.73512);
 
