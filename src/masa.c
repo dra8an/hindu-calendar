@@ -174,9 +174,69 @@ int hindu_year_vikram(int saka_year)
     return saka_year + 135;
 }
 
+/* ---------------------------------------------------------------------------
+ * LRU cache for lunisolar_month_start / lunisolar_month_length
+ * 32 entries covers ~2.5 years of months — more than enough for typical use.
+ * --------------------------------------------------------------------------- */
+#define LRU_MONTH_SIZE 32
+
+typedef struct {
+    MasaName masa;
+    int saka_year;
+    int is_adhika;
+    double jd_start;      /* cached month start (JD at 0h UT), 0 = empty */
+    int length;           /* cached month length (29 or 30), 0 = not yet computed */
+    unsigned int lru_seq; /* LRU sequence counter */
+} LuniMonthCache;
+
+static LuniMonthCache lru_month[LRU_MONTH_SIZE];
+static unsigned int lru_month_seq = 0;
+
+/* Find cache entry matching (masa, saka_year, is_adhika), or NULL */
+static LuniMonthCache *lru_month_find(MasaName masa, int saka_year, int is_adhika)
+{
+    for (int i = 0; i < LRU_MONTH_SIZE; i++) {
+        LuniMonthCache *e = &lru_month[i];
+        if (e->jd_start != 0 &&
+            e->masa == masa && e->saka_year == saka_year &&
+            e->is_adhika == is_adhika) {
+            e->lru_seq = ++lru_month_seq;
+            return e;
+        }
+    }
+    return NULL;
+}
+
+/* Insert/update entry, evicting lowest lru_seq on full cache */
+static LuniMonthCache *lru_month_insert(MasaName masa, int saka_year, int is_adhika)
+{
+    /* Find empty slot or LRU victim */
+    LuniMonthCache *victim = &lru_month[0];
+    for (int i = 0; i < LRU_MONTH_SIZE; i++) {
+        LuniMonthCache *e = &lru_month[i];
+        if (e->jd_start == 0) {
+            victim = e;
+            break;
+        }
+        if (e->lru_seq < victim->lru_seq)
+            victim = e;
+    }
+    victim->masa = masa;
+    victim->saka_year = saka_year;
+    victim->is_adhika = is_adhika;
+    victim->jd_start = 0;
+    victim->length = 0;
+    victim->lru_seq = ++lru_month_seq;
+    return victim;
+}
+
 double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
                              const Location *loc)
 {
+    /* Check cache */
+    LuniMonthCache *cached = lru_month_find(masa, saka_year, is_adhika);
+    if (cached && cached->jd_start > 0)
+        return cached->jd_start;
     /* Step 1: Estimate approximate Gregorian date in the target month.
      * Masa 1 (Chaitra) ≈ April, Masa 2 (Vaishakha) ≈ May, etc. */
     int gy = saka_year + 78;
@@ -232,7 +292,10 @@ double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
     MasaInfo check = masa_for_date(nm_y, nm_m, nm_d, loc);
     if (check.name == masa && check.is_adhika == is_adhika &&
         check.year_saka == saka_year) {
-        return gregorian_to_jd(nm_y, nm_m, nm_d);
+        double result = gregorian_to_jd(nm_y, nm_m, nm_d);
+        LuniMonthCache *e = lru_month_insert(masa, saka_year, is_adhika);
+        e->jd_start = result;
+        return result;
     }
 
     /* Try the next day (most common case) */
@@ -242,6 +305,8 @@ double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
     check = masa_for_date(ny, nmm, nd, loc);
     if (check.name == masa && check.is_adhika == is_adhika &&
         check.year_saka == saka_year) {
+        LuniMonthCache *e = lru_month_insert(masa, saka_year, is_adhika);
+        e->jd_start = jd_next;
         return jd_next;
     }
 
@@ -251,6 +316,8 @@ double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
     check = masa_for_date(ny, nmm, nd, loc);
     if (check.name == masa && check.is_adhika == is_adhika &&
         check.year_saka == saka_year) {
+        LuniMonthCache *e = lru_month_insert(masa, saka_year, is_adhika);
+        e->jd_start = jd_next;
         return jd_next;
     }
 
@@ -260,19 +327,33 @@ double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
 int lunisolar_month_length(MasaName masa, int saka_year, int is_adhika,
                            const Location *loc)
 {
+    /* Check cache for pre-computed length */
+    LuniMonthCache *cached = lru_month_find(masa, saka_year, is_adhika);
+    if (cached && cached->length > 0)
+        return cached->length;
+
     double jd_start = lunisolar_month_start(masa, saka_year, is_adhika, loc);
     if (jd_start == 0) return 0;
 
     /* Check days 28-31 from start to find where the month changes */
+    int length = 0;
     for (int d = 28; d <= 31; d++) {
         double jd = jd_start + d;
         int gy, gm, gd;
         jd_to_gregorian(jd, &gy, &gm, &gd);
         MasaInfo mi = masa_for_date(gy, gm, gd, loc);
         if (mi.name != masa || mi.is_adhika != is_adhika) {
-            return d;
+            length = d;
+            break;
         }
     }
 
-    return 0;  /* Should not happen */
+    /* Store length in cache (entry was created by lunisolar_month_start above) */
+    if (length > 0) {
+        LuniMonthCache *e = lru_month_find(masa, saka_year, is_adhika);
+        if (e)
+            e->length = length;
+    }
+
+    return length;
 }
