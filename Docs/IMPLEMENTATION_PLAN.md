@@ -344,7 +344,7 @@ See [SOLAR_PLAN.md](SOLAR_PLAN.md) for the full design document. Summary:
 1. **Ephemeris mode**: Start with Moshier (built-in, no files). Upgrade to Swiss Ephemeris files later for higher precision if needed.
 2. **Location default**: New Delhi (28.6139°N, 77.2090°E, UTC+5:30) to match drikpanchang.com defaults.
 3. **Ayanamsa**: Lahiri (SE_SIDM_LAHIRI = 1) - this is what drikpanchang.com uses.
-4. **Calendar scheme**: Amanta (new moon to new moon) initially. Purnimanta variant later.
+4. **Calendar scheme**: Amanta (new moon to new moon) and Purnimanta (full moon to full moon) via `LunisolarScheme` enum.
 5. **New moon search**: Bisection method on lunar phase, similar to the Reingold/Dershowitz approach but using Swiss Ephemeris positions.
 6. **Build**: Simple Makefile, no external dependencies beyond Swiss Ephemeris source.
 

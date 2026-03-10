@@ -1,4 +1,5 @@
 #include "masa.h"
+#include "tithi.h"
 #include "astro.h"
 #include "date_utils.h"
 #include <stdio.h>
@@ -73,7 +74,8 @@ static void test_known_month_starts(void)
 
     for (int i = 0; i < n; i++) {
         double jd = lunisolar_month_start(cases[i].masa, cases[i].saka_year,
-                                          cases[i].is_adhika, &delhi);
+                                          cases[i].is_adhika,
+                                          LUNISOLAR_AMANTA, &delhi);
         char buf[128];
         snprintf(buf, sizeof(buf), "%s start", cases[i].label);
         ASSERT_JD(jd, cases[i].exp_y, cases[i].exp_m, cases[i].exp_d, buf);
@@ -120,7 +122,8 @@ static void test_month_lengths(void)
                          BHADRAPADA, ASHVINA, KARTIKA, MARGASHIRSHA, PAUSHA,
                          MAGHA, PHALGUNA};
     for (int i = 0; i < 12; i++) {
-        int len = lunisolar_month_length(months[i], 1947, 0, &delhi);
+        int len = lunisolar_month_length(months[i], 1947, 0,
+                                          LUNISOLAR_AMANTA, &delhi);
         char buf[64];
         snprintf(buf, sizeof(buf), "%s 1947 length in [29,30]", MASA_NAMES[months[i]]);
         tests_run++;
@@ -132,7 +135,8 @@ static void test_month_lengths(void)
     }
 
     /* Adhika month length */
-    int len = lunisolar_month_length(BHADRAPADA, 1934, 1, &delhi);
+    int len = lunisolar_month_length(BHADRAPADA, 1934, 1,
+                                      LUNISOLAR_AMANTA, &delhi);
     tests_run++;
     if (len == 29 || len == 30) {
         tests_passed++;
@@ -141,9 +145,12 @@ static void test_month_lengths(void)
     }
 
     /* Verify start + length = next month start */
-    double jd_start = lunisolar_month_start(VAISHAKHA, 1947, 0, &delhi);
-    len = lunisolar_month_length(VAISHAKHA, 1947, 0, &delhi);
-    double jd_next = lunisolar_month_start(JYESHTHA, 1947, 0, &delhi);
+    double jd_start = lunisolar_month_start(VAISHAKHA, 1947, 0,
+                                             LUNISOLAR_AMANTA, &delhi);
+    len = lunisolar_month_length(VAISHAKHA, 1947, 0,
+                                  LUNISOLAR_AMANTA, &delhi);
+    double jd_next = lunisolar_month_start(JYESHTHA, 1947, 0,
+                                            LUNISOLAR_AMANTA, &delhi);
     ASSERT_EQ((int)(jd_next - jd_start), len, "Vaishakha+length = Jyeshtha start");
 
     printf("  Length checks: %d/%d passed\n",
@@ -185,7 +192,8 @@ static void test_roundtrip(void)
                     }
                     /* New month started — verify lunisolar_month_start */
                     double jd = lunisolar_month_start(mi.name, mi.year_saka,
-                                                      mi.is_adhika, &delhi);
+                                                      mi.is_adhika,
+                                                      LUNISOLAR_AMANTA, &delhi);
                     tests_run++;
                     if (jd > 0) {
                         int ry, rm, rd;
@@ -247,7 +255,7 @@ static void test_csv_regression(void)
         }
 
         double jd = lunisolar_month_start((MasaName)masa_num, saka_year,
-                                          is_adhika, &delhi);
+                                          is_adhika, LUNISOLAR_AMANTA, &delhi);
         tests_run++;
         if (jd > 0) {
             int ry, rm, rd;
@@ -267,7 +275,8 @@ static void test_csv_regression(void)
         /* Also verify length */
         if (length > 0) {
             int calc_len = lunisolar_month_length((MasaName)masa_num, saka_year,
-                                                  is_adhika, &delhi);
+                                                  is_adhika, LUNISOLAR_AMANTA,
+                                                  &delhi);
             tests_run++;
             if (calc_len == length) {
                 tests_passed++;
@@ -284,6 +293,109 @@ static void test_csv_regression(void)
            tests_passed - saved_pass, tests_run - saved_run);
 }
 
+/*
+ * Purnimanta month start spot checks.
+ * Purnimanta month M starts at the full moon of Amanta month M-1,
+ * i.e., ~15 days before the Amanta start of M.
+ */
+static void test_purnimanta_month_starts(void)
+{
+    printf("\n--- Purnimanta month starts ---\n");
+    Location delhi = DEFAULT_LOCATION;
+    int saved_run = tests_run, saved_pass = tests_passed;
+
+    /* For each Amanta month, verify that the Purnimanta start is ~15 days
+     * earlier and falls on a Krishna Pratipada (tithi 16). */
+    MasaName months[] = {CHAITRA, VAISHAKHA, JYESHTHA, ASHADHA, SHRAVANA,
+                         BHADRAPADA, ASHVINA, KARTIKA, MARGASHIRSHA, PAUSHA,
+                         MAGHA, PHALGUNA};
+    for (int i = 0; i < 12; i++) {
+        double jd_amanta = lunisolar_month_start(months[i], 1947, 0,
+                                                  LUNISOLAR_AMANTA, &delhi);
+        double jd_purni = lunisolar_month_start(months[i], 1947, 0,
+                                                 LUNISOLAR_PURNIMANTA, &delhi);
+        char buf[128];
+
+        /* Purnimanta start should be valid */
+        snprintf(buf, sizeof(buf), "Purnimanta %s 1947 found",
+                 MASA_NAMES[months[i]]);
+        tests_run++;
+        if (jd_purni > 0) {
+            tests_passed++;
+        } else {
+            printf("  FAIL: %s\n", buf);
+            continue;
+        }
+
+        /* Purnimanta start should be ~13-17 days before Amanta start */
+        double diff = jd_amanta - jd_purni;
+        snprintf(buf, sizeof(buf), "Purnimanta %s 1947 offset %.0f in [13,17]",
+                 MASA_NAMES[months[i]], diff);
+        tests_run++;
+        if (diff >= 13 && diff <= 17) {
+            tests_passed++;
+        } else {
+            printf("  FAIL: %s\n", buf);
+        }
+
+        /* First day of Purnimanta month should have Krishna paksha tithi */
+        double jr = sunrise_jd(jd_purni, &delhi);
+        if (jr <= 0) jr = jd_purni + 0.5 - delhi.utc_offset / 24.0;
+        int t = tithi_at_moment(jr);
+        snprintf(buf, sizeof(buf), "Purnimanta %s 1947 tithi %d in Krishna",
+                 MASA_NAMES[months[i]], t);
+        tests_run++;
+        if (t >= 16 && t <= 30) {
+            tests_passed++;
+        } else {
+            printf("  FAIL: %s\n", buf);
+        }
+    }
+
+    printf("  Purnimanta spot checks: %d/%d passed\n",
+           tests_passed - saved_pass, tests_run - saved_run);
+}
+
+/*
+ * Purnimanta month length checks
+ */
+static void test_purnimanta_month_lengths(void)
+{
+    printf("\n--- Purnimanta month lengths ---\n");
+    Location delhi = DEFAULT_LOCATION;
+    int saved_run = tests_run, saved_pass = tests_passed;
+
+    MasaName months[] = {CHAITRA, VAISHAKHA, JYESHTHA, ASHADHA, SHRAVANA,
+                         BHADRAPADA, ASHVINA, KARTIKA, MARGASHIRSHA, PAUSHA,
+                         MAGHA, PHALGUNA};
+    for (int i = 0; i < 12; i++) {
+        int len = lunisolar_month_length(months[i], 1947, 0,
+                                          LUNISOLAR_PURNIMANTA, &delhi);
+        char buf[64];
+        snprintf(buf, sizeof(buf), "Purnimanta %s 1947 length %d in [29,30]",
+                 MASA_NAMES[months[i]], len);
+        tests_run++;
+        if (len == 29 || len == 30) {
+            tests_passed++;
+        } else {
+            printf("  FAIL: %s\n", buf);
+        }
+    }
+
+    /* Verify start + length = next month start */
+    double jd_start = lunisolar_month_start(VAISHAKHA, 1947, 0,
+                                             LUNISOLAR_PURNIMANTA, &delhi);
+    int len = lunisolar_month_length(VAISHAKHA, 1947, 0,
+                                      LUNISOLAR_PURNIMANTA, &delhi);
+    double jd_next = lunisolar_month_start(JYESHTHA, 1947, 0,
+                                            LUNISOLAR_PURNIMANTA, &delhi);
+    ASSERT_EQ((int)(jd_next - jd_start), len,
+              "Purnimanta Vaishakha+length = Jyeshtha start");
+
+    printf("  Purnimanta length checks: %d/%d passed\n",
+           tests_passed - saved_pass, tests_run - saved_run);
+}
+
 int main(void)
 {
     astro_init(NULL);
@@ -292,6 +404,8 @@ int main(void)
     test_month_lengths();
     test_roundtrip();
     test_csv_regression();
+    test_purnimanta_month_starts();
+    test_purnimanta_month_lengths();
 
     astro_close();
 

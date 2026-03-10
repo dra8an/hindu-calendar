@@ -74,6 +74,20 @@ double new_moon_after(double jd_ut, int tithi_hint)
     return start + y0;
 }
 
+double full_moon_near(double jd_ut)
+{
+    /* Same interpolation approach as new_moon, but targeting 180° */
+    double x[9], y[9];
+    for (int i = 0; i < 9; i++) {
+        x[i] = -2.0 + i * 0.5;
+        y[i] = lunar_phase(jd_ut + x[i]);
+    }
+    unwrap_angles(y, 9);
+
+    double y0 = inverse_lagrange(x, y, 9, 180.0);
+    return jd_ut + y0;
+}
+
 int solar_rashi(double jd_ut)
 {
     double nirayana = solar_longitude_sidereal(jd_ut);
@@ -184,6 +198,7 @@ typedef struct {
     MasaName masa;
     int saka_year;
     int is_adhika;
+    LunisolarScheme scheme;
     double jd_start;      /* cached month start (JD at 0h UT), 0 = empty */
     int length;           /* cached month length (29 or 30), 0 = not yet computed */
     unsigned int lru_seq; /* LRU sequence counter */
@@ -192,14 +207,15 @@ typedef struct {
 static LuniMonthCache lru_month[LRU_MONTH_SIZE];
 static unsigned int lru_month_seq = 0;
 
-/* Find cache entry matching (masa, saka_year, is_adhika), or NULL */
-static LuniMonthCache *lru_month_find(MasaName masa, int saka_year, int is_adhika)
+/* Find cache entry matching (masa, saka_year, is_adhika, scheme), or NULL */
+static LuniMonthCache *lru_month_find(MasaName masa, int saka_year,
+                                       int is_adhika, LunisolarScheme scheme)
 {
     for (int i = 0; i < LRU_MONTH_SIZE; i++) {
         LuniMonthCache *e = &lru_month[i];
         if (e->jd_start != 0 &&
             e->masa == masa && e->saka_year == saka_year &&
-            e->is_adhika == is_adhika) {
+            e->is_adhika == is_adhika && e->scheme == scheme) {
             e->lru_seq = ++lru_month_seq;
             return e;
         }
@@ -208,7 +224,8 @@ static LuniMonthCache *lru_month_find(MasaName masa, int saka_year, int is_adhik
 }
 
 /* Insert/update entry, evicting lowest lru_seq on full cache */
-static LuniMonthCache *lru_month_insert(MasaName masa, int saka_year, int is_adhika)
+static LuniMonthCache *lru_month_insert(MasaName masa, int saka_year,
+                                         int is_adhika, LunisolarScheme scheme)
 {
     /* Find empty slot or LRU victim */
     LuniMonthCache *victim = &lru_month[0];
@@ -224,19 +241,17 @@ static LuniMonthCache *lru_month_insert(MasaName masa, int saka_year, int is_adh
     victim->masa = masa;
     victim->saka_year = saka_year;
     victim->is_adhika = is_adhika;
+    victim->scheme = scheme;
     victim->jd_start = 0;
     victim->length = 0;
     victim->lru_seq = ++lru_month_seq;
     return victim;
 }
 
-double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
-                             const Location *loc)
+/* Amanta month start — find first civil day after new moon */
+static double amanta_month_start(MasaName masa, int saka_year, int is_adhika,
+                                  const Location *loc)
 {
-    /* Check cache */
-    LuniMonthCache *cached = lru_month_find(masa, saka_year, is_adhika);
-    if (cached && cached->jd_start > 0)
-        return cached->jd_start;
     /* Step 1: Estimate approximate Gregorian date in the target month.
      * Masa 1 (Chaitra) ≈ April, Masa 2 (Vaishakha) ≈ May, etc. */
     int gy = saka_year + 78;
@@ -250,107 +265,167 @@ double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
     int est_y = gy, est_m = approx_gm, est_d = 15;
     MasaInfo mi = masa_for_date(est_y, est_m, est_d, loc);
 
-    /* Step 2-3: Navigate using new moon boundaries.
-     * Each MasaInfo has jd_start/jd_end (new moons bracketing the month).
-     * To go forward, jump past jd_end; to go backward, jump before jd_start. */
+    /* Step 2-3: Navigate using new moon boundaries. */
     for (int attempt = 0; attempt < 14; attempt++) {
         if (mi.name == masa && mi.is_adhika == is_adhika &&
             mi.year_saka == saka_year) {
-            break;  /* Found it */
+            break;
         }
 
-        /* Determine which direction to search */
         int target_ord = saka_year * 13 + (int)masa + (is_adhika ? 0 : 1);
         int cur_ord = mi.year_saka * 13 + (int)mi.name + (mi.is_adhika ? 0 : 1);
 
         double jd_nav;
         if (target_ord > cur_ord) {
-            /* Need to go forward — jump 1 day past end of current month */
             jd_nav = mi.jd_end + 1.0;
         } else {
-            /* Need to go backward — jump 1 day before start of current month */
             jd_nav = mi.jd_start - 1.0;
         }
         jd_to_gregorian(jd_nav, &est_y, &est_m, &est_d);
         mi = masa_for_date(est_y, est_m, est_d, loc);
     }
 
-    /* Verify we found the right month */
     if (mi.name != masa || mi.is_adhika != is_adhika ||
         mi.year_saka != saka_year) {
-        return 0;  /* Not found */
+        return 0;
     }
 
-    /* Step 4: Find the first civil day of this month.
-     * mi.jd_start is the new moon (Amavasya). The next day is typically
-     * Shukla Pratipada, the first day of the new month. */
+    /* Step 4: Find the first civil day of this month. */
     int nm_y, nm_m, nm_d;
     jd_to_gregorian(mi.jd_start, &nm_y, &nm_m, &nm_d);
 
-    /* Try the Amavasya day itself — if new moon is well before sunrise,
-     * this day may already belong to the new month */
     MasaInfo check = masa_for_date(nm_y, nm_m, nm_d, loc);
     if (check.name == masa && check.is_adhika == is_adhika &&
         check.year_saka == saka_year) {
-        double result = gregorian_to_jd(nm_y, nm_m, nm_d);
-        LuniMonthCache *e = lru_month_insert(masa, saka_year, is_adhika);
-        e->jd_start = result;
-        return result;
+        return gregorian_to_jd(nm_y, nm_m, nm_d);
     }
 
-    /* Try the next day (most common case) */
     double jd_next = gregorian_to_jd(nm_y, nm_m, nm_d) + 1;
     int ny, nmm, nd;
     jd_to_gregorian(jd_next, &ny, &nmm, &nd);
     check = masa_for_date(ny, nmm, nd, loc);
     if (check.name == masa && check.is_adhika == is_adhika &&
         check.year_saka == saka_year) {
-        LuniMonthCache *e = lru_month_insert(masa, saka_year, is_adhika);
-        e->jd_start = jd_next;
         return jd_next;
     }
 
-    /* Try day after that (rare edge case) */
     jd_next += 1;
     jd_to_gregorian(jd_next, &ny, &nmm, &nd);
     check = masa_for_date(ny, nmm, nd, loc);
     if (check.name == masa && check.is_adhika == is_adhika &&
         check.year_saka == saka_year) {
-        LuniMonthCache *e = lru_month_insert(masa, saka_year, is_adhika);
-        e->jd_start = jd_next;
         return jd_next;
     }
 
-    return 0;  /* Should not happen */
+    return 0;
+}
+
+double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
+                             LunisolarScheme scheme, const Location *loc)
+{
+    /* Check cache */
+    LuniMonthCache *cached = lru_month_find(masa, saka_year, is_adhika, scheme);
+    if (cached && cached->jd_start > 0)
+        return cached->jd_start;
+
+    double result;
+
+    if (scheme == LUNISOLAR_PURNIMANTA) {
+        /* Purnimanta month M starts at the full moon of Amanta month M-1.
+         * Find the Amanta start of M (new moon), then find the full moon
+         * ~15 days before it (which is in Amanta month M-1). */
+        double amanta_start = amanta_month_start(masa, saka_year, is_adhika, loc);
+        if (amanta_start == 0) return 0;
+
+        /* The full moon is ~15 days before the Amanta start (new moon).
+         * The Amanta new moon (jd_start in MasaInfo) is what amanta_month_start
+         * finds the civil day after. We need the actual new moon JD. */
+        double jd_rise = sunrise_jd(amanta_start, loc);
+        if (jd_rise <= 0) jd_rise = amanta_start + 0.5 - loc->utc_offset / 24.0;
+        MasaInfo mi = masa_for_date_at(jd_rise, loc);
+
+        /* mi.jd_start is the new moon starting Amanta month M.
+         * The full moon is ~15 days before this new moon. */
+        double jd_full = full_moon_near(mi.jd_start - 15.0);
+
+        /* Find the first civil day on/after this full moon where
+         * the tithi is in Krishna paksha (tithi 16-30). */
+        int fm_y, fm_m, fm_d;
+        jd_to_gregorian(jd_full, &fm_y, &fm_m, &fm_d);
+
+        /* Try the full moon day and the next 2 days */
+        for (int offset = 0; offset <= 2; offset++) {
+            double jd_try = gregorian_to_jd(fm_y, fm_m, fm_d) + offset;
+            int ty, tm, td;
+            jd_to_gregorian(jd_try, &ty, &tm, &td);
+            double jr = sunrise_jd(jd_try, loc);
+            if (jr <= 0) jr = jd_try + 0.5 - loc->utc_offset / 24.0;
+            int t = tithi_at_moment(jr);
+            /* Krishna paksha: tithi 16-30 (first day is Krishna Pratipada = 16) */
+            if (t >= 16) {
+                result = jd_try;
+                goto cache_and_return;
+            }
+        }
+        return 0;  /* Should not happen */
+    } else {
+        /* Amanta */
+        result = amanta_month_start(masa, saka_year, is_adhika, loc);
+        if (result == 0) return 0;
+    }
+
+cache_and_return:
+    {
+        LuniMonthCache *e = lru_month_insert(masa, saka_year, is_adhika, scheme);
+        e->jd_start = result;
+    }
+    return result;
 }
 
 int lunisolar_month_length(MasaName masa, int saka_year, int is_adhika,
-                           const Location *loc)
+                           LunisolarScheme scheme, const Location *loc)
 {
     /* Check cache for pre-computed length */
-    LuniMonthCache *cached = lru_month_find(masa, saka_year, is_adhika);
+    LuniMonthCache *cached = lru_month_find(masa, saka_year, is_adhika, scheme);
     if (cached && cached->length > 0)
         return cached->length;
 
-    double jd_start = lunisolar_month_start(masa, saka_year, is_adhika, loc);
+    double jd_start = lunisolar_month_start(masa, saka_year, is_adhika, scheme, loc);
     if (jd_start == 0) return 0;
 
-    /* Check days 28-31 from start to find where the month changes */
     int length = 0;
-    for (int d = 28; d <= 31; d++) {
-        double jd = jd_start + d;
-        int gy, gm, gd;
-        jd_to_gregorian(jd, &gy, &gm, &gd);
-        MasaInfo mi = masa_for_date(gy, gm, gd, loc);
-        if (mi.name != masa || mi.is_adhika != is_adhika) {
-            length = d;
-            break;
+
+    if (scheme == LUNISOLAR_PURNIMANTA) {
+        /* Find next Purnimanta month's start and subtract */
+        MasaName next_masa = (masa == PHALGUNA) ? CHAITRA : (MasaName)(masa + 1);
+        int next_saka = (masa == PHALGUNA) ? saka_year + 1 : saka_year;
+        /* For adhika: the next month is the nija of the same name */
+        int next_adhika = 0;
+        if (is_adhika) {
+            next_masa = masa;
+            next_saka = saka_year;
+        }
+        double jd_next = lunisolar_month_start(next_masa, next_saka, next_adhika,
+                                                scheme, loc);
+        if (jd_next > 0)
+            length = (int)(jd_next - jd_start);
+    } else {
+        /* Amanta: scan days 28-31 from start to find where the month changes */
+        for (int d = 28; d <= 31; d++) {
+            double jd = jd_start + d;
+            int gy, gm, gd;
+            jd_to_gregorian(jd, &gy, &gm, &gd);
+            MasaInfo mi = masa_for_date(gy, gm, gd, loc);
+            if (mi.name != masa || mi.is_adhika != is_adhika) {
+                length = d;
+                break;
+            }
         }
     }
 
-    /* Store length in cache (entry was created by lunisolar_month_start above) */
+    /* Store length in cache */
     if (length > 0) {
-        LuniMonthCache *e = lru_month_find(masa, saka_year, is_adhika);
+        LuniMonthCache *e = lru_month_find(masa, saka_year, is_adhika, scheme);
         if (e)
             e->length = length;
     }

@@ -1,6 +1,6 @@
 # Project Status
 
-## Current Version: 0.9.0
+## Current Version: 0.11.0
 
 ## Phase Completion
 
@@ -27,11 +27,11 @@
 
 ## Test Results
 
-**With Moshier backend** (default `make`): 53,286/53,286 assertions pass (100%). 55,136 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.971%); 16 sub-minute boundary edge cases remain.
+**With Moshier backend** (default `make`): 53,335/53,335 assertions pass (100%). 55,136 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.971%); 16 sub-minute boundary edge cases remain.
 
-**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 53,286/53,286 assertions pass (100%). SE differs from drikpanchang.com on 2 additional tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct.
+**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 53,335/53,335 assertions pass (100%). SE differs from drikpanchang.com on 2 additional tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct.
 
-53,286 assertions across 11 test suites:
+53,335 assertions across 12 test suites:
 
 | Suite | Assertions | What it tests |
 |-------|------------|---------------|
@@ -44,6 +44,7 @@
 | test_solar | 383 | **Solar calendars**: dates across 4 regional variants + roundtrip + sankranti precision + month/era names + Odia/Malayalam boundary cases + month_start/month_length |
 | test_solar_validation | 327 | **External validation**: month-start dates verified against drikpanchang.com/prokerala.com for all 4 solar calendars |
 | test_solar_regression | 28,976 | **Regression**: 1,811 months x 4 calendars checked against generated CSVs (1900-2050) |
+| test_lunisolar_month | 5,746 | Amanta month start spot checks + roundtrip (1,868 months, 1900-2050) + CSV regression (3,735) + Purnimanta spot checks (36) + lengths (13) |
 | test_solar_edge | 1,200 | **Edge cases**: 100 closest-to-critical-time sankrantis per calendar (400 total), 21 corrected from drikpanchang.com verification (Tamil/Malayalam), 23 Bengali entries updated for tithi-based rule |
 
 ## Validated Against drikpanchang.com
@@ -115,7 +116,7 @@ The buffer is subtracted from `critical_time_jd()` in `src/solar.c`. This single
 
 - SE backend differs from drikpanchang.com on 2 tithi boundary dates (1965-05-30, 2001-09-20) where the Moshier backend matches correctly. Both are extreme boundary cases where the tithi transition falls within arcseconds of sunrise
 - Moshier backend uses analytical planetary theories (VSOP87 for Sun, DE404-fitted Moshier theory for Moon) rather than Swiss Ephemeris data files
-- Amanta scheme only (no Purnimanta support)
+- Purnimanta month boundaries implemented but not yet validated against an external Purnimanta source (verified internally: 1,867/1,867 months start on Krishna Pratipada/Dwitiya)
 - No nakshatra, yoga, or karana calculations
 - No kshaya masa detection (extremely rare edge case)
 - UTC offset is manual (no IANA timezone / DST support)

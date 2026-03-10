@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.11.0 — 2026-03-09
+
+### Added
+
+- **`LunisolarScheme` enum**: `LUNISOLAR_AMANTA` (new-moon-to-new-moon) and `LUNISOLAR_PURNIMANTA` (full-moon-to-full-moon) in `types.h`
+- **Purnimanta month boundaries**: `lunisolar_month_start()` and `lunisolar_month_length()` now accept a `LunisolarScheme` parameter. Purnimanta month M starts at the full moon of Amanta month M−1 (Krishna Pratipada)
+- **`full_moon_near()`**: 9-point inverse Lagrange interpolation targeting 180° lunar phase, same approach as `new_moon_before()`
+- **LRU cache updated**: Cache key now includes `LunisolarScheme` so Amanta and Purnimanta entries don't collide
+- 49 new Purnimanta test assertions: 36 spot checks (month found, ~15 day offset, Krishna paksha entry) + 13 length checks (29-30 days, start+length=next start)
+- Purnimanta verified against ref CSV: 1,867/1,867 months checked — all start on tithi 16 (Krishna Pratipada) or tithi 17 (when Pratipada is kshaya, 115 cases)
+- `tools/purnimanta_check.c`: Diagnostic tool that verifies every Purnimanta month start against `ref_1900_2050.csv`
+
+### Changed
+
+- **API breaking change**: `lunisolar_month_start()` and `lunisolar_month_length()` now require a `LunisolarScheme` parameter (use `LUNISOLAR_AMANTA` for existing behavior)
+- Internal refactor: Amanta logic extracted to `amanta_month_start()` static helper
+
 ## 0.10.0 — 2026-03-05
 
 ### Added

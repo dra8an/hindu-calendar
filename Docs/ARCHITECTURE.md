@@ -123,6 +123,18 @@ The Amanta (new-moon-to-new-moon) month naming algorithm:
 
 Sidereal longitude is computed by subtracting the Lahiri ayanamsa (~24.2° in 2025) from the tropical longitude.
 
+### Purnimanta Scheme
+
+The Purnimanta (full-moon-to-full-moon) scheme is used in North India. A Purnimanta month M consists of the Krishna paksha of Amanta month M−1 followed by the Shukla paksha of Amanta month M. So:
+
+- Purnimanta month M starts at the full moon (~day 15) of Amanta month M−1
+- The first civil day is Krishna Pratipada (tithi 16), or Krishna Dwitiya (tithi 17) when Pratipada is kshaya (skipped)
+- Month length is 29 or 30 days (full moon to full moon)
+
+`full_moon_near(jd)` uses 9-point inverse Lagrange interpolation targeting 180° lunar phase, the same approach as `new_moon_before()`.
+
+Both schemes are selected via the `LunisolarScheme` enum parameter in `lunisolar_month_start()` and `lunisolar_month_length()`. The LRU cache includes the scheme in its key.
+
 ### Solar Rashi to Month Mapping
 
 | Sidereal Solar Sign | Degrees | Month Name |

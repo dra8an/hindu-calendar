@@ -6,7 +6,7 @@
  * Malayalam), and the astronomical backend.
  *
  * Calendar conventions:
- *   - Lunisolar: Amanta (new-moon-to-new-moon) scheme
+ *   - Lunisolar: Amanta (new-moon-to-new-moon) and Purnimanta (full-moon-to-full-moon)
  *   - Ayanamsa:  Lahiri (Chitrapaksha)
  *   - Ephemeris: Drik Siddhanta (modern astronomical), NOT Surya Siddhanta
  *   - Era:       Saka (lunisolar), regional eras for solar calendars
@@ -180,6 +180,21 @@ static const char *TITHI_NAMES[] = {
     "Chaturdashi",  /* 14 */
     "Purnima",      /* 15 - full moon (end of Shukla) */
 };
+
+/* ---------------------------------------------------------------------------
+ * LunisolarScheme - Month boundary convention
+ * ---------------------------------------------------------------------------
+ * Two schemes for defining lunisolar month boundaries:
+ *   AMANTA  (South/West India): new moon to new moon
+ *   PURNIMANTA (North India):   full moon to full moon
+ *
+ * Purnimanta month M = Krishna paksha of Amanta M-1 + Shukla paksha of Amanta M.
+ * So Purnimanta month M starts at the full moon (~day 15) of Amanta month M-1.
+ */
+typedef enum {
+    LUNISOLAR_AMANTA = 0,       /* New-moon-to-new-moon */
+    LUNISOLAR_PURNIMANTA,       /* Full-moon-to-full-moon */
+} LunisolarScheme;
 
 /* ---------------------------------------------------------------------------
  * SolarCalendarType - Regional solar calendar variants

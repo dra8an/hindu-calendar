@@ -2,7 +2,9 @@
  * masa.h - Lunisolar month (masa) determination
  *
  * Determines which Hindu lunisolar month a given date belongs to,
- * using the Amanta (new-moon-to-new-moon) scheme.
+ * using the Amanta (new-moon-to-new-moon) scheme.  Also provides
+ * Purnimanta (full-moon-to-full-moon) month boundaries via the
+ * LunisolarScheme parameter in lunisolar_month_start/length.
  *
  * Month determination algorithm:
  *   1. Find the new moons bracketing the given sunrise
@@ -98,42 +100,48 @@ int hindu_year_saka(double jd_ut, int masa_num);
 int hindu_year_vikram(int saka_year);
 
 /*
+ * full_moon_near - Find the full moon nearest to a given moment.
+ *
+ *   jd_ut: Julian Day in UT (should be within ~2 days of a full moon).
+ *   Returns: JD (UT) of the full moon.
+ *
+ * Uses 9-point inverse Lagrange interpolation on the lunar phase
+ * function, targeting 180 degrees.
+ */
+double full_moon_near(double jd_ut);
+
+/*
  * lunisolar_month_start - First civil day of a lunisolar month.
  *
  *   masa:      Month name (CHAITRA..PHALGUNA).
  *   saka_year: Saka era year.
  *   is_adhika: 1 for adhika (leap) month, 0 for nija (regular).
+ *   scheme:    LUNISOLAR_AMANTA or LUNISOLAR_PURNIMANTA.
  *   loc:       Observer location.
- *   Returns: JD at 0h UT of the first civil day (Shukla Pratipada),
- *            or 0 if the month is not found (invalid combination).
+ *   Returns: JD at 0h UT of the first civil day, or 0 if not found.
  *
- * Inverse lookup: (masa, year, adhika) -> Gregorian date.
- * To get the Gregorian date, pass the result to jd_to_gregorian().
- *
- * Algorithm: estimates the Gregorian month from the masa, then uses
- * masa_for_date() to verify and navigates via new moon boundaries
- * until the target month is found.  Tested for all 1,868 months
- * in 1900-2050.
+ * For Amanta: first civil day is Shukla Pratipada (day after new moon).
+ * For Purnimanta: first civil day is Krishna Pratipada (day after full
+ * moon of the preceding Amanta month).
  *
  * Example:
- *   double jd = lunisolar_month_start(CHAITRA, 1947, 0, &loc);
+ *   double jd = lunisolar_month_start(CHAITRA, 1947, 0,
+ *                                     LUNISOLAR_AMANTA, &loc);
  *   int y, m, d;
  *   jd_to_gregorian(jd, &y, &m, &d);  // -> 2025-03-30
  */
 double lunisolar_month_start(MasaName masa, int saka_year, int is_adhika,
-                             const Location *loc);
+                             LunisolarScheme scheme, const Location *loc);
 
 /*
  * lunisolar_month_length - Number of days in a lunisolar month.
  *
- *   masa, saka_year, is_adhika, loc: Same as lunisolar_month_start().
+ *   masa, saka_year, is_adhika, scheme, loc: Same as
+ *       lunisolar_month_start().
  *   Returns: 29 or 30 (the number of civil days in the month),
  *            or 0 if the month is not found.
- *
- * Computed by finding the first day where masa_for_date() returns
- * a different month, starting from day 28 of the month.
  */
 int lunisolar_month_length(MasaName masa, int saka_year, int is_adhika,
-                           const Location *loc);
+                           LunisolarScheme scheme, const Location *loc);
 
 #endif /* MASA_H */

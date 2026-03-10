@@ -47,11 +47,15 @@ Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshie
 - [ ] **Karana** (1-60): half-tithi, lunar_phase / 6
 - [ ] Add these to PanchangDay struct and CLI output
 
-## Priority 4: Purnimanta Scheme
+## Priority 4: Purnimanta Scheme (Partially Complete)
 
-- [ ] Add Purnimanta month calculation (full-moon-to-full-moon boundaries)
+- [x] Add `LunisolarScheme` enum (`LUNISOLAR_AMANTA`, `LUNISOLAR_PURNIMANTA`) to `types.h`
+- [x] Add Purnimanta month boundaries to `lunisolar_month_start()` and `lunisolar_month_length()`
+- [x] Add `full_moon_near()` for finding full moons via inverse Lagrange interpolation
+- [x] Verified against ref CSV: 1,867/1,867 months start on tithi 16 or 17 (kshaya Pratipada)
 - [ ] CLI flag to switch between Amanta and Purnimanta
-- [ ] Purnimanta is used in North India; Amanta in South India
+- [ ] External validation against drikpanchang.com Purnimanta panchang pages
+- [ ] Update Java and Rust ports with Purnimanta API
 
 ## Priority 5: Kshaya Masa Detection
 
