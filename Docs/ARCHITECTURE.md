@@ -193,7 +193,7 @@ The solar calendar module computes dates for four Indian regional solar traditio
 |----------|---------------|------|
 | **Tamil** | Sunset − 9.5 min | If sankranti is before (sunset − 9.5 min), that day starts the new month |
 | **Bengali** | Midnight + 24 min | Midnight IST with a 24-minute buffer into the next day (R/D edge-case zone) |
-| **Odia** | 22:12 IST (fixed) | Sankranti ≤22:11 IST = current day, ≥22:12 IST = next day |
+| **Odia** | 22:12 local time | Sankranti ≤22:11 local = current day, ≥22:12 local = next day |
 | **Malayalam** | End of madhyahna − 9.5 min | sunrise + 3/5 × (sunset − sunrise) minus 9.5 min buffer |
 
 The Tamil and Malayalam buffers compensate for ~24 arcsecond difference between our Lahiri ayanamsa and drikpanchang.com's Lahiri ayanamsa (~8–10 min in sankranti time). Verified against all 1,811 month boundaries per calendar (1900–2050) via drikpanchang.com scrape.

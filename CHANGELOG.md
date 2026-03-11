@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.11.0 — 2026-03-09
+## 0.11.0 — 2026-03-11
 
 ### Added
 
@@ -11,11 +11,19 @@
 - 49 new Purnimanta test assertions: 36 spot checks (month found, ~15 day offset, Krishna paksha entry) + 13 length checks (29-30 days, start+length=next start)
 - Purnimanta verified against ref CSV: 1,867/1,867 months checked — all start on tithi 16 (Krishna Pratipada) or tithi 17 (when Pratipada is kshaya, 115 cases)
 - `tools/purnimanta_check.c`: Diagnostic tool that verifies every Purnimanta month start against `ref_1900_2050.csv`
+- **Multi-location validation**: 465 assertions across 5 calendars × 3 locations (Ujjain, NYC, LA) × 31 days (March 2026), all verified against drikpanchang.com. See `Docs/LOCATION.md`
+- `validation/moshier/various_locations.csv`: Scraped drikpanchang.com data for multi-location testing
+- `tests/test_various_locations.c`: Test suite validating lunisolar tithi and solar calendar dates across locations
 
 ### Changed
 
 - **API breaking change**: `lunisolar_month_start()` and `lunisolar_month_length()` now require a `LunisolarScheme` parameter (use `LUNISOLAR_AMANTA` for existing behavior)
+- **Odia critical time**: Changed from fixed 22:12 IST to 22:12 local time. Formula changed from `jd + 16.7/24` to `jd + (22.2 - utc_offset)/24`. Identical for IST locations; fixes systematic +1 day offset for non-Indian locations (NYC, LA)
 - Internal refactor: Amanta logic extracted to `amanta_month_start()` static helper
+
+### Documentation
+
+- Created `Docs/LOCATION.md`: Multi-location support, Odia IST→local fix, validation data format, DST considerations
 
 ## 0.10.0 — 2026-03-05
 

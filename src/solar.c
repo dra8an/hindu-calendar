@@ -140,12 +140,13 @@ static double critical_time_jd(double jd_midnight_ut, const Location *loc,
         return jd_midnight_ut - loc->utc_offset / 24.0 + 24.0 / (24.0 * 60.0);
 
     case SOLAR_CAL_ODIA:
-        /* Fixed IST cutoff at 22:12 (10:12 PM IST).
+        /* Local cutoff at 22:12 (10:12 PM local time).
          * Empirically determined from 23 boundary cases on drikpanchang.com:
-         * all sankrantis at <=22:11 IST are assigned to the current day,
-         * all sankrantis at >=22:12 IST are assigned to the next day.
-         * 22:12 IST = 16:42 UTC = 16.7h UTC. */
-        return jd_midnight_ut + 16.7 / 24.0;
+         * all sankrantis at <=22:11 are assigned to the current day,
+         * all sankrantis at >=22:12 are assigned to the next day.
+         * For IST (utc_offset=5.5): 22.2 - 5.5 = 16.7h past midnight UT = 22:12 IST.
+         * Uses observer's local time so non-Indian locations get correct results. */
+        return jd_midnight_ut + (22.2 - loc->utc_offset) / 24.0;
 
     case SOLAR_CAL_MALAYALAM:
         {

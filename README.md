@@ -78,7 +78,7 @@ Hindu Date: Adhika Bhadrapada Shukla 1, Saka 1934 (Vikram 2069)
 make test
 ```
 
-Runs 53,335 assertions across 12 test suites: unit tests for astronomical calculations, tithi, month determination, and solar calendars; 186 lunisolar dates validated against drikpanchang.com (1900-2050, including 132 adhika/kshaya edge cases); 327 solar calendar month-start dates validated against drikpanchang.com/prokerala.com across all four regional variants; 1,200 solar edge case assertions covering the 100 closest-to-critical-time sankrantis per calendar (21 corrected from drikpanchang.com verification); and regression tests covering 1,104 sampled lunisolar days, all 4,269 adhika/kshaya tithi edge cases, and 7,244 solar month boundaries (1900-2050).
+Runs 59,497 assertions across 13 test suites: unit tests for astronomical calculations, tithi, month determination, and solar calendars; 186 lunisolar dates validated against drikpanchang.com (1900-2050, including 132 adhika/kshaya edge cases); 327 solar calendar month-start dates validated against drikpanchang.com/prokerala.com across all four regional variants; 1,200 solar edge case assertions covering the 100 closest-to-critical-time sankrantis per calendar (21 corrected from drikpanchang.com verification); 465 multi-location assertions (Ujjain, NYC, LA) across all 5 calendar types; and regression tests covering 1,104 sampled lunisolar days, all 4,269 adhika/kshaya tithi edge cases, and 7,244 solar month boundaries (1900-2050).
 
 ## Validation Web Page
 
@@ -112,6 +112,7 @@ See [Docs/MASTER.md](Docs/MASTER.md) for a full index. Key files:
 - [Docs/NEXT-STEPS.md](Docs/NEXT-STEPS.md) — roadmap (nakshatra, yoga, Purnimanta, etc.)
 - [Docs/VSOP87_IMPLEMENTATION.md](Docs/VSOP87_IMPLEMENTATION.md) — VSOP87 solar longitude pipeline, ayanamsa, precision analysis
 - [Docs/SOLAR_PLAN.md](Docs/SOLAR_PLAN.md) — solar calendar design document
+- [Docs/LOCATION.md](Docs/LOCATION.md) — multi-location support (Ujjain, NYC, LA validation)
 - [Docs/JAVA_PORT.md](Docs/JAVA_PORT.md) — Java 21 port (227 tests, Gradle build)
 - [Docs/RUST_PORT.md](Docs/RUST_PORT.md) — Rust port (275,396 assertions, Cargo build)
 - [CHANGELOG.md](CHANGELOG.md) — version history

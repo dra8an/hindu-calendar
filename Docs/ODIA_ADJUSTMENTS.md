@@ -35,23 +35,29 @@ We plotted all verified cases by their IST time and found a clean separation:
 
 This holds for all 35 verified boundary cases spanning 1900–2050, across all seasons and day lengths. Unlike the apparent-midnight model, the fixed IST cutoff has zero inconsistencies.
 
-## Why fixed IST works for Odia but not other calendars
+## Why a fixed clock time works for Odia but not other calendars
 
-Tamil uses sunset (season-dependent), Malayalam uses 3/5 of daytime (season-dependent), but Odia uses a fixed clock time. This is consistent with IST being the civil standard in Odisha. The 22:12 IST cutoff likely represents a traditional rule expressed in clock time rather than astronomical time.
+Tamil uses sunset (season-dependent), Malayalam uses 3/5 of daytime (season-dependent), but Odia uses a fixed clock time (22:12 local). This is consistent with civil time being the standard in Odisha. The 22:12 cutoff likely represents a traditional rule expressed in clock time rather than astronomical time. When used outside India, the rule adapts to the observer's local timezone.
 
 ## Solution
 
-Changed the Odia critical time from midnight to fixed 22:12 IST:
+Changed the Odia critical time from midnight to 22:12 local time:
 
 ```c
 // Before (midnight):
 return jd_midnight_ut - loc->utc_offset / 24.0;
 
-// After (22:12 IST = 16:42 UTC):
-return jd_midnight_ut + 16.7 / 24.0;
+// After (22:12 local time):
+return jd_midnight_ut + (22.2 - loc->utc_offset) / 24.0;
 ```
 
+For IST (`utc_offset = 5.5`): `22.2 - 5.5 = 16.7`, giving 16:42 UTC = 22:12 IST.
+
 This change is in `src/solar.c`, function `critical_time_jd()`, case `SOLAR_CAL_ODIA`.
+
+### Multi-location update
+
+The original discovery used Indian locations where IST = local time, so the cutoff was initially expressed as fixed IST. When validated against drikpanchang.com for non-Indian locations (New York, Los Angeles), all Odia dates were off by +1 day. The fix generalizes the rule to use 22:12 in the observer's local time. For IST the result is identical; for other timezones it correctly adapts. See `Docs/LOCATION.md` for full details.
 
 ## Verified Boundary Cases
 

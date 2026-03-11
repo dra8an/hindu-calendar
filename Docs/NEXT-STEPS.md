@@ -15,6 +15,8 @@
 - [x] Validation web page extended for solar calendar comparison (dropdown for all 4 calendars)
 - [x] Resolve Bengali solar calendar edge cases — tithi-based rule from Sewell & Dikshit (1896) + per-rashi tuning: 100% (1,811/1,811 months)
 - [x] Dual-backend validation data: SE + Moshier reference CSVs, JSON, web backend selector, `make gen-ref`/`gen-json` targets, `tools/generate_all_validation.sh` master script
+- [x] Multi-location validation: Ujjain, NYC, LA across all 5 calendars (March 2026, 465 assertions). See `Docs/LOCATION.md`
+- [x] Odia critical time generalized from fixed IST to local time for non-Indian locations
 - [ ] Continue manual validation of remaining lunisolar months via web page against drikpanchang.com
 - [ ] Document any edge-case discrepancies (midnight new moons, polar regions)
 

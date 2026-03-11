@@ -192,7 +192,7 @@ Malayalam months 9-12: Medam, Edavam, Mithunam, Karkadakam (corresponding to Mes
 Era offsets from Saka:
 - Bengali (Bangabda): Saka - 515
 - Tamil: Saka (no offset)
-- Odia (Amli): gy - 592 on/after Kanya (~Sep), gy - 593 before. Year starts at rashi 6, not 1
+- Odia (Amli): gy - 592 on/after Kanya (~Sep), gy - 593 before. Year starts at rashi 6, not 1. Critical time is 22:12 local (adapts to observer timezone)
 - Malayalam (Kollam): Saka + 823
 
 ### Phase 2: Tests (`tests/test_solar.c`)

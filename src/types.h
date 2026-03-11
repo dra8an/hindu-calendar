@@ -206,7 +206,7 @@ typedef enum {
  * Critical time rules (when a sankranti falls near a day boundary):
  *   Tamil:     sunset - 9.5 min (upper limb)
  *   Bengali:   midnight + 24 min buffer + tithi-based rule (Sewell & Dikshit)
- *   Odia:      fixed 22:12 IST cutoff
+ *   Odia:      22:12 local time cutoff
  *   Malayalam:  end of madhyahna - 9.5 min (sunrise + 3/5 * daytime)
  */
 typedef enum {
