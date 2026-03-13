@@ -1,32 +1,34 @@
 package com.hindu.calendar.model;
 
 public enum SolarCalendarType {
-    TAMIL(1, 78, 79, "Saka", new String[]{
+    TAMIL(1, 1, 78, 79, "Saka", new String[]{
             "", "Chithirai", "Vaikaasi", "Aani", "Aadi", "Aavani", "Purattaasi",
             "Aippasi", "Karthikai", "Maargazhi", "Thai", "Maasi", "Panguni"
     }),
-    BENGALI(1, 593, 594, "Bangabda", new String[]{
+    BENGALI(1, 1, 593, 594, "Bangabda", new String[]{
             "", "Boishakh", "Joishtho", "Asharh", "Srabon", "Bhadro", "Ashshin",
             "Kartik", "Ogrohaeon", "Poush", "Magh", "Falgun", "Choitro"
     }),
-    ODIA(1, 78, 79, "Saka", new String[]{
+    ODIA(1, 6, 592, 593, "Amli", new String[]{
             "", "Baisakha", "Jyeshtha", "Ashadha", "Shravana", "Bhadrapada", "Ashvina",
             "Kartika", "Margashirsha", "Pausha", "Magha", "Phalguna", "Chaitra"
     }),
-    MALAYALAM(5, 824, 825, "Kollam", new String[]{
+    MALAYALAM(5, 5, 824, 825, "Kollam", new String[]{
             "", "Chingam", "Kanni", "Thulam", "Vrishchikam", "Dhanu", "Makaram",
             "Kumbham", "Meenam", "Medam", "Edavam", "Mithunam", "Karkadakam"
     });
 
     private final int firstRashi;
+    private final int yearStartRashi;
     private final int gyOffsetOn;
     private final int gyOffsetBefore;
     private final String eraName;
     private final String[] months;
 
-    SolarCalendarType(int firstRashi, int gyOffsetOn, int gyOffsetBefore,
+    SolarCalendarType(int firstRashi, int yearStartRashi, int gyOffsetOn, int gyOffsetBefore,
                       String eraName, String[] months) {
         this.firstRashi = firstRashi;
+        this.yearStartRashi = yearStartRashi;
         this.gyOffsetOn = gyOffsetOn;
         this.gyOffsetBefore = gyOffsetBefore;
         this.eraName = eraName;
@@ -34,6 +36,7 @@ public enum SolarCalendarType {
     }
 
     public int firstRashi() { return firstRashi; }
+    public int yearStartRashi() { return yearStartRashi; }
     public int gyOffsetOn() { return gyOffsetOn; }
     public int gyOffsetBefore() { return gyOffsetBefore; }
     public String eraName() { return eraName; }

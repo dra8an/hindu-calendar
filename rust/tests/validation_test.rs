@@ -3,7 +3,7 @@
 
 use hindu_calendar::ephemeris::Ephemeris;
 use hindu_calendar::model::*;
-use hindu_calendar::core::{tithi, masa};
+use hindu_calendar::core::{tithi, masa, solar};
 
 struct RefData {
     y: i32, m: i32, d: i32,
@@ -270,4 +270,176 @@ fn test_186_drikpanchang_dates() {
 
     eprintln!("\n=== Validation: {}/{} passed, {} failed ===", passed, passed + failed, failed);
     assert_eq!(failed, 0, "{} validation tests failed", failed);
+}
+
+#[test]
+fn test_amanta_month_starts() {
+    let mut eph = Ephemeris::new();
+    let delhi = Location::NEW_DELHI;
+
+    struct MonthCase { masa: MasaName, saka: i32, adhika: bool, y: i32, m: i32, d: i32 }
+    let cases = [
+        MonthCase { masa: MasaName::Chaitra, saka: 1947, adhika: false, y: 2025, m: 3, d: 30 },
+        MonthCase { masa: MasaName::Vaishakha, saka: 1947, adhika: false, y: 2025, m: 4, d: 28 },
+        MonthCase { masa: MasaName::Jyeshtha, saka: 1947, adhika: false, y: 2025, m: 5, d: 28 },
+        MonthCase { masa: MasaName::Ashadha, saka: 1947, adhika: false, y: 2025, m: 6, d: 26 },
+        MonthCase { masa: MasaName::Shravana, saka: 1947, adhika: false, y: 2025, m: 7, d: 25 },
+        MonthCase { masa: MasaName::Bhadrapada, saka: 1947, adhika: false, y: 2025, m: 8, d: 24 },
+        MonthCase { masa: MasaName::Ashvina, saka: 1947, adhika: false, y: 2025, m: 9, d: 22 },
+        MonthCase { masa: MasaName::Kartika, saka: 1947, adhika: false, y: 2025, m: 10, d: 22 },
+        MonthCase { masa: MasaName::Margashirsha, saka: 1947, adhika: false, y: 2025, m: 11, d: 21 },
+        MonthCase { masa: MasaName::Pausha, saka: 1947, adhika: false, y: 2025, m: 12, d: 21 },
+        // Adhika Bhadrapada 2012
+        MonthCase { masa: MasaName::Bhadrapada, saka: 1934, adhika: true, y: 2012, m: 8, d: 18 },
+        MonthCase { masa: MasaName::Bhadrapada, saka: 1934, adhika: false, y: 2012, m: 9, d: 17 },
+        // Year boundary
+        MonthCase { masa: MasaName::Phalguna, saka: 1946, adhika: false, y: 2025, m: 2, d: 28 },
+        MonthCase { masa: MasaName::Chaitra, saka: 1946, adhika: false, y: 2024, m: 4, d: 9 },
+    ];
+
+    for mc in &cases {
+        let jd = masa::lunisolar_month_start(&mut eph, mc.masa, mc.saka, mc.adhika,
+                                              LunisolarScheme::Amanta, &delhi);
+        assert!(jd > 0.0, "{:?} {} should be found", mc.masa, mc.saka);
+        let (gy, gm, gd) = eph.jd_to_gregorian(jd);
+        assert_eq!((gy, gm, gd), (mc.y, mc.m, mc.d),
+            "{:?} {} {}start", mc.masa, mc.saka, if mc.adhika { "adhika " } else { "" });
+    }
+}
+
+#[test]
+fn test_amanta_month_lengths() {
+    let mut eph = Ephemeris::new();
+    let delhi = Location::NEW_DELHI;
+
+    let months = [
+        MasaName::Chaitra, MasaName::Vaishakha, MasaName::Jyeshtha, MasaName::Ashadha,
+        MasaName::Shravana, MasaName::Bhadrapada, MasaName::Ashvina, MasaName::Kartika,
+        MasaName::Margashirsha, MasaName::Pausha, MasaName::Magha, MasaName::Phalguna,
+    ];
+    for m in &months {
+        let len = masa::lunisolar_month_length(&mut eph, *m, 1947, false,
+                                                LunisolarScheme::Amanta, &delhi);
+        assert!(len == 29 || len == 30, "{:?} 1947 length should be 29 or 30, got {}", m, len);
+    }
+
+    // start + length = next month start
+    let jd_start = masa::lunisolar_month_start(&mut eph, MasaName::Vaishakha, 1947, false,
+                                                LunisolarScheme::Amanta, &delhi);
+    let len = masa::lunisolar_month_length(&mut eph, MasaName::Vaishakha, 1947, false,
+                                            LunisolarScheme::Amanta, &delhi);
+    let jd_next = masa::lunisolar_month_start(&mut eph, MasaName::Jyeshtha, 1947, false,
+                                               LunisolarScheme::Amanta, &delhi);
+    assert_eq!((jd_next - jd_start) as i32, len, "Vaishakha+length = Jyeshtha start");
+}
+
+#[test]
+fn test_purnimanta_month_starts() {
+    let mut eph = Ephemeris::new();
+    let delhi = Location::NEW_DELHI;
+
+    let months = [
+        MasaName::Chaitra, MasaName::Vaishakha, MasaName::Jyeshtha, MasaName::Ashadha,
+        MasaName::Shravana, MasaName::Bhadrapada, MasaName::Ashvina, MasaName::Kartika,
+        MasaName::Margashirsha, MasaName::Pausha, MasaName::Magha, MasaName::Phalguna,
+    ];
+    for m in &months {
+        let jd_amanta = masa::lunisolar_month_start(&mut eph, *m, 1947, false,
+                                                     LunisolarScheme::Amanta, &delhi);
+        let jd_purni = masa::lunisolar_month_start(&mut eph, *m, 1947, false,
+                                                    LunisolarScheme::Purnimanta, &delhi);
+        assert!(jd_purni > 0.0, "Purnimanta {:?} 1947 should be found", m);
+
+        // Purnimanta start should be ~13-17 days before Amanta start
+        let diff = jd_amanta - jd_purni;
+        assert!(diff >= 13.0 && diff <= 17.0,
+            "Purnimanta {:?} 1947 offset {} should be in [13,17]", m, diff);
+
+        // First day should have Krishna paksha tithi (>=16)
+        let mut jr = eph.sunrise_jd(jd_purni, &delhi);
+        if jr <= 0.0 { jr = jd_purni + 0.5 - delhi.utc_offset / 24.0; }
+        let t = tithi::tithi_at_moment(&mut eph, jr);
+        assert!(t >= 16 && t <= 30,
+            "Purnimanta {:?} 1947 tithi {} should be in Krishna paksha", m, t);
+    }
+}
+
+#[test]
+fn test_purnimanta_month_lengths() {
+    let mut eph = Ephemeris::new();
+    let delhi = Location::NEW_DELHI;
+
+    let months = [
+        MasaName::Chaitra, MasaName::Vaishakha, MasaName::Jyeshtha, MasaName::Ashadha,
+        MasaName::Shravana, MasaName::Bhadrapada, MasaName::Ashvina, MasaName::Kartika,
+        MasaName::Margashirsha, MasaName::Pausha, MasaName::Magha, MasaName::Phalguna,
+    ];
+    for m in &months {
+        let len = masa::lunisolar_month_length(&mut eph, *m, 1947, false,
+                                                LunisolarScheme::Purnimanta, &delhi);
+        assert!(len == 29 || len == 30,
+            "Purnimanta {:?} 1947 length should be 29 or 30, got {}", m, len);
+    }
+
+    // start + length = next month start
+    let jd_start = masa::lunisolar_month_start(&mut eph, MasaName::Vaishakha, 1947, false,
+                                                LunisolarScheme::Purnimanta, &delhi);
+    let len = masa::lunisolar_month_length(&mut eph, MasaName::Vaishakha, 1947, false,
+                                            LunisolarScheme::Purnimanta, &delhi);
+    let jd_next = masa::lunisolar_month_start(&mut eph, MasaName::Jyeshtha, 1947, false,
+                                               LunisolarScheme::Purnimanta, &delhi);
+    assert_eq!((jd_next - jd_start) as i32, len,
+        "Purnimanta Vaishakha+length = Jyeshtha start");
+}
+
+// ===== Solar calendar tests =====
+
+#[test]
+fn test_odia_amli_era() {
+    let mut eph = Ephemeris::new();
+    let delhi = Location::NEW_DELHI;
+
+    assert_eq!(solar::solar_era_name(SolarCalendarType::Odia), "Amli");
+
+    // Odia year starts at Kanya (~Sep), so Apr 2025 is Amli 1432
+    let sd = solar::gregorian_to_solar(&mut eph, 2025, 4, 14, &delhi, SolarCalendarType::Odia);
+    assert_eq!(sd.month, 1);
+    assert_eq!(sd.day, 1);
+    assert_eq!(sd.year, 1432);
+
+    let sd = solar::gregorian_to_solar(&mut eph, 2025, 4, 13, &delhi, SolarCalendarType::Odia);
+    assert_eq!(sd.month, 12);
+    assert_eq!(sd.day, 31);
+    assert_eq!(sd.year, 1432); // same year (year boundary is Sep, not Apr)
+
+    // Boundary cases
+    let sd = solar::gregorian_to_solar(&mut eph, 2026, 7, 17, &delhi, SolarCalendarType::Odia);
+    assert_eq!(sd.month, 4);
+    assert_eq!(sd.day, 1);
+    assert_eq!(sd.year, 1433);
+
+    let sd = solar::gregorian_to_solar(&mut eph, 2001, 4, 14, &delhi, SolarCalendarType::Odia);
+    assert_eq!(sd.month, 1);
+    assert_eq!(sd.day, 1);
+    assert_eq!(sd.year, 1408);
+}
+
+#[test]
+fn test_solar_month_start_length() {
+    let mut eph = Ephemeris::new();
+    let delhi = Location::NEW_DELHI;
+
+    // Tamil month 1 (Chithirai) 1947: should be 2025-04-14
+    let jd = solar::solar_month_start(&mut eph, 1, 1947, SolarCalendarType::Tamil, &delhi);
+    let (y, m, d) = eph.jd_to_gregorian(jd);
+    assert_eq!((y, m, d), (2025, 4, 14));
+
+    // Bengali month 1 (Boishakh) 1432: should be 2025-04-15
+    let jd = solar::solar_month_start(&mut eph, 1, 1432, SolarCalendarType::Bengali, &delhi);
+    let (y, m, d) = eph.jd_to_gregorian(jd);
+    assert_eq!((y, m, d), (2025, 4, 15));
+
+    // Tamil month 1 length should be 29-32
+    let len = solar::solar_month_length(&mut eph, 1, 1947, SolarCalendarType::Tamil, &delhi);
+    assert!(len >= 29 && len <= 32, "Tamil month 1 length: {}", len);
 }

@@ -71,7 +71,7 @@ class SolarTest {
     void testEraNames() {
         assertEquals("Saka", SolarCalendarType.TAMIL.eraName());
         assertEquals("Bangabda", SolarCalendarType.BENGALI.eraName());
-        assertEquals("Saka", SolarCalendarType.ODIA.eraName());
+        assertEquals("Amli", SolarCalendarType.ODIA.eraName());
         assertEquals("Kollam", SolarCalendarType.MALAYALAM.eraName());
     }
 
@@ -115,15 +115,18 @@ class SolarTest {
     }
 
     // ===== Odia Calendar =====
+    // Odia uses Amli era: gy - 592 on/after Kanya, gy - 593 before
 
     @Test
     void testOdiaNewYear2025() {
-        checkSolar(2025, 4, 14, SolarCalendarType.ODIA, 1, 1, 1947);
+        // Odia year starts at Kanya (~Sep), so Apr 2025 is Amli 1432
+        checkSolar(2025, 4, 14, SolarCalendarType.ODIA, 1, 1, 1432);
     }
 
     @Test
-    void testOdiaLastDayPreviousYear() {
-        checkSolar(2025, 4, 13, SolarCalendarType.ODIA, 12, 31, 1946);
+    void testOdiaLastDayPreviousMonth() {
+        // Same Amli year (year boundary is Sep, not Apr)
+        checkSolar(2025, 4, 13, SolarCalendarType.ODIA, 12, 31, 1432);
     }
 
     // ===== Malayalam Calendar =====
@@ -191,12 +194,14 @@ class SolarTest {
 
     @Test
     void testOdiaAdditional() {
-        checkSolar(2025, 4, 15, SolarCalendarType.ODIA, 1, 2, 1947);
-        checkSolar(2025, 4, 30, SolarCalendarType.ODIA, 1, 17, 1947);
-        checkSolar(2025, 4, 13, SolarCalendarType.ODIA, 12, 31, 1946);
-        checkSolar(2025, 4, 1, SolarCalendarType.ODIA, 12, 19, 1946);
-        checkSolar(2025, 1, 1, SolarCalendarType.ODIA, 9, 18, 1946);
-        checkSolar(2025, 7, 15, SolarCalendarType.ODIA, 3, 31, 1947);
+        // Odia Amli era: year starts at Kanya (~Sep)
+        // All these dates are before Kanya 2025 → Amli 1432
+        checkSolar(2025, 4, 15, SolarCalendarType.ODIA, 1, 2, 1432);
+        checkSolar(2025, 4, 30, SolarCalendarType.ODIA, 1, 17, 1432);
+        checkSolar(2025, 4, 13, SolarCalendarType.ODIA, 12, 31, 1432);
+        checkSolar(2025, 4, 1, SolarCalendarType.ODIA, 12, 19, 1432);
+        checkSolar(2025, 1, 1, SolarCalendarType.ODIA, 9, 18, 1432);
+        checkSolar(2025, 7, 15, SolarCalendarType.ODIA, 3, 31, 1432);
     }
 
     @Test
@@ -212,18 +217,45 @@ class SolarTest {
 
     @Test
     void testOdiaBoundary() {
+        // Odia Amli era boundary cases (verified against C output)
         // sankranti after 22:12 -> next day
-        checkSolar(2026, 7, 16, SolarCalendarType.ODIA, 3, 32, 1948);
-        checkSolar(2026, 7, 17, SolarCalendarType.ODIA, 4, 1, 1948);
-        checkSolar(2022, 7, 16, SolarCalendarType.ODIA, 3, 32, 1944);
-        checkSolar(2022, 7, 17, SolarCalendarType.ODIA, 4, 1, 1944);
-        checkSolar(2018, 7, 16, SolarCalendarType.ODIA, 3, 32, 1940);
-        checkSolar(2018, 7, 17, SolarCalendarType.ODIA, 4, 1, 1940);
-        checkSolar(2001, 4, 13, SolarCalendarType.ODIA, 12, 31, 1922);
-        checkSolar(2001, 4, 14, SolarCalendarType.ODIA, 1, 1, 1923);
+        checkSolar(2026, 7, 16, SolarCalendarType.ODIA, 3, 32, 1433);
+        checkSolar(2026, 7, 17, SolarCalendarType.ODIA, 4, 1, 1433);
+        checkSolar(2022, 7, 16, SolarCalendarType.ODIA, 3, 32, 1429);
+        checkSolar(2022, 7, 17, SolarCalendarType.ODIA, 4, 1, 1429);
+        checkSolar(2018, 7, 16, SolarCalendarType.ODIA, 3, 32, 1425);
+        checkSolar(2018, 7, 17, SolarCalendarType.ODIA, 4, 1, 1425);
+        checkSolar(2001, 4, 13, SolarCalendarType.ODIA, 12, 31, 1408);
+        checkSolar(2001, 4, 14, SolarCalendarType.ODIA, 1, 1, 1408);
         // sankranti before 22:12 -> current day
-        checkSolar(2024, 12, 15, SolarCalendarType.ODIA, 9, 1, 1946);
-        checkSolar(2013, 5, 14, SolarCalendarType.ODIA, 1, 31, 1935);
-        checkSolar(2003, 11, 16, SolarCalendarType.ODIA, 7, 30, 1925);
+        checkSolar(2024, 12, 15, SolarCalendarType.ODIA, 9, 1, 1432);
+        checkSolar(2013, 5, 14, SolarCalendarType.ODIA, 1, 31, 1420);
+        checkSolar(2003, 11, 16, SolarCalendarType.ODIA, 7, 30, 1411);
+    }
+
+    // ===== Solar month start/length =====
+
+    @Test
+    void testSolarMonthStart() {
+        // Tamil month 1 (Chithirai) 1947: should be 2025-04-14
+        double jd = solar.solarMonthStart(1, 1947, SolarCalendarType.TAMIL, LOC);
+        int[] ymd = eph.jdToGregorian(jd);
+        assertEquals(2025, ymd[0]);
+        assertEquals(4, ymd[1]);
+        assertEquals(14, ymd[2]);
+
+        // Bengali month 1 (Boishakh) 1432: should be 2025-04-15
+        jd = solar.solarMonthStart(1, 1432, SolarCalendarType.BENGALI, LOC);
+        ymd = eph.jdToGregorian(jd);
+        assertEquals(2025, ymd[0]);
+        assertEquals(4, ymd[1]);
+        assertEquals(15, ymd[2]);
+    }
+
+    @Test
+    void testSolarMonthLength() {
+        // Tamil month 1 should be 31 or 32 days
+        int len = solar.solarMonthLength(1, 1947, SolarCalendarType.TAMIL, LOC);
+        assertTrue(len >= 29 && len <= 32, "Tamil month 1 length: " + len);
     }
 }

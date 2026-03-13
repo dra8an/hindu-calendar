@@ -160,6 +160,12 @@ pub struct PanchangDay {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LunisolarScheme {
+    Amanta,
+    Purnimanta,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SolarCalendarType {
     Tamil,
     Bengali,
