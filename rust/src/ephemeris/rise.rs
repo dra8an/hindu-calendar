@@ -1,5 +1,5 @@
-/// Sunrise and sunset calculation
-/// Meeus Ch. 15, iterative method with Sinclair refraction and GAST.
+/// Sunrise and sunset calculation (upper limb)
+/// Meeus Ch. 15, iterative method with Sinclair refraction, solar semi-diameter, and GAST.
 
 use std::f64::consts::PI;
 use super::sun::{self, SunState};
@@ -7,6 +7,10 @@ use super::julian_day;
 
 const DEG2RAD: f64 = PI / 180.0;
 const RAD2DEG: f64 = 180.0 / PI;
+
+/// Solar semi-diameter for upper limb sunrise/sunset (arcminutes).
+/// Mean value ~15.95'. Range: 15.75' (aphelion) to 16.29' (perihelion).
+const SOLAR_SEMIDIAM_ARCMIN: f64 = 16.0;
 
 fn normalize_deg(d: f64) -> f64 {
     let d = d % 360.0;
@@ -112,6 +116,7 @@ fn rise_set(
         atpress = 1013.25 * (1.0 - 0.0065 * alt / 288.0).powf(5.255);
     }
     let mut h0 = -sinclair_refraction_horizon(atpress, 0.0);
+    h0 -= SOLAR_SEMIDIAM_ARCMIN / 60.0;  // solar semi-diameter: upper limb
     if alt > 0.0 {
         h0 -= 0.0353 * alt.sqrt();
     }

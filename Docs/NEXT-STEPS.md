@@ -57,7 +57,7 @@ Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshie
 - [x] Verified against ref CSV: 1,867/1,867 months start on tithi 16 or 17 (kshaya Pratipada)
 - [ ] CLI flag to switch between Amanta and Purnimanta
 - [ ] External validation against drikpanchang.com Purnimanta panchang pages
-- [ ] Update Java and Rust ports with Purnimanta API
+- [x] Update Java and Rust ports with Purnimanta API, Odia Amli era, Bengali per-rashi tuning, upper limb sunrise, lunisolar/solar month APIs
 
 ## Priority 5: Kshaya Masa Detection
 
@@ -77,8 +77,8 @@ Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshie
 
 ## Completed: Language Ports
 
-- [x] **Java 21 port** (`java/`): Moshier-only, 2,718 lines, 227 tests, Gradle build. See [JAVA_PORT.md](JAVA_PORT.md)
-- [x] **Rust port** (`rust/`): Moshier-only, 2,784 lines, 275,396 assertions, Cargo build. See [RUST_PORT.md](RUST_PORT.md)
+- [x] **Java 21 port** (`java/`): Moshier-only, ~3,000 lines, 239 tests, Gradle build. Includes upper limb sunrise, Odia Amli era, Bengali per-rashi tuning, Purnimanta scheme, lunisolar/solar month APIs. Full 55,152-day regression: 0 failures. See [JAVA_PORT.md](JAVA_PORT.md)
+- [x] **Rust port** (`rust/`): Moshier-only, ~3,100 lines, 12 tests, Cargo build. Same feature parity as Java. Full 55,152-day regression: 0 failures. See [RUST_PORT.md](RUST_PORT.md)
 
 ## Future Considerations
 

@@ -102,10 +102,10 @@ Tropical (Sayana) longitudes are used because the ayanamsa cancels out in the mo
 
 ### New Moon Finding
 
-New moons are found using **17-point inverse Lagrange interpolation**, matching the approach in the Python drik-panchanga reference implementation.
+New moons are found using **9-point inverse Lagrange interpolation** (0.5-day spacing).
 
 1. Estimate the new moon's position using the current tithi as a hint
-2. Sample the lunar phase at 17 points in a ±2 day window (every 0.25 days)
+2. Sample the lunar phase at 9 points in a ±2 day window (every 0.5 days)
 3. Unwrap the phase angles to handle the 0°/360° discontinuity
 4. Solve for phase = 360° using inverse Lagrange interpolation
 
@@ -224,7 +224,7 @@ A self-contained ephemeris implementing the same 8 SE functions used by the proj
 | Solar longitude | VSOP87 (135 harmonic terms) | ±1″ |
 | Lunar longitude | DE404 Moshier theory (full pipeline) | ±0.07″ |
 | Ayanamsa | IAU 1976 3D equatorial precession | ±0.3″ |
-| Sunrise/sunset | Meeus Ch.15, Sinclair refraction, upper limb | ±2 seconds |
+| Sunrise/sunset | Meeus Ch.15, Sinclair refraction, upper limb (16' semi-diameter) | ±2 seconds |
 | JD conversions | Meeus Ch.7 | Exact |
 
 See [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) for the full solar longitude pipeline, the ayanamsa nutation discovery, and precision analysis.

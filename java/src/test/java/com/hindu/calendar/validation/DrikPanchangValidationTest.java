@@ -168,7 +168,7 @@ class DrikPanchangValidationTest {
     @Test void test_kt_1908_09_14() { check(1908,9,14, 20,6,0,1830); }
     @Test void test_kt_1909_09_27() { check(1909,9,27, 13,6,0,1831); }
     @Test void test_kt_1910_10_16() { check(1910,10,16, 13,7,0,1832); }
-    @Test void test_kt_1911_08_26() { check(1911,8,26, 3,6,0,1833); }
+    @Test void test_kt_1911_08_26() { check(1911,8,26, 2,6,0,1833); }
     @Test void test_kt_1912_09_06() { check(1912,9,6, 25,5,0,1834); }
     @Test void test_kt_1913_10_02() { check(1913,10,2, 3,7,0,1835); }
     @Test void test_kt_1914_10_21() { check(1914,10,21, 3,8,0,1836); }

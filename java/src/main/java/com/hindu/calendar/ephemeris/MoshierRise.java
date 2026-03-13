@@ -6,8 +6,8 @@ package com.hindu.calendar.ephemeris;
  * Algorithm from Meeus, "Astronomical Algorithms", 2nd ed., Ch. 15.
  * Iterative method using hour angle computation.
  *
- * Configuration: disc center with atmospheric refraction
- *   h0 = Sinclair refraction at horizon (~-0.612 deg)
+ * Configuration: upper limb with atmospheric refraction
+ *   h0 = Sinclair refraction at horizon (~-0.612 deg) - solar semi-diameter (~-0.267 deg)
  *   Sidereal time = GAST (apparent, with equation of equinoxes)
  *
  * Precision: ~2 seconds (sufficient for Hindu calendar)
@@ -16,6 +16,10 @@ class MoshierRise {
 
     private static final double DEG2RAD = Math.PI / 180.0;
     private static final double RAD2DEG = 180.0 / Math.PI;
+
+    /** Solar semi-diameter for upper limb sunrise/sunset (arcminutes).
+     *  Mean value ~15.95'. Range: 15.75' (aphelion) to 16.29' (perihelion). */
+    private static final double SOLAR_SEMIDIAM_ARCMIN = 16.0;
 
     private final MoshierSun sun;
 
@@ -125,6 +129,7 @@ class MoshierRise {
         if (alt > 0)
             atpress = 1013.25 * Math.pow(1.0 - 0.0065 * alt / 288.0, 5.255);
         double h0 = -sinclairRefractionHorizon(atpress, 0.0);
+        h0 -= SOLAR_SEMIDIAM_ARCMIN / 60.0;  // solar semi-diameter: upper limb
         if (alt > 0)
             h0 -= 0.0353 * Math.sqrt(alt);
 

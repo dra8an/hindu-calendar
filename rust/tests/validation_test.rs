@@ -150,7 +150,7 @@ const REF_DATA: &[RefData] = &[
     RefData { y: 1908, m: 9, d: 14, tithi: 20, masa: 6, adhika: false, saka: 1830 },
     RefData { y: 1909, m: 9, d: 27, tithi: 13, masa: 6, adhika: false, saka: 1831 },
     RefData { y: 1910, m: 10, d: 16, tithi: 13, masa: 7, adhika: false, saka: 1832 },
-    RefData { y: 1911, m: 8, d: 26, tithi: 3, masa: 6, adhika: false, saka: 1833 },
+    RefData { y: 1911, m: 8, d: 26, tithi: 2, masa: 6, adhika: false, saka: 1833 },
     RefData { y: 1912, m: 9, d: 6, tithi: 25, masa: 5, adhika: false, saka: 1834 },
     RefData { y: 1913, m: 10, d: 2, tithi: 3, masa: 7, adhika: false, saka: 1835 },
     RefData { y: 1914, m: 10, d: 21, tithi: 3, masa: 8, adhika: false, saka: 1836 },

@@ -113,6 +113,6 @@ See [Docs/MASTER.md](Docs/MASTER.md) for a full index. Key files:
 - [Docs/VSOP87_IMPLEMENTATION.md](Docs/VSOP87_IMPLEMENTATION.md) — VSOP87 solar longitude pipeline, ayanamsa, precision analysis
 - [Docs/SOLAR_PLAN.md](Docs/SOLAR_PLAN.md) — solar calendar design document
 - [Docs/LOCATION.md](Docs/LOCATION.md) — multi-location support (Ujjain, NYC, LA validation)
-- [Docs/JAVA_PORT.md](Docs/JAVA_PORT.md) — Java 21 port (227 tests, Gradle build)
-- [Docs/RUST_PORT.md](Docs/RUST_PORT.md) — Rust port (275,396 assertions, Cargo build)
+- [Docs/JAVA_PORT.md](Docs/JAVA_PORT.md) — Java 21 port (239 tests, Gradle build)
+- [Docs/RUST_PORT.md](Docs/RUST_PORT.md) — Rust port (12 tests, Cargo build)
 - [CHANGELOG.md](CHANGELOG.md) — version history

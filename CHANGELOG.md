@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.12.0 — 2026-03-13
+
+### Added — Java Port Updates
+
+- **Upper limb sunrise/sunset**: Ported the Phase 18 upper limb fix to Java's `MoshierRise.java`. Added solar semi-diameter (16 arcmin) to h₀, matching the C Moshier implementation. This is the root cause fix — the previous disc-center sunrise was ~70s late, causing 45 lunisolar tithi mismatches and 60 Tamil solar calendar failures
+- **`LunisolarScheme` enum** (`model/LunisolarScheme.java`): New enum with `AMANTA` and `PURNIMANTA` values
+- **`fullMoonNear()`** in `Masa.java`: 9-point inverse Lagrange interpolation targeting 180° lunar phase
+- **`lunisolarMonthStart()` / `lunisolarMonthLength()`** in `Masa.java`: Amanta and Purnimanta month boundary APIs with HashMap cache
+- **`solarMonthStart()` / `solarMonthLength()`** in `Solar.java`: Forward sankranti pipeline for solar month boundaries
+- **Bengali per-rashi tuning** in `Solar.java`: `bengaliTunedCrit()`, `bengaliDayEdgeOffset()`, `bengaliRashiCorrection()`, `bengaliTithiPushNext()` — matches C's per-rashi tuning for 100% Bengali solar calendar accuracy
+- **Odia Amli era**: Changed from Saka (offset 78/79) to Amli (offset 592/593) with `yearStartRashi=6` (Kanya) in `SolarCalendarType.java`
+- **Odia critical time**: Changed from fixed IST to local time: `(22.2 - utcOffset) / 24.0`
+- **Tamil ayanamsa buffer**: 8.0 → 9.5 min (accompanies the upper limb fix)
+- 14 new Amanta month start test cases, 12 Amanta month length checks, 12 Purnimanta month start checks (with offset and tithi validation), 12 Purnimanta month length checks
+- Java test count: 239 tests, 0 failures (up from 227)
+
+### Added — Rust Port Updates
+
+- **Upper limb sunrise/sunset**: Ported the Phase 18 upper limb fix to Rust's `rise.rs`. Added `SOLAR_SEMIDIAM_ARCMIN` constant and h₀ correction
+- **`LunisolarScheme` enum** in `model.rs`: `Amanta` and `Purnimanta` variants
+- **`full_moon_near()`** in `core/masa.rs`: 9-point Lagrange targeting 180°
+- **`lunisolar_month_start()` / `lunisolar_month_length()`** in `core/masa.rs`: Amanta + Purnimanta support
+- **`solar_month_start()` / `solar_month_length()`** in `core/solar.rs`: Forward sankranti pipeline
+- **Bengali per-rashi tuning** in `core/solar.rs`: Full per-rashi tuning matching C
+- **Odia Amli era**: `ODIA_CONFIG` updated with `gy_offset_on: 592`, `gy_offset_before: 593`, `era_name: "Amli"`, `year_start_rashi: 6`
+- **Odia critical time**: Local time formula matching C
+- **Tamil ayanamsa buffer**: 9.5 min (with upper limb fix)
+- 6 new validation tests: Amanta starts/lengths, Purnimanta starts/lengths, Odia Amli era, solar month start/length
+- Rust test count: 12 tests, 0 failures (up from 9)
+
+### Changed
+
+- **Java `newMoonBefore` / `newMoonAfter`**: Changed from 17-point (0.25 spacing) to 9-point (0.5 spacing) Lagrange interpolation, matching C Phase 21 optimization
+- **Java/Rust sunrise/sunset**: Changed from disc center to upper limb (h₀ includes solar semi-diameter). This matches the C Phase 18 change and eliminates all regression test mismatches
+- **DrikPanchangValidationTest**: Updated 1911-08-26 tithi from 3 → 2 (boundary shifted by upper limb change, verified against C and drikpanchang.com)
+- **Rust validation_test**: Same 1911-08-26 update
+
+### Fixed
+
+- **Java FullRegressionTest**: 45 lunisolar tithi mismatches → 0 (root cause: disc center vs upper limb sunrise)
+- **Java FullRegressionTest**: 60 Tamil solar calendar mismatches → 0 (root cause: same — disc center sunset made 9.5 min buffer wrong)
+- **Rust full_regression_test**: Same fixes — lunisolar and Tamil solar now 0 failures
+
+### Verification
+
+- Java: 239/239 tests pass, including full 55,152-day lunisolar regression (0 failures) and all 4 solar calendar regressions (0 failures each)
+- Rust: 12/12 tests pass, including full 55,152-day lunisolar regression (0 failures) and all 4 solar calendar regressions (0 failures each)
+- All three implementations (C, Java, Rust) now produce identical output for all tested dates
+
 ## 0.11.0 — 2026-03-11
 
 ### Added

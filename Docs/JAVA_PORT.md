@@ -1,6 +1,6 @@
 # Java 21 Port of Hindu Calendar
 
-Complete port of the Hindu calendar C project to Java. Moshier-only backend (no Swiss Ephemeris). Produces identical output to the C implementation across all 186 validated dates and full month views.
+Complete port of the Hindu calendar C project to Java. Moshier-only backend (no Swiss Ephemeris). Produces identical output to the C implementation across all 55,152 lunisolar days (1900-2050) and all 4 solar calendar regressions — 0 failures. Includes upper limb sunrise, Odia Amli era, Bengali per-rashi tuning, Purnimanta scheme, and lunisolar/solar month start/length APIs.
 
 ## Quick Start
 
@@ -10,7 +10,7 @@ cd java
 # Build
 ./gradlew build
 
-# Run tests (227 tests)
+# Run tests (239 tests)
 ./gradlew test
 
 # Single day
@@ -32,16 +32,16 @@ java/
   gradlew / gradlew.bat      # Gradle 8.10 wrapper
   src/
     main/java/com/hindu/calendar/
-      model/                  # Records + enums (9 files, 185 lines)
-      ephemeris/              # Moshier library (6 files, 1,786 lines)
-      core/                   # Calendar logic (5 files, 608 lines)
+      model/                  # Records + enums (10 files, ~200 lines) — includes LunisolarScheme
+      ephemeris/              # Moshier library (6 files, ~1,800 lines) — upper limb sunrise
+      core/                   # Calendar logic (5 files, ~850 lines) — Purnimanta, month APIs
       cli/                    # CLI entry point (1 file, 139 lines)
     test/java/com/hindu/calendar/
       ephemeris/              # EphemerisTest (142 lines)
-      core/                   # TithiTest, MasaTest, SolarTest (363 lines)
-      validation/             # DrikPanchangValidationTest (245 lines)
+      core/                   # TithiTest, MasaTest, SolarTest (~500 lines) — month API tests
+      validation/             # DrikPanchangValidationTest, FullRegressionTest (~440 lines)
 
-Total: 2,718 production lines, 750 test lines
+Total: ~3,000 production lines, ~900 test lines
 ```
 
 ## Class Mapping (C to Java)
@@ -57,8 +57,9 @@ Total: 2,718 production lines, 750 test lines
 | `MasaInfo` (record) | `types.h` MasaInfo struct | |
 | `HinduDate` (record) | `types.h` HinduDate struct | |
 | `PanchangDay` (record) | `types.h` PanchangDay struct | |
-| `SolarCalendarType` (enum) | `types.h` + `solar.c` configs | firstRashi, offsets, eraName, months[] |
+| `SolarCalendarType` (enum) | `types.h` + `solar.c` configs | firstRashi, yearStartRashi, offsets, eraName, months[] |
 | `SolarDate` (record) | `types.h` SolarDate struct | |
+| `LunisolarScheme` (enum) | `types.h` LunisolarScheme | AMANTA, PURNIMANTA |
 
 ### ephemeris/ — Moshier Ephemeris
 
@@ -68,7 +69,7 @@ Total: 2,718 production lines, 750 test lines
 | `MoshierSun` (pkg-private) | `moshier_sun.c` (726) | 668 |
 | `MoshierMoon` (pkg-private) | `moshier_moon.c` (760) | 687 |
 | `MoshierAyanamsa` (pkg-private) | `moshier_ayanamsa.c` (147) | 120 |
-| `MoshierRise` (pkg-private) | `moshier_rise.c` (176) | 150 |
+| `MoshierRise` (pkg-private) | `moshier_rise.c` (176) | 155 | Upper limb (solar semi-diameter) |
 | `Ephemeris` (**public** facade) | `astro.c` + `date_utils.c` | 84 |
 
 `Ephemeris` public API:
@@ -82,9 +83,9 @@ Total: 2,718 production lines, 750 test lines
 |------|----------|-------|
 | `DateUtils` | `date_utils.c` (partial) | 33 |
 | `Tithi` | `tithi.c` (96) | 85 |
-| `Masa` | `masa.c` (150) | 122 |
+| `Masa` | `masa.c` (300+) | ~290 | fullMoonNear, lunisolarMonthStart/Length, cache |
 | `Panchang` | `panchang.c` (164) | 154 |
-| `Solar` | `solar.c` (448) | 214 |
+| `Solar` | `solar.c` (448) | ~325 | Bengali tuning, solarMonthStart/Length, yearStartRashi |
 
 ### cli/
 
@@ -161,18 +162,21 @@ NOT thread-safe, matching the C implementation. Moshier pipeline uses mutable in
 
 ## Test Suite
 
-**227 tests, 0 failures.**
+**239 tests, 0 failures.**
 
 | Test Class | Tests | What It Covers |
 |------------|-------|----------------|
 | `EphemerisTest` | 7 | JD conversion, round-trips, day-of-week, solar/lunar longitude ranges, ayanamsa, Delhi sunrise/sunset |
 | `TithiTest` | 4 | 7 known dates with tithi + paksha, kshaya detection, adhika detection, lunar phase at Purnima |
-| `MasaTest` | 2 | 9 known dates with masa + adhika flag, Saka + Vikram year determination |
-| `SolarTest` | 14 | Sankranti precision, month names, era names, Tamil/Bengali/Odia/Malayalam dates, round-trips, 11 Odia boundary cases |
+| `MasaTest` | 6 | 9 known dates with masa + adhika flag, Saka + Vikram year, Amanta month starts (14 cases), Amanta month lengths (12 months + consistency), Purnimanta month starts (12 months), Purnimanta month lengths (12 months) |
+| `SolarTest` | 16 | Sankranti precision, month names, era names, Tamil/Bengali/Odia/Malayalam dates, round-trips, 11 Odia boundary cases, solar month start, solar month length |
 | `DrikPanchangValidationTest` | 186 | 186 dates x 4 assertions (tithi, masa, adhika, saka) = 744 checks. Ported verbatim from C `test_validation.c` |
-| **Total** | **227** | |
+| `FullRegressionTest` | 5 | 55,152-day lunisolar regression (0 failures) + 4 solar calendar regressions (~55,124 days each, 0 failures) |
+| **Total** | **239** | |
 
 The 186 validation dates span 1900-2050 and include the hardest edge cases: adhika months, adhika tithis (repeated), kshaya tithis (skipped), new year boundaries, and Amavasya/Purnima days.
+
+The full regression tests read C-generated reference CSVs (`validation/moshier/ref_1900_2050.csv` and `validation/moshier/solar/*.csv`). They verify that Java produces identical tithi, masa, adhika, saka, and solar date values for every date from 1900 to 2050.
 
 ## Cross-Validation
 

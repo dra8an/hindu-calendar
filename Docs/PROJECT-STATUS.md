@@ -18,8 +18,8 @@
 | 10 | VSOP87 solar longitude upgrade | Done | ±1″ solar, all solar tests 100%, 120→29 total failures |
 | 11 | DE404 moon pipeline + sunrise | Done | ±0.07″ lunar, ±2s sunrise, 29→2 total failures |
 | 12 | Dual-backend validation data | Done | SE + Moshier CSVs, JSON, web backend selector |
-| 13 | Java 21 port | Done | Moshier-only, 227 tests, identical output to C |
-| 14 | Rust port | Done | Moshier-only, 275,396 assertions, identical output to C |
+| 13 | Java 21 port | Done | Moshier-only, 239 tests, identical output to C |
+| 14 | Rust port | Done | Moshier-only, 12 tests, identical output to C |
 | 15 | Drikpanchang.com lunisolar scrape | Done | 55,136/55,152 tithi match (99.971%), 16 boundary edge cases |
 | 17 | Bengali per-rashi tuning | Done | 8 midnight boundary mismatches → 0, all 4 solar calendars 100% |
 | 18 | SE naming cleanup + upper limb sunrise | Done | 35→16 lunisolar mismatches (99.971%) |
@@ -146,14 +146,14 @@ The project has been ported to two additional languages, both targeting the Mosh
 | | C (original) | Java | Rust |
 |---|---|---|---|
 | Directory | `src/` + `lib/moshier/` | `java/` | `rust/` |
-| Production lines | ~3,500 | 2,718 | 2,784 |
-| Test lines | ~2,140 | 750 | 409 |
-| Test assertions | 53,143 | 744 | 275,396 |
+| Production lines | ~3,500 | ~3,000 | ~3,100 |
+| Test lines | ~2,140 | ~900 | ~600 |
+| Tests | 13 suites | 239 tests | 12 tests |
 | External deps | 0 | JUnit 5 (test only) | 0 |
 | Build tool | Make | Gradle | Cargo |
 | Documentation | — | [JAVA_PORT.md](JAVA_PORT.md) | [RUST_PORT.md](RUST_PORT.md) |
 
-All three implementations produce identical output for every tested date.
+All three implementations produce identical output for every tested date. Java and Rust include full 55,152-day lunisolar regression (0 failures) and all 4 solar calendar regressions (0 failures each). Both ports include upper limb sunrise, Odia Amli era, Bengali per-rashi tuning, Purnimanta scheme, and lunisolar/solar month start/length APIs.
 
 ## Source Statistics
 
@@ -161,5 +161,5 @@ All three implementations produce identical output for every tested date.
 - Moshier ephemeris library: 1,943 lines across 6 files (5 .c + 1 .h)
 - Test code: ~2,140 lines across 10 files
 - Vendored Swiss Ephemeris: ~51,500 lines (11 .c + 12 .h)
-- Java port: 2,718 production + 750 test lines
-- Rust port: 2,784 production + 409 test lines
+- Java port: ~3,000 production + ~900 test lines (239 tests, upper limb, Purnimanta, month APIs)
+- Rust port: ~3,100 production + ~600 test lines (12 tests, upper limb, Purnimanta, month APIs)

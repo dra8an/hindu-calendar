@@ -1,6 +1,6 @@
 # Rust Port of Hindu Calendar
 
-Complete port of the Hindu calendar C project to Rust. Moshier-only backend (no Swiss Ephemeris). Produces identical output to the C implementation across all 275,396 tested assertions — 55,152 lunisolar days, 7,244 solar month-starts, and 186 drikpanchang.com validation dates.
+Complete port of the Hindu calendar C project to Rust. Moshier-only backend (no Swiss Ephemeris). Produces identical output to the C implementation across all tested assertions — 55,152 lunisolar days (0 failures), all 4 solar calendar regressions (0 failures), and 186 drikpanchang.com validation dates. Includes upper limb sunrise, Odia Amli era, Bengali per-rashi tuning, Purnimanta scheme, and lunisolar/solar month start/length APIs.
 
 ## Quick Start
 
@@ -10,7 +10,7 @@ cd rust
 # Build
 cargo build --release
 
-# Run tests (9 tests, 275,396 assertions)
+# Run tests (12 tests)
 cargo test --release
 
 # Single day
@@ -30,27 +30,27 @@ rust/
   Cargo.toml                # Zero external runtime deps, [[bin]] section for CLI
   src/
     lib.rs                  # Library crate root — re-exports public API
-    model.rs                # Structs + enums (191 lines)
+    model.rs                # Structs + enums (~200 lines) — includes LunisolarScheme
     ephemeris/
       mod.rs                # Ephemeris pub struct (facade, 86 lines)
       julian_day.rs         # JD <-> Gregorian, day of week (79 lines)
       sun.rs                # VSOP87 solar longitude, nutation, delta-T (676 lines)
       moon.rs               # DE404 lunar longitude (662 lines)
       ayanamsa.rs           # IAU 1976 precession, Lahiri ayanamsa (104 lines)
-      rise.rs               # Sinclair refraction, GAST, iterative sunrise/sunset (136 lines)
+      rise.rs               # Sinclair refraction, GAST, upper limb sunrise/sunset (140 lines)
     core/
       mod.rs                # Re-exports (4 lines)
       tithi.rs              # Lunar phase, tithi at sunrise, boundary finding (88 lines)
-      masa.rs               # New moon (Lagrange), rashi, masa, year (115 lines)
+      masa.rs               # New moon, full moon (Lagrange), rashi, masa, year, month start/length (~275 lines)
       panchang.rs           # Gregorian->Hindu, month generation, formatting (163 lines)
-      solar.rs              # Sankranti, 4 regional critical-time rules (254 lines)
+      solar.rs              # Sankranti, 4 regional critical-time rules, Bengali tuning, month APIs (~420 lines)
     bin/
       hindu_calendar.rs     # CLI binary (223 lines)
   tests/
-    validation_test.rs      # 186 drikpanchang.com dates (273 lines)
+    validation_test.rs      # 186 drikpanchang.com dates + month API tests (~450 lines)
     full_regression_test.rs # 55,152 lunisolar + 4x~1,811 solar from CSV (136 lines)
 
-Total: 2,784 production lines, 409 test lines
+Total: ~3,100 production lines, ~600 test lines
 ```
 
 ## Module Mapping (C to Rust)
@@ -68,6 +68,7 @@ Total: 2,784 production lines, 409 test lines
 | `PanchangDay` struct | `types.h` PanchangDay | |
 | `SolarCalendarType` enum | `types.h` + `solar.c` configs | `#[derive(PartialEq)]` for match in critical_time |
 | `SolarDate` struct | `types.h` SolarDate | |
+| `LunisolarScheme` enum | `types.h` LunisolarScheme | Amanta, Purnimanta |
 
 ### ephemeris/ — Moshier Ephemeris
 
@@ -77,7 +78,7 @@ Total: 2,784 production lines, 409 test lines
 | `sun.rs` — `SunState` struct | `moshier_sun.c` (726) | 676 |
 | `moon.rs` — `MoonState` struct | `moshier_moon.c` (760) | 662 |
 | `ayanamsa.rs` (pub functions) | `moshier_ayanamsa.c` (147) | 104 |
-| `rise.rs` (pub functions) | `moshier_rise.c` (176) | 136 |
+| `rise.rs` (pub functions) | `moshier_rise.c` (176) | 140 | Upper limb (solar semi-diameter) |
 | `mod.rs` — `Ephemeris` pub struct | `astro.c` + `date_utils.c` | 86 |
 
 `Ephemeris` public API:
@@ -90,9 +91,9 @@ Total: 2,784 production lines, 409 test lines
 | Rust | C Source | Lines |
 |------|----------|-------|
 | `tithi.rs` | `tithi.c` (96) | 88 |
-| `masa.rs` | `masa.c` (150) | 115 |
+| `masa.rs` | `masa.c` (300+) | ~275 | full_moon_near, lunisolar_month_start/length |
 | `panchang.rs` | `panchang.c` (164) | 163 |
-| `solar.rs` | `solar.c` (448) | 254 |
+| `solar.rs` | `solar.c` (448) | ~420 | Bengali tuning, solar_month_start/length, year_start_rashi |
 
 ### CLI
 
@@ -189,19 +190,22 @@ All computation is stack-based f64 math. Data tables are `const` statics compile
 
 ## Test Suite
 
-**9 tests, 275,396 assertions, 0 failures.**
+**12 tests, 0 failures.**
 
-| Test | Assertions | What It Covers |
-|------|------------|----------------|
-| `test_jd_j2000` | 1 | J2000.0 epoch JD value |
-| `test_day_of_week` | 1 | Day-of-week for known date |
-| `test_roundtrip` | 1 | JD ↔ Gregorian round-trip |
-| `test_186_drikpanchang_dates` | 744 | 186 dates × 4 checks (tithi, masa, adhika, saka) |
-| `test_lunisolar_55152_days` | 220,608 | Full lunisolar regression: 55,152 days × 4 checks |
-| `test_tamil_solar_months` | ~1,811 | Tamil solar month-start verification from CSV |
-| `test_bengali_solar_months` | ~1,811 | Bengali solar month-start verification from CSV |
-| `test_odia_solar_months` | ~1,811 | Odia solar month-start verification from CSV |
-| `test_malayalam_solar_months` | ~1,811 | Malayalam solar month-start verification from CSV |
+| Test | What It Covers |
+|------|----------------|
+| `test_jd_j2000` | J2000.0 epoch JD value |
+| `test_day_of_week` | Day-of-week for known date |
+| `test_roundtrip` | JD ↔ Gregorian round-trip |
+| `test_186_drikpanchang_dates` | 186 dates × 4 checks (tithi, masa, adhika, saka) = 744 assertions |
+| `test_amanta_month_starts` | 14 Amanta month start spot checks (including adhika months) |
+| `test_amanta_month_lengths` | 12 Amanta month lengths + start+length=next consistency |
+| `test_purnimanta_month_starts` | 12 Purnimanta month starts (offset 13-17 days, Krishna paksha tithi) |
+| `test_purnimanta_month_lengths` | 12 Purnimanta month lengths + consistency |
+| `test_odia_amli_era` | Odia era name, specific date year checks (Amli) |
+| `test_solar_month_start_length` | Tamil/Bengali month 1 start + Tamil month 1 length |
+| `test_lunisolar_55152_days` | Full lunisolar regression: 55,152 days × 4 checks (0 failures) |
+| 4 solar regression tests | Tamil/Bengali/Odia/Malayalam month-start CSV verification (~1,811 each, 0 failures) |
 
 The 186 validation dates span 1900-2050 and include the hardest edge cases: adhika months, adhika tithis (repeated), kshaya tithis (skipped), new year boundaries, and Amavasya/Purnima days.
 
@@ -245,11 +249,13 @@ Full month output (31 lines for March 2025) matches line-for-line, including sun
 
 | | C (original) | Java | Rust |
 |---|---|---|---|
-| Production lines | ~3,500 | 2,718 | 2,784 |
-| Test lines | ~2,140 | 750 | 409 |
-| Test assertions | 53,143 | 744 | 275,396 |
+| Production lines | ~3,500 | ~3,000 | ~3,100 |
+| Test lines | ~2,140 | ~900 | ~600 |
+| Tests | 13 suites | 239 tests | 12 tests |
 | External deps | 0 | JUnit 5 (test only) | 0 |
 | Build tool | Make | Gradle | Cargo |
 | Backend | Moshier + SE | Moshier only | Moshier only |
+| Upper limb sunrise | Yes | Yes | Yes |
+| Purnimanta scheme | Yes | Yes | Yes |
 | Heap allocation | No | Yes (autoboxing) | No |
 | Thread-safe | No | No | No |
