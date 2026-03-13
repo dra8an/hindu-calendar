@@ -25,6 +25,7 @@
 | 18 | SE naming cleanup + upper limb sunrise | Done | 35→16 lunisolar mismatches (99.971%) |
 | 16 | Drikpanchang.com solar scrape | Done | Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100% |
 | 23 | Multi-location validation | Done | Ujjain, NYC, LA — 465 assertions, Odia IST→local fix |
+| 26 | Swift port | Done | Moshier-only, 40 tests, identical output to C |
 
 ## Test Results
 
@@ -141,19 +142,19 @@ The Moshier library (`lib/moshier/`) implements the same 8 SE functions used by 
 
 ## Language Ports
 
-The project has been ported to two additional languages, both targeting the Moshier-only backend:
+The project has been ported to three additional languages, all targeting the Moshier-only backend:
 
-| | C (original) | Java | Rust |
-|---|---|---|---|
-| Directory | `src/` + `lib/moshier/` | `java/` | `rust/` |
-| Production lines | ~3,500 | ~3,000 | ~3,100 |
-| Test lines | ~2,140 | ~900 | ~600 |
-| Tests | 13 suites | 239 tests | 12 tests |
-| External deps | 0 | JUnit 5 (test only) | 0 |
-| Build tool | Make | Gradle | Cargo |
-| Documentation | — | [JAVA_PORT.md](JAVA_PORT.md) | [RUST_PORT.md](RUST_PORT.md) |
+| | C (original) | Java | Rust | Swift |
+|---|---|---|---|---|
+| Directory | `src/` + `lib/moshier/` | `java/` | `rust/` | `swift/` |
+| Production lines | ~3,500 | ~3,000 | ~3,100 | ~2,875 |
+| Test lines | ~2,140 | ~900 | ~600 | ~797 |
+| Tests | 13 suites | 239 tests | 12 tests | 40 tests |
+| External deps | 0 | JUnit 5 (test only) | 0 | 0 |
+| Build tool | Make | Gradle | Cargo | SPM |
+| Documentation | — | [JAVA_PORT.md](JAVA_PORT.md) | [RUST_PORT.md](RUST_PORT.md) | [SWIFT_PORT.md](SWIFT_PORT.md) |
 
-All three implementations produce identical output for every tested date. Java and Rust include full 55,152-day lunisolar regression (0 failures) and all 4 solar calendar regressions (0 failures each). Both ports include upper limb sunrise, Odia Amli era, Bengali per-rashi tuning, Purnimanta scheme, and lunisolar/solar month start/length APIs.
+All four implementations produce identical output for every tested date. Java, Rust, and Swift include full lunisolar regression (0 failures) and all 4 solar calendar regressions (0 failures each). All ports include upper limb sunrise, Odia Amli era, Bengali per-rashi tuning, Purnimanta scheme, and lunisolar/solar month start/length APIs.
 
 ## Source Statistics
 
@@ -163,3 +164,4 @@ All three implementations produce identical output for every tested date. Java a
 - Vendored Swiss Ephemeris: ~51,500 lines (11 .c + 12 .h)
 - Java port: ~3,000 production + ~900 test lines (239 tests, upper limb, Purnimanta, month APIs)
 - Rust port: ~3,100 production + ~600 test lines (12 tests, upper limb, Purnimanta, month APIs)
+- Swift port: ~2,875 production + ~797 test lines (40 tests, upper limb, Purnimanta, month APIs)

@@ -55,6 +55,7 @@ hindu-calendar/
 ├── ephe/                   # Swiss Ephemeris data files (optional)
 ├── java/                   # Java 21 port (Moshier-only, Gradle build)
 ├── rust/                   # Rust port (Moshier-only, Cargo build)
+├── swift/                  # Swift port (Moshier-only, SPM build)
 ├── Docs/                   # Documentation
 ├── build/                  # Build artifacts (gitignored)
 ├── Makefile
