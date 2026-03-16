@@ -148,8 +148,8 @@ The project has been ported to three additional languages, all targeting the Mos
 |---|---|---|---|---|
 | Directory | `src/` + `lib/moshier/` | `java/` | `rust/` | `swift/` |
 | Production lines | ~3,500 | ~3,000 | ~3,100 | ~2,875 |
-| Test lines | ~2,140 | ~900 | ~600 | ~797 |
-| Tests | 13 suites | 239 tests | 12 tests | 40 tests |
+| Test lines | ~2,140 | ~2,600 | ~1,930 | ~2,100 |
+| Tests | 13 suites | 257 tests | 27 tests | 62 tests |
 | External deps | 0 | JUnit 5 (test only) | 0 | 0 |
 | Build tool | Make | Gradle | Cargo | SPM |
 | Documentation | — | [JAVA_PORT.md](JAVA_PORT.md) | [RUST_PORT.md](RUST_PORT.md) | [SWIFT_PORT.md](SWIFT_PORT.md) |
@@ -162,6 +162,6 @@ All four implementations produce identical output for every tested date. Java, R
 - Moshier ephemeris library: 1,943 lines across 6 files (5 .c + 1 .h)
 - Test code: ~2,140 lines across 10 files
 - Vendored Swiss Ephemeris: ~51,500 lines (11 .c + 12 .h)
-- Java port: ~3,000 production + ~900 test lines (239 tests, upper limb, Purnimanta, month APIs)
-- Rust port: ~3,100 production + ~600 test lines (12 tests, upper limb, Purnimanta, month APIs)
-- Swift port: ~2,875 production + ~797 test lines (40 tests, upper limb, Purnimanta, month APIs)
+- Java port: ~3,000 production + ~2,600 test lines (257 tests, upper limb, Purnimanta, month APIs)
+- Rust port: ~3,100 production + ~1,930 test lines (27 tests, upper limb, Purnimanta, month APIs)
+- Swift port: ~2,875 production + ~2,100 test lines (62 tests, upper limb, Purnimanta, month APIs)

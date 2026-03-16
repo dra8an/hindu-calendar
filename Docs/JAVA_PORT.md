@@ -41,7 +41,7 @@ java/
       core/                   # TithiTest, MasaTest, SolarTest (~500 lines) — month API tests
       validation/             # DrikPanchangValidationTest, FullRegressionTest (~440 lines)
 
-Total: ~3,000 production lines, ~900 test lines
+Total: ~3,000 production lines, ~2,600 test lines
 ```
 
 ## Class Mapping (C to Java)
@@ -162,17 +162,23 @@ NOT thread-safe, matching the C implementation. Moshier pipeline uses mutable in
 
 ## Test Suite
 
-**239 tests, 0 failures.**
+**257 tests, 0 failures.**
 
 | Test Class | Tests | What It Covers |
 |------------|-------|----------------|
-| `EphemerisTest` | 7 | JD conversion, round-trips, day-of-week, solar/lunar longitude ranges, ayanamsa, Delhi sunrise/sunset |
+| `EphemerisTest` | 12 | JD conversion, round-trips, day-of-week, solar/lunar longitude ranges, ayanamsa, Delhi sunrise/sunset |
 | `TithiTest` | 4 | 7 known dates with tithi + paksha, kshaya detection, adhika detection, lunar phase at Purnima |
 | `MasaTest` | 6 | 9 known dates with masa + adhika flag, Saka + Vikram year, Amanta month starts (14 cases), Amanta month lengths (12 months + consistency), Purnimanta month starts (12 months), Purnimanta month lengths (12 months) |
-| `SolarTest` | 16 | Sankranti precision, month names, era names, Tamil/Bengali/Odia/Malayalam dates, round-trips, 11 Odia boundary cases, solar month start, solar month length |
-| `DrikPanchangValidationTest` | 186 | 186 dates x 4 assertions (tithi, masa, adhika, saka) = 744 checks. Ported verbatim from C `test_validation.c` |
-| `FullRegressionTest` | 5 | 55,152-day lunisolar regression (0 failures) + 4 solar calendar regressions (~55,124 days each, 0 failures) |
-| **Total** | **239** | |
+| `SolarTest` | 25 | Sankranti precision, month names, era names, Tamil/Bengali/Odia/Malayalam dates, round-trips, 11 Odia boundary cases, solar month start, solar month length |
+| `SolarValidationTest` | 8 | 109 drikpanchang.com verified solar dates across all 4 calendars |
+| `SolarEdgeTest` | 1 | 400 closest-to-critical-time sankrantis (100 per calendar), boundary edge cases |
+| `DrikPanchangValidationTest` | 186 | 186 dates x 4 assertions (tithi, masa, adhika, saka) = 744 checks |
+| `AdhikaKshayaTest` | 1 | 4,269 adhika/kshaya tithi edge-case days from CSV (1900-2050) |
+| `LunisolarMonthTest` | 6 | Amanta month starts, month lengths, roundtrip, CSV regression, Purnimanta |
+| `NycTest` | 2 | US Eastern DST rules + NYC-location dates verified against drikpanchang.com |
+| `VariousLocationsTest` | 1 | Multi-location CSV validation (Ujjain, NYC, LA) |
+| `FullRegressionTest` | 5 | 55,152-day lunisolar regression (0 failures) + 4 solar calendar regressions (0 failures) |
+| **Total** | **257** | |
 
 The 186 validation dates span 1900-2050 and include the hardest edge cases: adhika months, adhika tithis (repeated), kshaya tithis (skipped), new year boundaries, and Amavasya/Purnima days.
 

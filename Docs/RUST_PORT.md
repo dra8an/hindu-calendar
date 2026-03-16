@@ -50,7 +50,7 @@ rust/
     validation_test.rs      # 186 drikpanchang.com dates + month API tests (~450 lines)
     full_regression_test.rs # 55,152 lunisolar + 4x~1,811 solar from CSV (136 lines)
 
-Total: ~3,100 production lines, ~600 test lines
+Total: ~3,100 production lines, ~1,930 test lines
 ```
 
 ## Module Mapping (C to Rust)
@@ -190,7 +190,7 @@ All computation is stack-based f64 math. Data tables are `const` statics compile
 
 ## Test Suite
 
-**12 tests, 0 failures.**
+**27 tests, 0 failures.**
 
 | Test | What It Covers |
 |------|----------------|
@@ -204,6 +204,12 @@ All computation is stack-based f64 math. Data tables are `const` statics compile
 | `test_purnimanta_month_lengths` | 12 Purnimanta month lengths + consistency |
 | `test_odia_amli_era` | Odia era name, specific date year checks (Amli) |
 | `test_solar_month_start_length` | Tamil/Bengali month 1 start + Tamil month 1 length |
+| `test_solar_validation` | 109 drikpanchang.com verified solar dates across all 4 calendars |
+| `test_solar_edge` | 400 closest-to-critical-time sankrantis (100 per calendar), boundary edge cases |
+| `test_adhika_kshaya` | 4,269 adhika/kshaya tithi edge-case days from CSV (1900-2050) |
+| `test_lunisolar_months` | Amanta month starts, lengths, roundtrip, CSV regression, Purnimanta |
+| `test_nyc_dst` + `test_nyc_dates` | US Eastern DST rules + NYC-location dates verified against drikpanchang.com |
+| `test_various_locations` | Multi-location CSV validation (Ujjain, NYC, LA) |
 | `test_lunisolar_55152_days` | Full lunisolar regression: 55,152 days × 4 checks (0 failures) |
 | 4 solar regression tests | Tamil/Bengali/Odia/Malayalam month-start CSV verification (~1,811 each, 0 failures) |
 
@@ -250,8 +256,8 @@ Full month output (31 lines for March 2025) matches line-for-line, including sun
 | | C (original) | Java | Rust |
 |---|---|---|---|
 | Production lines | ~3,500 | ~3,000 | ~3,100 |
-| Test lines | ~2,140 | ~900 | ~600 |
-| Tests | 13 suites | 239 tests | 12 tests |
+| Test lines | ~2,140 | ~2,600 | ~1,930 |
+| Tests | 13 suites | 257 tests | 27 tests |
 | External deps | 0 | JUnit 5 (test only) | 0 |
 | Build tool | Make | Gradle | Cargo |
 | Backend | Moshier + SE | Moshier only | Moshier only |

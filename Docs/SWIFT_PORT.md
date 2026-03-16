@@ -62,10 +62,16 @@ swift/
       TithiTests.swift                   # Tithi calculation, kshaya, adhika (48 lines)
       MasaTests.swift                    # Masa, month start/length — Amanta + Purnimanta (114 lines)
       SolarTests.swift                   # Solar calendar, Odia Amli era, month APIs (134 lines)
+      SolarValidationTests.swift         # 109 drikpanchang.com solar dates (169 lines)
+      SolarEdgeTests.swift               # 400 boundary sankranti edge cases (440 lines)
       ValidationTests.swift              # 186 drikpanchang.com dates (226 lines)
+      AdhikaKshayaTests.swift            # 4,269 adhika/kshaya edge-case days (76 lines)
+      LunisolarMonthTests.swift          # Month starts, lengths, roundtrip, CSV regression (255 lines)
+      NycTests.swift                     # US Eastern DST + NYC validation (253 lines)
+      VariousLocationsTests.swift        # Multi-location validation (112 lines)
       FullRegressionTests.swift          # 1,104 lunisolar days + 4 solar CSVs (165 lines)
 
-Total: ~2,875 production lines, ~797 test lines
+Total: ~2,875 production lines, ~2,100 test lines
 ```
 
 ## Type Mapping (C to Swift)
@@ -197,7 +203,7 @@ Zero runtime or test dependencies. Uses only Swift standard library and Foundati
 
 ## Test Suite
 
-**40 tests, 0 failures.**
+**62 tests, 0 failures.**
 
 | Test Class | Tests | What It Covers |
 |------------|-------|----------------|
@@ -205,9 +211,15 @@ Zero runtime or test dependencies. Uses only Swift standard library and Foundati
 | `TithiTests` | 4 | 7 known dates with tithi + paksha, kshaya detection, adhika detection, lunar phase at Purnima |
 | `MasaTests` | 6 | 9 known dates with masa + adhika flag, Saka + Vikram year, Amanta month starts (14 cases), Amanta month lengths (12 months + consistency), Purnimanta month starts (12 months), Purnimanta month lengths (12 months) |
 | `SolarTests` | 10 | Sankranti precision, month names, era names, Tamil (10 cases), Bengali (9 cases), Odia (7 + 11 boundary cases), Malayalam (7 cases), solar month start, solar month length |
+| `SolarValidationTests` | 8 | 109 drikpanchang.com verified solar dates across all 4 calendars (Tamil, Bengali, Odia, Malayalam) |
+| `SolarEdgeTests` | 4 | 400 closest-to-critical-time sankrantis (100 per calendar), boundary edge cases |
 | `ValidationTests` | 3 | 186 dates × 4 assertions (tithi, masa, adhika, saka) = 744 checks. 54 spot-checked + 52 adhika tithi + 80 kshaya tithi |
+| `AdhikaKshayaTests` | 1 | 4,269 adhika/kshaya tithi edge-case days from CSV (1900-2050) |
+| `LunisolarMonthTests` | 6 | Amanta month starts (spot checks), month lengths, roundtrip, CSV regression (1,868 months), Purnimanta spot checks + lengths |
+| `NycTests` | 2 | US Eastern DST rules + 18 NYC-location dates verified against drikpanchang.com |
+| `VariousLocationsTests` | 1 | Multi-location CSV validation (Ujjain, NYC, LA — 465 assertions) |
 | `FullRegressionTests` | 5 | 1,104 sampled lunisolar days (every 50th from 55,152) × 4 checks + 4 solar calendar regressions (1,811 months each × 4 checks) |
-| **Total** | **40** | |
+| **Total** | **62** | |
 
 The 186 validation dates span 1900-2050 and include the hardest edge cases: adhika months, adhika tithis (repeated), kshaya tithis (skipped), new year boundaries, and Amavasya/Purnima days.
 
@@ -246,15 +258,15 @@ Odia Solar Date: Ashvina 1, 1433 (Amli)
 - **Dependencies**: Zero runtime dependencies. XCTest for testing only (built into Swift toolchain).
 - **Build system**: Swift Package Manager (SPM). No Xcode project file needed.
 - **No Swiss Ephemeris**: The Swift port is Moshier-only. There is no `USE_SWISSEPH` equivalent.
-- **Performance**: `swift test` runs all 40 tests in ~7.7 minutes (regression tests dominate at ~7 min; unit tests complete in ~24s).
+- **Performance**: `swift test` runs all 62 tests in ~19 minutes (regression and validation tests dominate; unit tests complete in ~24s).
 
 ## Comparison with Other Ports
 
 | | C (original) | Java | Rust | Swift |
 |---|---|---|---|---|
 | Production lines | ~3,500 | ~3,000 | ~3,100 | ~2,875 |
-| Test lines | ~2,140 | ~900 | ~600 | ~797 |
-| Tests | 13 suites | 239 tests | 12 tests | 40 tests |
+| Test lines | ~2,140 | ~2,600 | ~1,930 | ~2,100 |
+| Tests | 13 suites | 257 tests | 27 tests | 62 tests |
 | External deps | 0 | JUnit 5 (test only) | 0 | 0 |
 | Build tool | Make | Gradle | Cargo | SPM |
 | Backend | Moshier + SE | Moshier only | Moshier only | Moshier only |
