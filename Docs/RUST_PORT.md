@@ -10,7 +10,7 @@ cd rust
 # Build
 cargo build --release
 
-# Run tests (12 tests)
+# Run tests (27 tests)
 cargo test --release
 
 # Single day
@@ -255,9 +255,9 @@ Full month output (31 lines for March 2025) matches line-for-line, including sun
 
 | | C (original) | Java | Rust |
 |---|---|---|---|
-| Production lines | ~3,500 | ~3,000 | ~3,100 |
-| Test lines | ~2,140 | ~2,600 | ~1,930 |
-| Tests | 13 suites | 257 tests | 27 tests |
+| Production lines | ~4,900 | ~3,000 | ~3,100 |
+| Test lines | ~3,190 | ~2,600 | ~1,930 |
+| Tests | 15 suites | 257 tests | 27 tests |
 | External deps | 0 | JUnit 5 (test only) | 0 |
 | Build tool | Make | Gradle | Cargo |
 | Backend | Moshier + SE | Moshier only | Moshier only |

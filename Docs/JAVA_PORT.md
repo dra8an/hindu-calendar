@@ -10,7 +10,7 @@ cd java
 # Build
 ./gradlew build
 
-# Run tests (239 tests)
+# Run tests (257 tests)
 ./gradlew test
 
 # Single day

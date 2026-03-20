@@ -14,18 +14,18 @@
 | 6 | Validation web page | Done | Month-by-month visual comparison tool |
 | 7 | Reingold diff overlay | Done | HL diffs shown on web page (89.2% match) |
 | 8 | Hindu solar calendars | Done | Tamil, Bengali, Odia, Malayalam — all verified against drikpanchang.com |
-| 9 | Self-contained Moshier ephemeris | Done | 787-line replacement for 51K-line Swiss Ephemeris |
+| 9 | Self-contained Moshier ephemeris | Done | ~2,000-line replacement for 51K-line Swiss Ephemeris |
 | 10 | VSOP87 solar longitude upgrade | Done | ±1″ solar, all solar tests 100%, 120→29 total failures |
 | 11 | DE404 moon pipeline + sunrise | Done | ±0.07″ lunar, ±2s sunrise, 29→2 total failures |
 | 12 | Dual-backend validation data | Done | SE + Moshier CSVs, JSON, web backend selector |
-| 13 | Java 21 port | Done | Moshier-only, 239 tests, identical output to C |
-| 14 | Rust port | Done | Moshier-only, 12 tests, identical output to C |
+| 13 | Java 21 port | Done | Moshier-only, 257 tests, identical output to C |
+| 14 | Rust port | Done | Moshier-only, 27 tests, identical output to C |
 | 15 | Drikpanchang.com lunisolar scrape | Done | 55,136/55,152 tithi match (99.971%), 16 boundary edge cases |
 | 17 | Bengali per-rashi tuning | Done | 8 midnight boundary mismatches → 0, all 4 solar calendars 100% |
 | 18 | SE naming cleanup + upper limb sunrise | Done | 35→16 lunisolar mismatches (99.971%) |
 | 16 | Drikpanchang.com solar scrape | Done | Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100% |
 | 23 | Multi-location validation | Done | Ujjain, NYC, LA — 465 assertions, Odia IST→local fix |
-| 26 | Swift port | Done | Moshier-only, 40 tests, identical output to C |
+| 26 | Swift port | Done | Moshier-only, 62 tests, identical output to C |
 
 ## Test Results
 
@@ -147,9 +147,9 @@ The project has been ported to three additional languages, all targeting the Mos
 | | C (original) | Java | Rust | Swift |
 |---|---|---|---|---|
 | Directory | `src/` + `lib/moshier/` | `java/` | `rust/` | `swift/` |
-| Production lines | ~3,500 | ~3,000 | ~3,100 | ~2,875 |
-| Test lines | ~2,140 | ~2,600 | ~1,930 | ~2,100 |
-| Tests | 13 suites | 257 tests | 27 tests | 62 tests |
+| Production lines | ~4,900 | ~3,000 | ~3,100 | ~2,875 |
+| Test lines | ~3,190 | ~2,600 | ~1,930 | ~2,100 |
+| Tests | 15 suites | 257 tests | 27 tests | 62 tests |
 | External deps | 0 | JUnit 5 (test only) | 0 | 0 |
 | Build tool | Make | Gradle | Cargo | SPM |
 | Documentation | — | [JAVA_PORT.md](JAVA_PORT.md) | [RUST_PORT.md](RUST_PORT.md) | [SWIFT_PORT.md](SWIFT_PORT.md) |
@@ -158,9 +158,9 @@ All four implementations produce identical output for every tested date. Java, R
 
 ## Source Statistics
 
-- Application code: ~1,550 lines across 14 files (7 .c + 7 .h)
-- Moshier ephemeris library: 1,943 lines across 6 files (5 .c + 1 .h)
-- Test code: ~2,140 lines across 10 files
+- Application code: ~2,840 lines across 16 files (8 .c + 8 .h, includes dst module)
+- Moshier ephemeris library: ~2,070 lines across 6 files (5 .c + 1 .h)
+- Test code: ~3,190 lines across 15 files
 - Vendored Swiss Ephemeris: ~51,500 lines (11 .c + 12 .h)
 - Java port: ~3,000 production + ~2,600 test lines (257 tests, upper limb, Purnimanta, month APIs)
 - Rust port: ~3,100 production + ~1,930 test lines (27 tests, upper limb, Purnimanta, month APIs)

@@ -5,7 +5,7 @@
 | Component | Technology | Notes |
 |-----------|-----------|-------|
 | Language | C99 | Chosen for performance and Swiss Ephemeris native compatibility |
-| Ephemeris (default) | Self-contained Moshier library | 1,265 lines, VSOP87 solar + ELP-2000/82 lunar, no external files |
+| Ephemeris (default) | Self-contained Moshier library | ~2,070 lines, VSOP87 solar + DE404 lunar, no external files |
 | Ephemeris (optional) | Swiss Ephemeris | 51K lines, vendored C source, `make USE_SWISSEPH=1` to enable |
 | Ayanamsa | Lahiri | IAU 1976 3D equatorial precession |
 | Build | GNU Make | `make` (moshier) or `make USE_SWISSEPH=1` (SE) |
@@ -22,6 +22,7 @@ hindu-calendar/
 │   ├── tithi.h/.c          # Tithi (lunar day) calculation
 │   ├── masa.h/.c           # Month determination (lunisolar)
 │   ├── solar.h/.c          # Solar calendar (Tamil, Bengali, Odia, Malayalam, month_start/length)
+│   ├── dst.h/.c            # US Eastern DST rules (for NYC validation)
 │   ├── panchang.h/.c       # High-level panchang and display
 │   └── main.c              # CLI entry point
 ├── lib/moshier/            # Self-contained Moshier ephemeris (default backend)
@@ -32,7 +33,7 @@ hindu-calendar/
 │   ├── moshier_ayanamsa.c  # Lahiri ayanamsa (IAU 1976 precession)
 │   └── moshier_rise.c      # Iterative sunrise/sunset
 ├── lib/swisseph/           # Vendored Swiss Ephemeris C source (optional backend)
-├── tests/                  # Test suites
+├── tests/                  # Test suites (15 files, ~3,190 lines)
 │   ├── test_astro.c
 │   ├── test_tithi.c
 │   ├── test_masa.c
@@ -42,7 +43,12 @@ hindu-calendar/
 │   ├── test_solar_edge.c
 │   ├── test_validation.c
 │   ├── test_csv_regression.c
-│   └── test_adhika_kshaya.c
+│   ├── test_adhika_kshaya.c
+│   ├── test_lunisolar_month.c
+│   ├── test_various_locations.c
+│   ├── test_nyc.c
+│   ├── test_perf.c
+│   └── test_perf_random.c
 ├── tools/                  # Utility programs
 │   ├── generate_ref_data.c # Generate lunisolar reference CSV
 │   ├── gen_solar_ref.c     # Generate solar calendar CSVs
@@ -216,7 +222,7 @@ The Tamil and Malayalam buffers compensate for ~24 arcsecond difference between 
 
 The project supports two astronomical backends, selected at compile time via `#ifdef USE_SWISSEPH`. The application code (`src/astro.c`, `src/date_utils.c`) provides an abstraction layer so all other modules are backend-agnostic.
 
-### Default: Moshier Library (`lib/moshier/`, 1,265 lines)
+### Default: Moshier Library (`lib/moshier/`, ~2,070 lines)
 
 A self-contained ephemeris implementing the same 8 SE functions used by the project. No external data files needed.
 

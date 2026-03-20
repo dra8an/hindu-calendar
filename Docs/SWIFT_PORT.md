@@ -10,7 +10,7 @@ cd swift
 # Build
 swift build
 
-# Run tests (40 tests)
+# Run tests (62 tests)
 swift test
 
 # Single day
@@ -264,9 +264,9 @@ Odia Solar Date: Ashvina 1, 1433 (Amli)
 
 | | C (original) | Java | Rust | Swift |
 |---|---|---|---|---|
-| Production lines | ~3,500 | ~3,000 | ~3,100 | ~2,875 |
-| Test lines | ~2,140 | ~2,600 | ~1,930 | ~2,100 |
-| Tests | 13 suites | 257 tests | 27 tests | 62 tests |
+| Production lines | ~4,900 | ~3,000 | ~3,100 | ~2,875 |
+| Test lines | ~3,190 | ~2,600 | ~1,930 | ~2,100 |
+| Tests | 15 suites | 257 tests | 27 tests | 62 tests |
 | External deps | 0 | JUnit 5 (test only) | 0 | 0 |
 | Build tool | Make | Gradle | Cargo | SPM |
 | Backend | Moshier + SE | Moshier only | Moshier only | Moshier only |
