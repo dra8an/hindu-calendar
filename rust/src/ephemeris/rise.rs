@@ -116,10 +116,9 @@ fn rise_set(
         atpress = 1013.25 * (1.0 - 0.0065 * alt / 288.0).powf(5.255);
     }
     let mut h0 = -sinclair_refraction_horizon(atpress, 0.0);
-    h0 -= SOLAR_SEMIDIAM_ARCMIN / 60.0;  // solar semi-diameter: upper limb
-    if alt > 0.0 {
-        h0 -= 0.0353 * alt.sqrt();
-    }
+    h0 -= SOLAR_SEMIDIAM_ARCMIN / 60.0; // solar semi-diameter: upper limb
+    // Horizon dip not applied: inland cities on flat terrain have no
+    // ocean-visible horizon, so the dip formula is not appropriate.
 
     let (_, yr, mo, dy) = julian_day::revjul(jd_ut);
     let jd_0h = julian_day::julday(yr, mo, dy, 0.0);

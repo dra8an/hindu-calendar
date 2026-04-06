@@ -11,5 +11,5 @@ public struct Location {
         self.utcOffset = utcOffset
     }
 
-    public static let newDelhi = Location(latitude: 28.6139, longitude: 77.2090, altitude: 0.0, utcOffset: 5.5)
+    public static let newDelhi = Location(latitude: 28.6139, longitude: 77.2090, altitude: 216.0, utcOffset: 5.5)
 }

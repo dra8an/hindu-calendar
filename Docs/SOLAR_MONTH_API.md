@@ -160,7 +160,7 @@ utc_offset). Always use `DEFAULT_LOCATION` or initialize all 4:
 ```c
 /* Correct */
 Location loc = DEFAULT_LOCATION;
-Location loc = { 28.6139, 77.2090, 0.0, 5.5 };
+Location loc = { 28.6139, 77.2090, 216.0, 5.5 };  /* New Delhi, 216m ASL */
 
 /* WRONG — sets altitude=5.5, utc_offset=0.0 */
 Location loc = { 28.6139, 77.2090, 5.5 };

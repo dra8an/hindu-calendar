@@ -40,7 +40,7 @@ typedef struct {
 } Location;
 
 /* Default location: New Delhi (28.6139 N, 77.2090 E, IST = UTC+5:30) */
-#define DEFAULT_LOCATION { 28.6139, 77.2090, 0.0, 5.5 }
+#define DEFAULT_LOCATION { 28.6139, 77.2090, 216.0, 5.5 }
 
 /* ---------------------------------------------------------------------------
  * Paksha - Lunar fortnight

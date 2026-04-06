@@ -141,7 +141,7 @@ Meeus Ch. 15 iterative method with SE-matching refinements:
 
 **Midnight UT wrap-around**: Delhi sunrise in May/June falls near 0h UT. The iteration can converge to m values near 1.0 instead of 0.0. Handled by: `if (is_rise && m > 0.75) m -= 1.0`.
 
-Altitude adjustment for observer elevation: h₀ -= 0.0353 × √alt.
+**Elevation**: Atmospheric pressure is adjusted for observer altitude using the barometric formula, which slightly reduces refraction at higher elevations. Horizon dip is NOT applied — it assumes an ocean-visible horizon, which is inappropriate for inland locations like Delhi (216m ASL on flat terrain). See [ELEVATION.md](ELEVATION.md).
 
 ## Precision vs Swiss Ephemeris
 

@@ -130,8 +130,8 @@ class MoshierRise {
             atpress = 1013.25 * Math.pow(1.0 - 0.0065 * alt / 288.0, 5.255);
         double h0 = -sinclairRefractionHorizon(atpress, 0.0);
         h0 -= SOLAR_SEMIDIAM_ARCMIN / 60.0;  // solar semi-diameter: upper limb
-        if (alt > 0)
-            h0 -= 0.0353 * Math.sqrt(alt);
+        // Horizon dip not applied: inland cities on flat terrain have no
+        // ocean-visible horizon, so the dip formula is not appropriate.
 
         int[] ymd = MoshierJulianDay.revjul(jdUt);
         double jd0h = MoshierJulianDay.julday(ymd[0], ymd[1], ymd[2], 0.0);

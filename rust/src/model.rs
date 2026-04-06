@@ -12,7 +12,7 @@ impl Location {
     pub const NEW_DELHI: Location = Location {
         latitude: 28.6139,
         longitude: 77.2090,
-        altitude: 0.0,
+        altitude: 216.0,
         utc_offset: 5.5,
     };
 }

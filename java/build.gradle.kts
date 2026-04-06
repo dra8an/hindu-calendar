@@ -25,6 +25,10 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     jvmArgs("-Xmx512m")
+    testLogging {
+        events("passed", "failed", "skipped")
+        showStandardStreams = true
+    }
 }
 
 tasks.withType<JavaCompile> {

@@ -174,7 +174,7 @@ The Saka era began in 78 CE. Vikram Samvat began in 57 BCE. The Hindu new year s
 
 ### Sunrise Calculation
 
-Uses **upper limb** sunrise (top edge of the solar disc at the horizon, with atmospheric refraction). This matches drikpanchang.com's sunrise definition. The Moshier backend computes h₀ = −(Sinclair refraction) − (solar semi-diameter) ≈ −0.879°. The SE backend uses `swe_rise_trans()` without the `SE_BIT_DISC_CENTER` flag (upper limb is the default).
+Uses **upper limb** sunrise (top edge of the solar disc at the horizon, with atmospheric refraction). This matches drikpanchang.com's sunrise definition. The Moshier backend computes h₀ = −(Sinclair refraction) − (solar semi-diameter) ≈ −0.879°. Atmospheric pressure is adjusted for observer altitude (barometric formula), but horizon dip is not applied — see [ELEVATION.md](ELEVATION.md). The SE backend uses `swe_rise_trans()` without the `SE_BIT_DISC_CENTER` flag (upper limb is the default).
 
 The search starts from local midnight UT to find the next sunrise. The returned Julian Day is in UT. To display local time: add utc_offset/24, then add 0.5 to convert from the noon-based JD epoch to midnight-based.
 

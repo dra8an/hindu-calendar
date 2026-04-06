@@ -303,11 +303,16 @@ first appears above the horizon. This requires:
 
 - **Atmospheric refraction** at the horizon: the atmosphere bends light, making the
   Sun visible ~34' before it geometrically clears the horizon. We use the Sinclair
-  (1982) formula: ~0.612° at standard conditions.
+  (1982) formula: ~0.612° at standard conditions. Atmospheric pressure is adjusted
+  for observer elevation using the barometric formula.
 - **Solar semi-diameter**: the Sun's disc subtends ~32' (±0.5' seasonally). Upper
   limb = center + 16'.
 - **Total**: the Sun appears to rise when its geometric center is ~0.88° below
   the horizon.
+- **No horizon dip**: the dip-of-the-horizon formula (which adds ~0.52° for 216m)
+  is NOT applied. It models an observer elevated above surrounding terrain (e.g. a
+  cliff over the ocean). For inland cities on flat terrain, the visible horizon is
+  not depressed. See [ELEVATION.md](ELEVATION.md).
 
 ---
 

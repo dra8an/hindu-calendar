@@ -150,14 +150,16 @@ static double rise_set_for_date(double jd_0h, double lon, double lat, double h0,
 static double rise_set(double jd_ut, double lon, double lat, double alt, int is_rise)
 {
     /* Compute h0 using Sinclair refraction formula.
-     * Uses attemp=0°C and estimates atpress from observer altitude. */
+     * Uses attemp=0°C and estimates atpress from observer altitude.
+     * Note: horizon dip is NOT applied. The dip formula assumes the observer
+     * can see down to a sea-level horizon (e.g. on a cliff over the ocean).
+     * For inland locations like Delhi (216m ASL), surrounding terrain is at
+     * similar elevation, so the visible horizon is not depressed. */
     double atpress = 1013.25;
     if (alt > 0)
         atpress = 1013.25 * pow(1.0 - 0.0065 * alt / 288.0, 5.255);
     double h0 = -sinclair_refraction_horizon(atpress, 0.0);
     h0 -= SOLAR_SEMIDIAM_ARCMIN / 60.0;  /* solar semi-diameter: upper limb */
-    if (alt > 0)
-        h0 -= 0.0353 * sqrt(alt);  /* dip of horizon */
 
     /* Get 0h UT of the UT date containing jd_ut */
     int yr, mo, dy;

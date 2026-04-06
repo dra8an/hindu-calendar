@@ -8,15 +8,18 @@ tithi for each day against our computed reference.
 
 | Backend | Match | Mismatch | Rate |
 |---------|-------|----------|------|
-| **Moshier (upper limb)** | **55,136** | **16** | **99.971%** |
+| **Moshier (upper limb, 216m)** | **55,137** | **15** | **99.973%** |
+| Moshier (upper limb, 0m, historical) | 55,136 | 16 | 99.971% |
 | Moshier (disc center, historical) | 55,117 | 35 | 99.937% |
 | Swiss Ephemeris (disc center) | 55,115 | 37 | 99.933% |
 
 Our production code uses **upper limb** sunrise (top edge of the solar
 disc at the horizon, with Sinclair refraction + 16′ solar semi-diameter,
-h0 ≈ -0.879°). This matches drikpanchang.com's sunrise definition,
-confirmed by comparing scraped HH:MM sunrise times against our computed
-values — the systematic +60–75s offset disappeared after the switch.
+h0 ≈ -0.879°) at New Delhi's correct elevation of 216m ASL. Atmospheric
+pressure is adjusted for altitude (barometric formula), but horizon dip
+is not applied — see [ELEVATION.md](ELEVATION.md). This matches
+drikpanchang.com's sunrise definition, confirmed by comparing scraped
+HH:MM sunrise times against our computed values.
 
 ### Relationship to the 2 SE-specific mismatches
 
@@ -63,7 +66,7 @@ is tied to the server's `_DRIK_SESSION_ID` cookie, not the IP). With
 session rotation and 15-second delays, all 1,812 months were downloaded
 in ~4 sessions over several hours.
 
-## The 16 Upper-Limb Mismatches
+## The 15 Upper-Limb Mismatches
 
 ### Pattern
 
@@ -73,14 +76,14 @@ elongation crosses a 12° boundary within 0–1.8 minutes of sunrise.
 | Metric | Value |
 |--------|-------|
 | Total days compared | 55,152 |
-| Match | 55,136 (99.971%) |
-| Mismatch | 16 (0.029%) |
+| Match | 55,137 (99.973%) |
+| Mismatch | 15 (0.027%) |
 | Max margin to boundary | 1.8 minutes |
 | Min margin to boundary | 0.01 minutes |
 
 ### Direction of disagreement
 
-- **15 dates**: Drikpanchang assigns the *next* tithi; we assign the
+- **14 dates**: Drikpanchang assigns the *next* tithi; we assign the
   *previous*. The tithi boundary falls 0.0–1.8 minutes after our
   computed sunrise. Our code sees the old tithi at sunrise;
   drikpanchang sees the new one.
@@ -102,13 +105,13 @@ At these margins, any of the following could flip the result:
 
 ### Complete list
 
-All 16 dates with diagnostic data from `tools/mismatch16_diag.c`:
+All 15 dates (1919-10-13 was resolved by the elevation fix — see
+[ELEVATION.md](ELEVATION.md)):
 
 ```
 Date         Sunrise   Ours  DP  Diff  Margin (min)  Direction
 1929-11-26   06:51:xx   25   26   +1    0.8          after_start
 1930-10-31   06:21:xx    9   10   +1    1.1          after_start
-1936-12-29   07:14:xx   16   17   +1    0.4          after_start
 1982-03-07   06:40:xx   12   13   +1    1.3          after_start
 2001-01-19   07:16:xx   25   26   +1    0.6          after_start
 2007-08-15   05:54:xx    2    3   +1    0.5          after_start
@@ -124,7 +127,7 @@ Date         Sunrise   Ours  DP  Diff  Margin (min)  Direction
 2049-10-16   06:12:xx   20   21   +1    0.4          after_start
 ```
 
-These 16 mismatches are irreducible at the current precision. The tithi
+These 15 mismatches are irreducible at the current precision. The tithi
 boundary falls within 0.0–1.8 minutes of sunrise — well within the
 uncertainty of any ephemeris computation.
 
@@ -139,7 +142,9 @@ dates.
 
 Switching to upper limb (h0 ≈ -0.879°, adding solar semi-diameter of 16′)
 fixed 32 of 35 original mismatches but introduced 13 new ones — giving
-a net 16 mismatches (99.971%).
+a net 16 mismatches (99.971%). Later, correcting New Delhi's elevation
+from 0 to 216m (pressure-only, no horizon dip) resolved one more,
+bringing it to 15 mismatches (99.973%).
 
 ## Optimal h0 Search (Historical Analysis)
 
@@ -150,7 +155,7 @@ minimizes total mismatches across all 55,152 days.
 |---|---|---|---|
 | Disc center | -0.612° | 35 | 99.937% |
 | Optimal h0 | -0.817° | 8 | 99.985% |
-| **Upper limb (production)** | **-0.879°** | **16** | **99.971%** |
+| **Upper limb (production, 216m)** | **-0.879°** | **15** | **99.973%** |
 
 The optimal h0 = -0.817° corresponds to Sinclair refraction (0.612°)
 plus ~77% of the solar semi-diameter — no standard astronomical convention.
@@ -160,7 +165,7 @@ comparing scraped HH:MM sunrise times. The optimal h0 would achieve fewer
 mismatches but would be overfitting to drikpanchang's undocumented parameters.
 
 The analysis proves that no single constant h0 can fix all boundary
-cases — the constraints provably conflict. The 16 remaining mismatches
+cases — the constraints provably conflict. The 15 remaining mismatches
 at h0 = -0.879° are irreducible sub-minute boundary precision limits.
 
 Diagnostic tools: `tools/disc_edge_test.c`, `tools/disc_edge_full.c`,
@@ -235,9 +240,9 @@ Data in `scraper/data/solar/`. Comparison reports in
 
 ### Lunisolar
 
-The 99.971% match rate across 151 years (55,152 days) confirms that our
+The 99.973% match rate across 151 years (55,152 days) confirms that our
 lunisolar implementation is essentially identical to drikpanchang.com.
-The 16 disagreements are all at tithi boundaries within 1.8 minutes of
+The 15 disagreements are all at tithi boundaries within 1.8 minutes of
 sunrise — well within the uncertainty of any ephemeris computation. An
 optimal h0 search shows the theoretical minimum is 8 irreducible
 mismatches (99.985%), proving that no single refraction parameter can
@@ -256,7 +261,7 @@ Combined across lunisolar and solar calendars, we validated:
 
 | Calendar | Data points | Match rate |
 |----------|-------------|------------|
-| Lunisolar (tithi) | 55,152 days | 99.971% |
+| Lunisolar (tithi) | 55,152 days | 99.973% |
 | Tamil (months) | 1,811 months | 100.000% |
 | Bengali (months) | 1,811 months | 100.000% |
 | Odia (months) | 1,811 months | 100.000% |

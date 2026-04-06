@@ -20,16 +20,16 @@
 | 12 | Dual-backend validation data | Done | SE + Moshier CSVs, JSON, web backend selector |
 | 13 | Java 21 port | Done | Moshier-only, 257 tests, identical output to C |
 | 14 | Rust port | Done | Moshier-only, 27 tests, identical output to C |
-| 15 | Drikpanchang.com lunisolar scrape | Done | 55,136/55,152 tithi match (99.971%), 16 boundary edge cases |
+| 15 | Drikpanchang.com lunisolar scrape | Done | 55,137/55,152 tithi match (99.973%), 15 boundary edge cases |
 | 17 | Bengali per-rashi tuning | Done | 8 midnight boundary mismatches → 0, all 4 solar calendars 100% |
-| 18 | SE naming cleanup + upper limb sunrise | Done | 35→16 lunisolar mismatches (99.971%) |
+| 18 | SE naming cleanup + upper limb sunrise | Done | 35→15 lunisolar mismatches (99.973%) |
 | 16 | Drikpanchang.com solar scrape | Done | Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100% |
 | 23 | Multi-location validation | Done | Ujjain, NYC, LA — 465 assertions, Odia IST→local fix |
 | 26 | Swift port | Done | Moshier-only, 62 tests, identical output to C |
 
 ## Test Results
 
-**With Moshier backend** (default `make`): 59,497/59,497 assertions pass (100%). 55,136 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.971%); 16 sub-minute boundary edge cases remain.
+**With Moshier backend** (default `make`): 59,497/59,497 assertions pass (100%). 55,137 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.973%); 15 sub-minute boundary edge cases remain. Default location uses correct New Delhi elevation (216m ASL) with pressure-only correction (no horizon dip — see [ELEVATION.md](ELEVATION.md)).
 
 **With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 59,497/59,497 assertions pass (100%). SE differs from drikpanchang.com on 2 additional tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct.
 
