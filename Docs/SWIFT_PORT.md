@@ -10,8 +10,8 @@ cd swift
 # Build
 swift build
 
-# Run tests (62 tests)
-swift test
+# Run tests (62 tests) — use release mode for numerical code
+swift test -c release
 
 # Single day
 swift run hindu-calendar -- -y 2025 -m 1 -d 18
@@ -258,7 +258,7 @@ Odia Solar Date: Ashvina 1, 1433 (Amli)
 - **Dependencies**: Zero runtime dependencies. XCTest for testing only (built into Swift toolchain).
 - **Build system**: Swift Package Manager (SPM). No Xcode project file needed.
 - **No Swiss Ephemeris**: The Swift port is Moshier-only. There is no `USE_SWISSEPH` equivalent.
-- **Performance**: `swift test` runs all 62 tests in ~19 minutes (regression and validation tests dominate; unit tests complete in ~24s).
+- **Performance**: `swift test -c release` runs all 62 tests in ~18 seconds. Debug mode (`swift test`) takes ~21 minutes due to unoptimized numerical code (70x slower). Always use `-c release` for this project.
 
 ## Comparison with Other Ports
 

@@ -10,7 +10,7 @@
  * produces the same output. Tests every SAMPLE_STEP-th day for speed.
  * Set SAMPLE_STEP=1 to test all 55K days (slow, ~45 min).
  */
-#define SAMPLE_STEP 50  /* test ~1100 days out of 55K */
+#define SAMPLE_STEP 1  /* test all 55,152 days */
 
 static int tests_run = 0;
 static int tests_passed = 0;

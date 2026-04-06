@@ -9,8 +9,8 @@ final class FullRegressionTests: XCTestCase {
     static let solar = Solar(ephemeris: eph)
     static let loc = Location.newDelhi
 
-    /// Sample step for lunisolar CSV (50 = ~1,100 days out of 55K)
-    private static let sampleStep = 50
+    /// Test all 55,152 days (use -c release for speed)
+    private static let sampleStep = 1
 
     private static func findFile(_ name: String) -> String? {
         // Try relative to #filePath (Tests/HinduCalendarTests/)
@@ -84,7 +84,7 @@ final class FullRegressionTests: XCTestCase {
 
         print("Lunisolar CSV: \(sampled) days sampled, \(failures) assertion failures")
         XCTAssertEqual(failures, 0)
-        XCTAssertTrue(sampled > 1000, "Should sample >1000 days, got \(sampled)")
+        XCTAssertTrue(sampled > 55000, "Should have >55000 days, got \(sampled)")
     }
 
     // ===== Solar calendar CSV regression =====
