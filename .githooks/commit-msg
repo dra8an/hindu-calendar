@@ -1,0 +1,46 @@
+#!/bin/sh
+# commit-msg — reject AI attribution trailers in commit messages.
+#
+# HARD RULE: commit messages in this repo must never carry a Co-Authored-By
+# line naming Claude/Anthropic, an @anthropic.com address, a "Generated with
+# Claude Code" footer, or a robot emoji.
+#
+# This hook is the mechanical backstop for the rule stated in CLAUDE.md. It is
+# committed to the repo and activated via:
+#
+#     git config core.hooksPath .githooks
+#
+# (already set locally; re-run after a fresh clone)
+#
+# Deliberately narrow: it matches the specific signature forms, not any mention
+# of the words "Claude" or "Anthropic", so commits that legitimately discuss the
+# Claude API or Anthropic models are unaffected.
+
+msg_file="$1"
+found=""
+
+if grep -qiE '^[[:space:]]*Co-Authored-By:.*(claude|anthropic)' "$msg_file"; then
+    found="${found}  - Co-Authored-By line naming Claude/Anthropic\n"
+fi
+
+if grep -qiE '[a-z0-9._%+-]*@anthropic\.com' "$msg_file"; then
+    found="${found}  - an @anthropic.com email address\n"
+fi
+
+if grep -qiE 'generated with .{0,3}claude code' "$msg_file"; then
+    found="${found}  - a 'Generated with Claude Code' footer\n"
+fi
+
+if grep -q '🤖' "$msg_file"; then
+    found="${found}  - a robot emoji\n"
+fi
+
+if [ -n "$found" ]; then
+    printf '\nCOMMIT REJECTED: AI attribution found in the commit message.\n\n'
+    printf "$found"
+    printf '\nThis repo does not carry AI attribution in its history.\n'
+    printf 'Remove the offending line(s) and commit again.\n\n'
+    exit 1
+fi
+
+exit 0
