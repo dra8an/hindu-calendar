@@ -141,3 +141,21 @@ cc -O2 -Isrc -Ilib/swisseph tools/<tool>.c src/solar.c src/astro.c src/date_util
 # Python tools
 python3 tools/<tool>.py [args]
 ```
+
+## Suryasiddhanta Panjika Analysis
+
+These live under `validation/suryasiddhanta/` rather than `tools/`, alongside
+the data they consume and the Reingold generators they cross-check against.
+See [SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md) for the findings and
+`validation/suryasiddhanta/README.md` for build/usage.
+
+| Tool | Purpose |
+|------|---------|
+| `validation/suryasiddhanta/surya_siddhanta.py` | Surya Siddhanta engine — solar/lunar longitude, tithi, sankranti finding. Ported from Reingold `calendar.l` to floating point; matches it to 6e-9 degrees at ~175,000x the speed |
+| `validation/suryasiddhanta/fit_rule.py` | Fits the Bengali critical-time rule (crit + per-rashi day edge + tithi rule) against the scraped month starts |
+| `validation/suryasiddhanta/compare_flavors.py` | Characterises Bisuddhasiddhanta vs Suryasiddhanta divergence (26.32%, annual + secular signatures) |
+| `validation/suryasiddhanta/sunrise_tool.c` | Emits the project's real drik sunrise as JD for a list of dates, so the Python experiments never approximate sunrise |
+| `validation/reingold/generate_reingold_solar.lisp` | Emits Surya Siddhanta sankranti moments from `calendar.l`. Independent cross-check oracle only — ~25 s per sankranti |
+
+Input data is the committed scrape in `validation/drikpanchang/` (see its
+README), so these run without re-scraping drikpanchang.com.

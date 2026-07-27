@@ -29,11 +29,11 @@
 
 ## Test Results
 
-**With Moshier backend** (default `make`): 59,497/59,497 assertions pass (100%). 55,137 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.973%); 15 sub-minute boundary edge cases remain. Default location uses correct New Delhi elevation (216m ASL) with pressure-only correction (no horizon dip — see [ELEVATION.md](ELEVATION.md)).
+**With Moshier backend** (default `make`): 275,689/275,689 assertions pass (100%), in ~15 seconds. 55,137 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.973%); 15 sub-minute boundary edge cases remain. Default location uses correct New Delhi elevation (216m ASL) with pressure-only correction (no horizon dip — see [ELEVATION.md](ELEVATION.md)).
 
-**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 59,497/59,497 assertions pass (100%). SE differs from drikpanchang.com on 2 additional tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct.
+**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 275,689/275,689 assertions pass (100%). SE differs from drikpanchang.com on 2 additional tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct.
 
-59,497 assertions across 13 test suites:
+275,689 assertions across 13 test suites:
 
 | Suite | Assertions | What it tests |
 |-------|------------|---------------|
@@ -41,7 +41,7 @@
 | test_tithi | 18 | Tithi at known dates, kshaya/adhika detection, lunar phase |
 | test_masa | 24 | Month name, adhika months, solar rashi, Saka/Vikram years |
 | test_validation | 744 | **External validation**: 186 dates verified against drikpanchang.com x 4 checks |
-| test_csv_regression | 4,416 | **Regression**: 1,104 sampled days from generated CSV (1900-2050) x 4 checks |
+| test_csv_regression | 220,608 | **Regression**: all 55,152 days from generated CSV (1900-2050) x 4 checks |
 | test_adhika_kshaya | 17,076 | **Regression**: all 4,269 adhika/kshaya tithi edge-case days (1900-2050) x 4 checks |
 | test_solar | 383 | **Solar calendars**: dates across 4 regional variants + roundtrip + sankranti precision + month/era names + Odia/Malayalam boundary cases + month_start/month_length |
 | test_solar_validation | 327 | **External validation**: month-start dates verified against drikpanchang.com/prokerala.com for all 4 solar calendars |
@@ -49,6 +49,7 @@
 | test_lunisolar_month | 5,746 | Amanta month start spot checks + roundtrip (1,868 months, 1900-2050) + CSV regression (3,735) + Purnimanta spot checks (36) + lengths (13) |
 | test_solar_edge | 1,200 | **Edge cases**: 100 closest-to-critical-time sankrantis per calendar (400 total), 21 corrected from drikpanchang.com verification (Tamil/Malayalam), 23 Bengali entries updated for tithi-based rule |
 | test_various_locations | 465 | **External validation**: 5 calendars × 3 locations (Ujjain, NYC, LA) × 31 days (March 2026) verified against drikpanchang.com |
+| test_nyc | 111 | **External validation**: NYC tithi/masa with US Eastern DST offsets (`src/dst.c`) |
 
 ## Validated Against drikpanchang.com
 
@@ -133,8 +134,8 @@ The project supports two astronomical backends, selectable at compile time:
 
 | Backend | Build command | Lines | Precision (solar) | Precision (lunar) | Sunrise | Test pass rate |
 |---------|---------------|-------|--------------------|--------------------|---------|----------------|
-| **Moshier** (default) | `make` | 1,943 | ±1″ (VSOP87) | ±0.07″ (DE404) | ±2s | 100% (53,143/53,143) |
-| **Swiss Ephemeris** | `make USE_SWISSEPH=1` | 51,493 | ±0.001″ | ±0.003″ | ref | 100% (53,143/53,143)* |
+| **Moshier** (default) | `make` | 1,943 | ±1″ (VSOP87) | ±0.07″ (DE404) | ±2s | 100% (275,689/275,689) |
+| **Swiss Ephemeris** | `make USE_SWISSEPH=1` | 51,493 | ±0.001″ | ±0.003″ | ref | 100% (275,689/275,689)* |
 
 \* SE differs from drikpanchang.com on 2 tithi boundary dates where Moshier matches correctly.
 

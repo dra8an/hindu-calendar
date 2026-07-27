@@ -2,7 +2,7 @@
 
 **A language-agnostic guide to implementing Hindu lunisolar (panchang) and regional solar calendars using modern astronomical ephemerides.**
 
-This guide documents everything needed to reimplement the Hindu calendar system from scratch: astronomical background, step-by-step algorithms in pseudocode, critical time rules for four regional solar calendars, implementation pitfalls, and validation strategies. All algorithms have been verified against [drikpanchang.com](https://www.drikpanchang.com/) with 53,143 assertions across 150 years (1900–2050), achieving 100% match on all 55,152 lunisolar days.
+This guide documents everything needed to reimplement the Hindu calendar system from scratch: astronomical background, step-by-step algorithms in pseudocode, critical time rules for four regional solar calendars, implementation pitfalls, and validation strategies. All algorithms have been verified against [drikpanchang.com](https://www.drikpanchang.com/) with 275,689 assertions across 150 years (1900–2050), achieving a 99.973% match across all 55,152 lunisolar days (15 sub-minute tithi boundary cases remain) and 100% on all 7,244 solar month boundaries.
 
 ---
 
@@ -1437,16 +1437,16 @@ Once the algorithms are validated, generate a comprehensive reference dataset:
 - Write automated tests that recompute every date and compare against the CSV
 - If supporting multiple backends, generate and store separate reference CSVs for each backend to enable side-by-side comparison
 
-Our implementation has 53,143 assertions across 10 test suites, covering:
+Our implementation has 275,689 assertions across 13 test suites, covering:
 - 186 dates hand-verified against drikpanchang.com (lunisolar)
 - 351 solar calendar assertions (35 Odia boundary + 17 Malayalam boundary + more)
 - 327 solar validation assertions (month-start dates verified against drikpanchang.com for all 4 solar calendars)
 - 1,200 solar edge case assertions (100 closest-to-critical-time sankrantis per calendar, 21 corrected from drikpanchang.com verification)
-- 4,416 sampled lunisolar regression assertions + 17,076 adhika/kshaya tithi edge-case regression assertions
+- 220,608 lunisolar regression assertions (all 55,152 days × 4 checks) + 17,076 adhika/kshaya tithi edge-case regression assertions
 - 28,976 solar regression assertions (1,811 months × 4 calendars)
 - Full regression across the complete 1900–2050 date range
 
-Both the Swiss Ephemeris and self-contained Moshier backends pass all 53,143 assertions. The Moshier backend achieves 55,152/55,152 (100%) match against drikpanchang.com across the full lunisolar date range. The SE backend differs from drikpanchang.com on exactly 2 tithi boundary dates (1965-05-30, 2001-09-20) where the Moshier backend is correct.
+Both the Swiss Ephemeris and self-contained Moshier backends pass all 275,689 assertions. Against drikpanchang.com itself, the Moshier backend matches 55,137 of 55,152 days (99.973%) across the full lunisolar date range; the 15 remaining disagreements are tithi boundaries falling within 1.8 minutes of sunrise (see `Docs/DRIKPANCHANG_VALIDATION.md`). The SE backend differs on those same 15 dates plus 2 more (1965-05-30, 2001-09-20) where the Moshier backend is correct.
 
 ### 6.6 Known Limitations
 

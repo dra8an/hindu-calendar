@@ -59,12 +59,20 @@ using the standard Shukla 1–15 / Krishna 16–29 / Amavasya 30 mapping.
 
 ### Rate limiting
 
-Drikpanchang rate-limits after ~200–400 consecutive requests, returning
-CAPTCHA pages (~2 KB vs normal ~200 KB). The fetcher detects this by
-checking response size and rotates to a fresh HTTP session (the CAPTCHA
-is tied to the server's `_DRIK_SESSION_ID` cookie, not the IP). With
-session rotation and 15-second delays, all 1,812 months were downloaded
-in ~4 sessions over several hours.
+Drikpanchang rate-limits after ~200 consecutive requests **per IP address**,
+returning CAPTCHA pages (~2 KB vs normal ~200 KB). The fetcher detects this by
+response size and stops cleanly; resuming skips already-downloaded files.
+
+Clearing a block requires changing the outbound IP (VPN switch). Rotating the
+HTTP session does **not** help: a fresh `requests.Session()` gets a new
+`_DRIK_SESSION_ID` from the server and is still served a CAPTCHA.
+
+This corrects an earlier version of this document, which stated the CAPTCHA was
+tied to the `_DRIK_SESSION_ID` cookie rather than the IP. That was wrong. It was
+settled on 2026-07-27 during the Bengali Suryasiddhanta scrape, where four
+consecutive blocks each triggered at ~200 requests, each survived a session
+rotation, and each cleared only on a VPN switch. See `scraper/README.md` for
+the table. A full 1,812-page fetch therefore needs roughly 9 VPN switches.
 
 ## The 15 Upper-Limb Mismatches
 
@@ -130,6 +138,28 @@ Date         Sunrise   Ours  DP  Diff  Margin (min)  Direction
 These 15 mismatches are irreducible at the current precision. The tithi
 boundary falls within 0.0–1.8 minutes of sunrise — well within the
 uncertainty of any ephemeris computation.
+
+## Independent Confirmation of the Sunrise Convention
+
+The upper-limb conclusion was inferred indirectly, by noticing our disc-center
+sunrise ran +53–97 s later than the `HH:MM` values in scraped pages.
+Drikpanchang states it directly in its own default settings, returned as
+cookies on any request (verified 2026-07-27):
+
+```
+drik-sunrise-type         = edges       -> upper limb, not disc center
+drik-geo-elevation-status = disabled    -> no horizon dip (see ELEVATION.md)
+```
+
+Both match what we settled on empirically. The `edges` value confirms the
+Phase 18 switch that took mismatches from 35 to 15, and
+`geo-elevation-status=disabled` confirms the elevation decision documented in
+[ELEVATION.md](ELEVATION.md).
+
+Note this makes the **optimal h0 = -0.817°** result below firmly a case of
+overfitting: the physically-correct upper-limb value is what the reference
+actually uses, so the 8-mismatch configuration was tuning against
+drikpanchang's residual numerical noise, not toward its real convention.
 
 ## Historical: Disc Center to Upper Limb Switch
 

@@ -57,6 +57,31 @@ With altitude=0, the dip formula evaluates to `0.0353 × √0 = 0` — a no-op. 
 
 The pressure-only adjustment at 216m actually **improved** the match rate by one — the tiny refraction change nudged one boundary case (1919-10-13) to the correct side.
 
+## Independent Confirmation from Drikpanchang
+
+The no-dip conclusion above was reached empirically — applying dip blew the
+mismatch count from 16 to 111, so we removed it. Drikpanchang's own
+configuration independently agrees.
+
+A scrape request returns the site's default settings as cookies, and among
+them (verified 2026-07-27):
+
+```
+drik-geo-elevation-status = disabled
+drik-sunrise-type         = edges
+```
+
+`drik-geo-elevation-status=disabled` means drikpanchang does not apply a
+geometric elevation correction to the horizon by default — the same choice we
+made for the opposite-seeming reason (we kept altitude for pressure but dropped
+the dip term). `drik-sunrise-type=edges` separately confirms the upper-limb
+sunrise convention documented in
+[DRIKPANCHANG_VALIDATION.md](DRIKPANCHANG_VALIDATION.md).
+
+This does not change any code — it explains *why* the empirical result came out
+the way it did, and means the choice is a match to the reference implementation
+rather than a fitted parameter.
+
 ## When Dip SHOULD Be Applied
 
 The horizon dip is physically appropriate when the observer is genuinely elevated above the surrounding terrain:

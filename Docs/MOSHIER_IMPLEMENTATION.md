@@ -9,7 +9,7 @@ Self-contained astronomical ephemeris replacing Swiss Ephemeris (SE) for the Hin
 | Lines of code | 1,943 | 51,493 |
 | External files | None | Optional .se1 files |
 | Build time | ~0.5s | ~3s |
-| Test pass rate | 53,143 / 53,143 (100%) | 53,143 / 53,143 (100%) |
+| Test pass rate | 275,689 / 275,689 (100%) | 275,689 / 275,689 (100%) |
 | drikpanchang.com match | 1,071 / 1,071 (100%) | 1,071 / 1,071 (100%) |
 | Reduction factor | **26x fewer lines** | — |
 
@@ -159,7 +159,7 @@ All differences are well within the requirements for Hindu calendar calculation 
 
 ## Zero Test Failures
 
-All 53,143 assertions pass with the Moshier backend. The two dates that previously appeared as "failures" (1965-05-30 and 2001-09-20) were caused by `test_adhika_kshaya.c` being hardcoded to read the Swiss Ephemeris CSV even when testing with Moshier. Once fixed to select the backend-appropriate CSV, both dates pass — and are confirmed correct by drikpanchang.com (SE is wrong on those 2 dates, not Moshier).
+All 275,689 assertions pass with the Moshier backend. The two dates that previously appeared as "failures" (1965-05-30 and 2001-09-20) were caused by `test_adhika_kshaya.c` being hardcoded to read the Swiss Ephemeris CSV even when testing with Moshier. Once fixed to select the backend-appropriate CSV, both dates pass — and are confirmed correct by drikpanchang.com (SE is wrong on those 2 dates, not Moshier).
 
 ## What We Tried and Why
 

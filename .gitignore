@@ -15,3 +15,9 @@ swift/.build/
 
 # Scraper data (HTML pages + parsed CSVs + reports, ~1.8 GB total)
 scraper/data/
+
+# Swiss Ephemeris data files (~37 MB, only needed for USE_SWISSEPH=1 builds)
+ephe/
+
+# Built helper binary (see validation/suryasiddhanta/README.md)
+validation/suryasiddhanta/sunrise_tool

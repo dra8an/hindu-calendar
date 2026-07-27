@@ -173,11 +173,12 @@ output for every tested date.
 
 ---
 
-Final state: Three implementations (C, Java, Rust) producing identical output.
-C: 59,497 test assertions across 13 suites. Java: 239 tests (including
-55,152-day full regression, 0 failures). Rust: 12 tests (including 55,152-day
-full regression, 0 failures). All include upper limb sunrise, Odia Amli era,
+Final state: Four implementations (C, Java, Rust, Swift) producing identical
+output. C: 275,689 test assertions across 13 suites. Java: 257 tests (including
+55,152-day full regression, 0 failures). Rust: 27 tests (including 55,152-day
+full regression, 0 failures). Swift: 62 tests (including 55,152-day full
+regression, 0 failures). All include upper limb sunrise, Odia Amli era,
 Bengali per-rashi tuning, Purnimanta scheme, and lunisolar/solar month APIs.
-55,152 dates verified against drikpanchang.com (100% match), 1,943 lines of
-self-contained ephemeris code, 4 regional solar calendars, comprehensive
-documentation.
+55,152 dates compared against drikpanchang.com (99.973% match; 15 sub-minute
+tithi boundary cases remain), 1,943 lines of self-contained ephemeris code,
+4 regional solar calendars, comprehensive documentation.

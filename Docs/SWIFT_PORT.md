@@ -1,6 +1,6 @@
 # Swift Port of Hindu Calendar
 
-Complete port of the Hindu calendar C project to Swift. Moshier-only backend (no Swiss Ephemeris). Produces identical output to the C implementation across all tested assertions — 55,152 lunisolar days (1,104 sampled, 0 failures), all 4 solar calendar regressions (7,244 months, 0 failures), and 186 drikpanchang.com validation dates. Includes upper limb sunrise, Odia Amli era, Bengali per-rashi tuning, Purnimanta scheme, and lunisolar/solar month start/length APIs.
+Complete port of the Hindu calendar C project to Swift. Moshier-only backend (no Swiss Ephemeris). Produces identical output to the C implementation across all tested assertions — all 55,152 lunisolar days (0 failures), all 4 solar calendar regressions (7,244 months, 0 failures), and 186 drikpanchang.com validation dates. Includes upper limb sunrise, Odia Amli era, Bengali per-rashi tuning, Purnimanta scheme, and lunisolar/solar month start/length APIs.
 
 ## Quick Start
 
@@ -69,7 +69,7 @@ swift/
       LunisolarMonthTests.swift          # Month starts, lengths, roundtrip, CSV regression (255 lines)
       NycTests.swift                     # US Eastern DST + NYC validation (253 lines)
       VariousLocationsTests.swift        # Multi-location validation (112 lines)
-      FullRegressionTests.swift          # 1,104 lunisolar days + 4 solar CSVs (165 lines)
+      FullRegressionTests.swift          # 55,152 lunisolar days + 4 solar CSVs (165 lines)
 
 Total: ~2,875 production lines, ~2,100 test lines
 ```
@@ -218,7 +218,7 @@ Zero runtime or test dependencies. Uses only Swift standard library and Foundati
 | `LunisolarMonthTests` | 6 | Amanta month starts (spot checks), month lengths, roundtrip, CSV regression (1,868 months), Purnimanta spot checks + lengths |
 | `NycTests` | 2 | US Eastern DST rules + 18 NYC-location dates verified against drikpanchang.com |
 | `VariousLocationsTests` | 1 | Multi-location CSV validation (Ujjain, NYC, LA — 465 assertions) |
-| `FullRegressionTests` | 5 | 1,104 sampled lunisolar days (every 50th from 55,152) × 4 checks + 4 solar calendar regressions (1,811 months each × 4 checks) |
+| `FullRegressionTests` | 5 | All 55,152 lunisolar days (`sampleStep = 1`) × 4 checks + 4 solar calendar regressions (1,811 months each × 4 checks) |
 | **Total** | **62** | |
 
 The 186 validation dates span 1900-2050 and include the hardest edge cases: adhika months, adhika tithis (repeated), kshaya tithis (skipped), new year boundaries, and Amavasya/Purnima days.

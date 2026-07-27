@@ -17,6 +17,7 @@ import os
 import time
 
 from scraper.common import (
+    MAX_REQUESTS_PER_RUN,
     fetch_pages,
     fetch_url,
     install_signal_handlers,
@@ -33,7 +34,8 @@ from scraper.lunisolar.config import (
 )
 
 
-def fetch_month_pages(start_year, end_year, delay, location="delhi"):
+def fetch_month_pages(start_year, end_year, delay, location="delhi",
+                      max_requests=MAX_REQUESTS_PER_RUN):
     """Download month panchang pages for the given year range."""
     paths = get_paths(location)
     raw_dir = paths["raw_dir"]
@@ -47,7 +49,8 @@ def fetch_month_pages(start_year, end_year, delay, location="delhi"):
         year, month = key
         return f"{BASE_URL_MONTH}?date=01/{month:02d}/{year:04d}"
 
-    fetch_pages(targets, raw_dir, url_fn, delay, label="month", location=location)
+    fetch_pages(targets, raw_dir, url_fn, delay, label="month", location=location,
+                max_requests=max_requests)
 
 
 def fetch_day_pages(dates, delay, location="delhi"):
@@ -102,15 +105,20 @@ def main():
     parser.add_argument("--start-year", type=int, default=DEFAULT_START_YEAR)
     parser.add_argument("--end-year", type=int, default=DEFAULT_END_YEAR)
     parser.add_argument("--delay", type=float, default=DEFAULT_DELAY,
-                        help="Seconds between requests (default: 5)")
+                        help=f"Seconds between requests (default: {DEFAULT_DELAY})")
     parser.add_argument("--fetch-days", nargs="*", metavar="YYYY-MM-DD",
                         help="Fetch specific day pages instead of month pages")
+    parser.add_argument("--max-requests", type=int, default=MAX_REQUESTS_PER_RUN,
+                        help=f"Stop cleanly after N requests (default: "
+                             f"{MAX_REQUESTS_PER_RUN}; site blocks per-IP at 200). "
+                             "0 disables the cap.")
     args = parser.parse_args()
 
     if args.fetch_days:
         fetch_day_pages(args.fetch_days, args.delay, args.location)
     else:
-        fetch_month_pages(args.start_year, args.end_year, args.delay, args.location)
+        fetch_month_pages(args.start_year, args.end_year, args.delay, args.location,
+                          args.max_requests)
 
 
 if __name__ == "__main__":

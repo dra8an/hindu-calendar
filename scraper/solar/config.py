@@ -22,6 +22,42 @@ DEFAULT_END_YEAR = 2050
 # --- Supported calendars ---
 CALENDARS = ["tamil", "bengali", "odia", "malayalam"]
 
+# --- Panchang arithmetic (the `drik-arithmetic` cookie) ---
+#
+# Drikpanchang can render a calendar under two different schools, toggled by
+# the "Bisuddhasiddhanta / Suryasiddhanta Panjika" toolbar button.  This is not
+# cosmetic: the computed month-start dates differ (e.g. Bengali Srabon 1433
+# starts 2026-07-17 under modern and 2026-07-18 under suryasiddhanta).
+#
+#   modern         -> Bisuddhasiddhanta panjika (drik / modern astronomy).
+#                     The site default, and what our C implementation targets.
+#   suryasiddhanta -> Suryasiddhanta panjika (traditional).
+ARITHMETIC_MODERN = "modern"
+ARITHMETIC_SURYA = "suryasiddhanta"
+ARITHMETICS = [ARITHMETIC_MODERN, ARITHMETIC_SURYA]
+DEFAULT_ARITHMETIC = ARITHMETIC_MODERN
+
+# Token that must appear in the page's <h1> ("... based on <Token> for ...").
+# Used to prove a downloaded page really is the school we asked for, so the
+# two flavors can never silently mix in one directory.  Only calendars that
+# actually render this title are listed; others skip the check.
+PROVENANCE_TOKENS = {
+    ("bengali", ARITHMETIC_MODERN): "Bisuddhasiddhanta",
+    ("bengali", ARITHMETIC_SURYA): "Suryasiddhanta",
+}
+
+
+def provenance_token(calendar_type, arithmetic):
+    """Expected <h1> school token, or None if this calendar has no title."""
+    return PROVENANCE_TOKENS.get((calendar_type, arithmetic))
+
+
+def _suffix(arithmetic):
+    """Path suffix for a non-default arithmetic ('' for the default)."""
+    if arithmetic is None or arithmetic == DEFAULT_ARITHMETIC:
+        return ""
+    return f"_{arithmetic}"
+
 # --- URLs ---
 # Each calendar's month panchang page on drikpanchang.com
 SOLAR_URLS = {
@@ -232,21 +268,31 @@ def normalize_month_name(drik_name, calendar_type):
     return None
 
 
-def raw_dir(calendar_type):
-    """Return raw HTML directory for a given calendar."""
-    return os.path.join(RAW_DIR, calendar_type)
+def raw_dir(calendar_type, arithmetic=DEFAULT_ARITHMETIC):
+    """Return raw HTML directory for a calendar + arithmetic.
+
+    The default arithmetic keeps the original unsuffixed path so the existing
+    1,812-page 'modern' download is reused as-is.
+    """
+    return os.path.join(RAW_DIR, f"{calendar_type}{_suffix(arithmetic)}")
 
 
-def parsed_csv(calendar_type):
-    """Return parsed CSV path for a given calendar."""
-    return os.path.join(PARSED_DIR, f"{calendar_type}.csv")
+def parsed_csv(calendar_type, arithmetic=DEFAULT_ARITHMETIC):
+    """Return parsed CSV path for a calendar + arithmetic."""
+    return os.path.join(PARSED_DIR, f"{calendar_type}{_suffix(arithmetic)}.csv")
 
 
-def ref_csv(calendar_type):
-    """Return reference CSV path for a given calendar."""
-    return os.path.join(REF_DIR, f"{calendar_type}_months_1900_2050.csv")
+def ref_csv(calendar_type, arithmetic=DEFAULT_ARITHMETIC):
+    """Return reference CSV path for a calendar + arithmetic.
+
+    Only the default (modern/Bisuddhasiddhanta) has a reference: our C code
+    computes drik sankrantis.  There is no Suryasiddhanta reference yet.
+    """
+    return os.path.join(REF_DIR,
+                        f"{calendar_type}{_suffix(arithmetic)}_months_1900_2050.csv")
 
 
-def comparison_report(calendar_type):
-    """Return comparison report path for a given calendar."""
-    return os.path.join(COMPARISON_DIR, f"{calendar_type}_report.txt")
+def comparison_report(calendar_type, arithmetic=DEFAULT_ARITHMETIC):
+    """Return comparison report path for a calendar + arithmetic."""
+    return os.path.join(COMPARISON_DIR,
+                        f"{calendar_type}{_suffix(arithmetic)}_report.txt")

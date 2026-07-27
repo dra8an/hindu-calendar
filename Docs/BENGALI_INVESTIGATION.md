@@ -145,3 +145,18 @@ The base tithi rule left 8 mismatches across the full 1,811-month scrape. These 
 | `tools/bengali_weekday.c` | Day-of-week analysis (ruled out) |
 | `tests/test_solar_edge.c` | Edge case tests — 23 Bengali entries updated to match tithi rule |
 | `validation/solar_edge_cases.csv` | Original edge case scan (Bengali section) |
+
+## The other Bengali calendar
+
+Everything above concerns the **Bisuddhasiddhanta** panjika
+(`drik-arithmetic=modern`), which is drikpanchang's default and what
+`src/solar.c` implements.
+
+Drikpanchang also publishes a **Suryasiddhanta** Bengali panjika, which
+disagrees on 26.32% of month starts. It uses the same rule structure documented
+here — midnight-based critical time plus the Sewell & Dikshit tithi rule plus
+per-rashi tuning — but with Surya Siddhanta longitudes and retuned constants
+(crit 40 min instead of 24, different day-edge offsets). The finding that
+time-based rules alone provably cannot work reproduces there too.
+
+See [SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md).

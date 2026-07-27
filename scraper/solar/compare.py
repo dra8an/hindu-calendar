@@ -14,7 +14,9 @@ import csv
 import os
 
 from scraper.solar.config import (
+    ARITHMETICS,
     CALENDARS,
+    DEFAULT_ARITHMETIC,
     comparison_report,
     parsed_csv,
     ref_csv,
@@ -57,23 +59,29 @@ def load_parsed_csv(path):
     return data
 
 
-def compare_calendar(calendar_type, report_path=None):
-    """Compare parsed vs reference for one calendar."""
-    parsed_path = parsed_csv(calendar_type)
-    reference_path = ref_csv(calendar_type)
+def compare_calendar(calendar_type, report_path=None, arithmetic=DEFAULT_ARITHMETIC):
+    """Compare parsed vs reference for one calendar + arithmetic."""
+    parsed_path = parsed_csv(calendar_type, arithmetic)
+    reference_path = ref_csv(calendar_type, arithmetic)
 
     if not os.path.exists(parsed_path):
         print(f"  Parsed CSV not found: {parsed_path}")
-        print(f"  Run: python3 -m scraper.solar.parse --calendar {calendar_type}")
+        print(f"  Run: python3 -m scraper.solar.parse --calendar {calendar_type} "
+              f"--arithmetic {arithmetic}")
         return
 
     if not os.path.exists(reference_path):
         print(f"  Reference CSV not found: {reference_path}")
+        if arithmetic != DEFAULT_ARITHMETIC:
+            print(f"  Expected: our C code computes drik sankrantis, so there is")
+            print(f"  no {arithmetic} reference to compare against yet. The parsed")
+            print(f"  CSV stands on its own as a new reference dataset.")
         return
 
-    print(f"Calendar: {calendar_type}")
-    print(f"Parsed:   {parsed_path}")
-    print(f"Ref:      {reference_path}")
+    print(f"Calendar:   {calendar_type}")
+    print(f"Arithmetic: {arithmetic}")
+    print(f"Parsed:     {parsed_path}")
+    print(f"Ref:        {reference_path}")
 
     parsed = load_parsed_csv(parsed_path)
     ref = load_ref_csv(reference_path)
@@ -163,7 +171,7 @@ def compare_calendar(calendar_type, report_path=None):
     print(report)
 
     if report_path is None:
-        report_path = comparison_report(calendar_type)
+        report_path = comparison_report(calendar_type, arithmetic)
     os.makedirs(os.path.dirname(report_path), exist_ok=True)
     with open(report_path, "w") as f:
         f.write(report + "\n")
@@ -182,11 +190,14 @@ def main():
     parser = argparse.ArgumentParser(description="Compare drikpanchang solar months vs reference")
     parser.add_argument("--calendar", required=True,
                         choices=CALENDARS + ["all"])
+    parser.add_argument("--arithmetic", default=DEFAULT_ARITHMETIC,
+                        choices=ARITHMETICS,
+                        help=f"Panchang arithmetic school (default: {DEFAULT_ARITHMETIC})")
     args = parser.parse_args()
 
     calendars = CALENDARS if args.calendar == "all" else [args.calendar]
     for cal in calendars:
-        compare_calendar(cal)
+        compare_calendar(cal, arithmetic=args.arithmetic)
 
 
 if __name__ == "__main__":

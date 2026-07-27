@@ -27,12 +27,28 @@ import sys
 from bs4 import BeautifulSoup
 
 from scraper.solar.config import (
+    ARITHMETICS,
     CALENDARS,
+    DEFAULT_ARITHMETIC,
     MONTH_NAME_TO_NUM,
     normalize_month_name,
     parsed_csv,
+    provenance_token,
     raw_dir,
 )
+
+
+def check_provenance(html, expected_token):
+    """Return the page's school token, or None if the page has no title.
+
+    Every page states its own school in the <h1>: "... based on <School> for
+    <City>".  Verifying it per page means a mixed directory is caught at parse
+    time instead of silently producing a blended CSV.
+    """
+    m = re.search(r"based on ([A-Za-z]+)", html)
+    if not m:
+        return None
+    return m.group(1)
 
 
 def _parse_header(soup, calendar_type):
@@ -92,7 +108,8 @@ def _parse_header(soup, calendar_type):
     return month_before, month_after, year
 
 
-def parse_month_html(html_path, greg_year, greg_month, calendar_type):
+def parse_month_html(html_path, greg_year, greg_month, calendar_type,
+                     expected_token=None):
     """Parse a solar calendar month page.
 
     Returns a list of month-start records:
@@ -100,9 +117,20 @@ def parse_month_html(html_path, greg_year, greg_month, calendar_type):
 
     Typically 0 or 1 records per page (one month transition per Gregorian month).
     Rarely 2 if two solar months start within the same Gregorian month.
+
+    If expected_token is given, the page's declared school must match it or
+    ValueError is raised, so a directory holding a mix of Bisuddhasiddhanta and
+    Suryasiddhanta pages fails loudly instead of producing a blended CSV.
     """
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
+
+    if expected_token is not None:
+        found = check_provenance(html, expected_token)
+        if found is not None and found != expected_token:
+            raise ValueError(
+                f"{os.path.basename(html_path)}: expected school "
+                f"{expected_token!r}, page says {found!r}")
 
     soup = BeautifulSoup(html, "html.parser")
 
@@ -161,18 +189,24 @@ def parse_month_html(html_path, greg_year, greg_month, calendar_type):
     return results
 
 
-def find_month_starts(calendar_type, start_year, end_year):
+def find_month_starts(calendar_type, start_year, end_year,
+                      arithmetic=DEFAULT_ARITHMETIC):
     """Scan all HTML pages and find solar month start dates.
 
     Returns list of (solar_month_num, solar_year, greg_year, greg_month, greg_day, month_name)
     sorted by Gregorian date.
+
+    Raises ValueError if any page declares a school other than the one
+    requested (see parse_month_html).
     """
-    html_dir = raw_dir(calendar_type)
+    html_dir = raw_dir(calendar_type, arithmetic)
     name_to_num = MONTH_NAME_TO_NUM[calendar_type]
+    expected_token = provenance_token(calendar_type, arithmetic)
 
     month_starts = []
     pages_parsed = 0
     pages_missing = 0
+    provenance_failures = []
 
     for year in range(start_year, end_year + 1):
         for month in range(1, 13):
@@ -182,7 +216,12 @@ def find_month_starts(calendar_type, start_year, end_year):
                 continue
 
             pages_parsed += 1
-            results = parse_month_html(html_path, year, month, calendar_type)
+            try:
+                results = parse_month_html(html_path, year, month, calendar_type,
+                                           expected_token)
+            except ValueError as e:
+                provenance_failures.append(str(e))
+                continue
             for month_name, solar_year, gy, gm, gd in results:
                 month_num = name_to_num.get(month_name)
                 if month_num is None:
@@ -203,7 +242,19 @@ def find_month_starts(calendar_type, start_year, end_year):
             seen.add(key)
             unique.append(entry)
 
-    print(f"  Pages parsed: {pages_parsed}, missing: {pages_missing}")
+    if provenance_failures:
+        print(f"  PROVENANCE: {len(provenance_failures)} page(s) declared the "
+              f"wrong school:", file=sys.stderr)
+        for msg in provenance_failures[:10]:
+            print(f"    {msg}", file=sys.stderr)
+        if len(provenance_failures) > 10:
+            print(f"    ... and {len(provenance_failures) - 10} more", file=sys.stderr)
+        raise ValueError(
+            f"{len(provenance_failures)} page(s) in {html_dir} are not "
+            f"{expected_token!r} — refusing to build a mixed CSV")
+
+    label = f" [{expected_token}]" if expected_token else ""
+    print(f"  Pages parsed: {pages_parsed}, missing: {pages_missing}{label}")
     return unique
 
 
@@ -229,13 +280,14 @@ def compute_lengths(month_starts):
     return result
 
 
-def build_csv(calendar_type, start_year, end_year):
-    """Build parsed solar CSV for a calendar."""
-    output_path = parsed_csv(calendar_type)
+def build_csv(calendar_type, start_year, end_year, arithmetic=DEFAULT_ARITHMETIC):
+    """Build parsed solar CSV for a calendar + arithmetic."""
+    output_path = parsed_csv(calendar_type, arithmetic)
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    print(f"Parsing {calendar_type} solar pages ({start_year}-{end_year})...")
-    month_starts = find_month_starts(calendar_type, start_year, end_year)
+    print(f"Parsing {calendar_type} [{arithmetic}] solar pages "
+          f"({start_year}-{end_year})...")
+    month_starts = find_month_starts(calendar_type, start_year, end_year, arithmetic)
     print(f"  Found {len(month_starts)} month starts")
 
     if not month_starts:
@@ -262,11 +314,14 @@ def main():
                         choices=CALENDARS + ["all"])
     parser.add_argument("--start-year", type=int, default=1900)
     parser.add_argument("--end-year", type=int, default=2050)
+    parser.add_argument("--arithmetic", default=DEFAULT_ARITHMETIC,
+                        choices=ARITHMETICS,
+                        help=f"Panchang arithmetic school (default: {DEFAULT_ARITHMETIC})")
     args = parser.parse_args()
 
     calendars = CALENDARS if args.calendar == "all" else [args.calendar]
     for cal in calendars:
-        build_csv(cal, args.start_year, args.end_year)
+        build_csv(cal, args.start_year, args.end_year, args.arithmetic)
 
 
 if __name__ == "__main__":

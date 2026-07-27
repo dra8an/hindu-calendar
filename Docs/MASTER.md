@@ -32,6 +32,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [LOCATION.md](LOCATION.md) | Multi-location support. Location struct usage, how each calendar adapts to observer timezone, Odia IST→local fix, multi-location validation (Ujjain/NYC/LA). |
 | [VSOP87_IMPLEMENTATION.md](VSOP87_IMPLEMENTATION.md) | VSOP87 solar longitude implementation in the Moshier library. Covers the full computation pipeline (7 steps), ayanamsa nutation discovery, precision analysis vs Swiss Ephemeris, test result evolution, and key lessons learned. |
 | [BENGALI_INVESTIGATION.md](BENGALI_INVESTIGATION.md) | Bengali critical time investigation. Documents the tithi-based rule from Sewell & Dikshit (1896) + per-rashi tuning that achieves 100% on all 1,811 months. Includes exhaustive testing of time-based rules (all failed) and proof of inseparability. |
+| [SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md) | The second Bengali calendar flavor (`drik-arithmetic=suryasiddhanta`), which disagrees with Bisuddhasiddhanta on 26.32% of month starts. Covers the scrape, the Surya Siddhanta arithmetic (constants, algorithm, precision traps), the annual + secular divergence signatures, and the critical-time rule fitted to 1,811/1,811 (100%). Not yet implemented in C. |
 | [SOLAR_VERIFICATION_WEB.md](SOLAR_VERIFICATION_WEB.md) | Plan for adding solar calendar support to the validation web page. |
 | [REINGOLD_VALIDATION.md](REINGOLD_VALIDATION.md) | Approach for comparing our Drik Siddhanta output against Reingold/Dershowitz Surya Siddhanta (HL function via SBCL). |
 | [REINGOLD_VALIDATION_WEB_PAGE.md](REINGOLD_VALIDATION_WEB_PAGE.md) | Design for embedding Reingold diff overlay into the validation web page. |
@@ -39,8 +40,9 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [LICENSING.md](LICENSING.md) | Intellectual property and licensing analysis for all scientific theories, data tables, and algorithms used in the Moshier ephemeris library. Covers VSOP87, DE404 Moshier, Meeus, IAU 1976, Sinclair, IERS delta-T, and the Swiss Ephemeris AGPL non-applicability. Conclusion: all components freely usable with zero risk. |
 | [DEVELOPMENT_STEPS.md](DEVELOPMENT_STEPS.md) | Concise chronological summary of each development phase, from project setup through final verification. |
 | [DEVELOPMENT_JOURNAL.md](DEVELOPMENT_JOURNAL.md) | Reflections on building the project — the challenges, discoveries, and lessons learned across ~15 sessions. Written by Claude (Opus). |
-| [JAVA_PORT.md](JAVA_PORT.md) | Java 21 port documentation. Project structure, class mapping (C → Java), porting decisions, key technical traps, test suite (227 tests), cross-validation results, and build/usage instructions. |
-| [RUST_PORT.md](RUST_PORT.md) | Rust port documentation. Project structure, module mapping (C → Rust), porting decisions (ownership, mutability, `i8` indexing), test suite (9 tests, 275,396 assertions), full regression verification, cross-validation results, and build/usage instructions. |
+| [JAVA_PORT.md](JAVA_PORT.md) | Java 21 port documentation. Project structure, class mapping (C → Java), porting decisions, key technical traps, test suite (257 tests), cross-validation results, and build/usage instructions. |
+| [RUST_PORT.md](RUST_PORT.md) | Rust port documentation. Project structure, module mapping (C → Rust), porting decisions (ownership, mutability, `i8` indexing), test suite (27 tests, 275,396 assertions), full regression verification, cross-validation results, and build/usage instructions. |
+| [SWIFT_PORT.md](SWIFT_PORT.md) | Swift port documentation. Project structure, type mapping (C → Swift), porting decisions, test suite (62 tests), cross-validation results, and build/usage instructions. |
 | calendrical-calculations.pdf | Reference book by Reingold & Dershowitz. Chapter 20 covers Hindu calendar mathematics. |
 
 ## Root Directory
