@@ -88,3 +88,31 @@ Replaced the 51,493-line Swiss Ephemeris with a self-contained 1,265-line Moshie
 - Web interface or API wrapper
 - Performance optimization (caching ephemeris calls for month generation)
 - Additional language ports (Go, Python, etc.)
+
+## Priority 7: Suryasiddhanta Panjika Follow-ups
+
+The Bengali Suryasiddhanta panjika is implemented and shipped
+(`-s bengali-surya`, 1,812/1,812 against drikpanchang.com). See
+[SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md) and
+[SURYASIDDHANTA_PORTING_SPEC.md](SURYASIDDHANTA_PORTING_SPEC.md).
+
+Two items remain open.
+
+- [ ] **Regenerate the Swiss Ephemeris reference data.** `make gen-ref USE_SWISSEPH=1`.
+  `validation/se/adhika_kshaya_tithis.csv` was last regenerated 2026-02-23,
+  before the upper-limb sunrise change (2026-03-13) and the elevation fix
+  (2026-04-06); both shift tithi-at-sunrise at boundary dates. The Moshier
+  reference was regenerated, the SE one was not. This causes **23 failures in
+  `test_adhika_kshaya` under `USE_SWISSEPH=1`** — pre-existing, verified by
+  reproducing at HEAD in a clean clone, and unrelated to the Suryasiddhanta
+  work. The Moshier default backend is unaffected (279,313/279,313 pass).
+  Note this rewrites six committed CSVs, so review the diff.
+
+- [ ] **Scrape and validate the Tamil Suryasiddhanta variant.** Tamil exposes
+  the same `drik-arithmetic` toggle (its default is Thirukanitha); Odia and
+  Malayalam appear not to. This is the one test that would show whether the
+  Bengali rule constants — critical time at midnight + 40 min, and the
+  per-rashi day edges — encode a real convention or are fitted to Bengali
+  data. The current honest generalisation figure is **99.667%** out-of-sample
+  (fit 1900–1975, test 1976–2050) against 100% on the full fitted range.
+  Cost: ~1,812 pages, roughly 9 VPN cycles at the per-IP rate limit.

@@ -26,6 +26,7 @@
 | 16 | Drikpanchang.com solar scrape | Done | Tamil 100%, Bengali 100%, Odia 100%, Malayalam 100% |
 | 23 | Multi-location validation | Done | Ujjain, NYC, LA — 465 assertions, Odia IST→local fix |
 | 26 | Swift port | Done | Moshier-only, 62 tests, identical output to C |
+| 27 | Bengali Suryasiddhanta panjika | Done | Scrape (1,812 months), clean-room Surya Siddhanta engine, `-s bengali-surya`, 1,812/1,812 |
 
 ## Test Results
 
@@ -123,6 +124,8 @@ The buffer is subtracted from `critical_time_jd()` in `src/solar.c`. This single
 - Moshier backend uses analytical planetary theories (VSOP87 for Sun, DE404-fitted Moshier theory for Moon) rather than Swiss Ephemeris data files
 - Purnimanta month boundaries implemented but not yet validated against an external Purnimanta source (verified internally: 1,867/1,867 months start on Krishna Pratipada/Dwitiya)
 - Multi-location validation covers March 2026 only (Ujjain, NYC, LA); full multi-location scrape not yet performed
+- **SE reference data is stale**: `validation/se/adhika_kshaya_tithis.csv` predates the upper-limb and elevation changes, causing 23 `test_adhika_kshaya` failures under `USE_SWISSEPH=1`. Pre-existing and unrelated to recent work; the Moshier default is unaffected. Fix with `make gen-ref USE_SWISSEPH=1` (see [NEXT-STEPS.md](NEXT-STEPS.md))
+- Suryasiddhanta rule constants are fitted on Bengali data only; out-of-sample 99.667%. Tamil has the same panjika toggle and is unscraped — see [SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md)
 - No nakshatra, yoga, or karana calculations
 - No kshaya masa detection (extremely rare edge case)
 - UTC offset is manual (no IANA timezone / DST support)
