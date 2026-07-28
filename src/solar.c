@@ -3,6 +3,7 @@
 #include "masa.h"
 #include "tithi.h"
 #include "date_utils.h"
+#include "surya_siddhanta.h"
 #include <math.h>
 #include <string.h>
 
@@ -94,19 +95,64 @@ typedef struct {
  *   Malayalam (Kollam): gy - 824 on/after Simha, gy - 825 before
  */
 static const SolarCalendarConfig SOLAR_CONFIGS[] = {
-    { SOLAR_CAL_TAMIL,     1, 1,  78,   79,  TAMIL_MONTHS,     "Saka"     },
-    { SOLAR_CAL_BENGALI,   1, 1,  593,  594, BENGALI_MONTHS,   "Bangabda" },
-    { SOLAR_CAL_ODIA,      1, 6,  592,  593, ODIA_MONTHS,      "Amli"     },
-    { SOLAR_CAL_MALAYALAM, 5, 5,  824,  825, MALAYALAM_MONTHS,  "Kollam"   },
+    { SOLAR_CAL_TAMIL,        1, 1,  78,   79,  TAMIL_MONTHS,     "Saka"     },
+    { SOLAR_CAL_BENGALI,      1, 1,  593,  594, BENGALI_MONTHS,   "Bangabda" },
+    { SOLAR_CAL_ODIA,         1, 6,  592,  593, ODIA_MONTHS,      "Amli"     },
+    { SOLAR_CAL_MALAYALAM,    5, 5,  824,  825, MALAYALAM_MONTHS,  "Kollam"   },
+    /* Same regional calendar as Bengali -- identical months and era -- but
+     * computed under Surya Siddhanta arithmetic. */
+    { SOLAR_CAL_BENGALI_SURYA, 1, 1, 593,  594, BENGALI_MONTHS,   "Bangabda" },
 };
+
+#define N_SOLAR_CONFIGS ((int)(sizeof(SOLAR_CONFIGS) / sizeof(SOLAR_CONFIGS[0])))
 
 static const SolarCalendarConfig *get_config(SolarCalendarType type)
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < N_SOLAR_CONFIGS; i++) {
         if (SOLAR_CONFIGS[i].type == type)
             return &SOLAR_CONFIGS[i];
     }
     return &SOLAR_CONFIGS[0]; /* fallback to Tamil */
+}
+
+/* ---- Arithmetic dispatch ----
+ *
+ * Both Bengali variants share every rule in this file; they differ only in
+ * which astronomy computes the sun, the moon, and the sankranti moment.  These
+ * helpers keep that difference in one place instead of scattering conditionals
+ * through the calendar logic.
+ *
+ * Note the Surya Siddhanta functions need the observer's longitude (it sets
+ * the local time the classical model reckons in), which is why these take a
+ * Location where the drik equivalents do not. */
+
+static int is_bengali(SolarCalendarType type)
+{
+    return type == SOLAR_CAL_BENGALI || type == SOLAR_CAL_BENGALI_SURYA;
+}
+
+static int is_surya(SolarCalendarType type)
+{
+    return type == SOLAR_CAL_BENGALI_SURYA;
+}
+
+static double arith_solar_longitude(double jd_ut, const Location *loc,
+                                    SolarCalendarType type)
+{
+    if (is_surya(type)) return surya_solar_longitude(jd_ut, loc);
+    (void)loc;
+    return solar_longitude_sidereal(jd_ut);
+}
+
+/* Sankranti moment under the calendar's own arithmetic.  The public
+ * sankranti_jd() stays drik-only so its signature is unchanged. */
+static double arith_sankranti(double jd_approx, double target_longitude,
+                              const Location *loc, SolarCalendarType type)
+{
+    if (is_surya(type))
+        return surya_sankranti(jd_approx, target_longitude, loc);
+    (void)loc;
+    return sankranti_jd(jd_approx, target_longitude);
 }
 
 /* ---- Critical time computation ----
@@ -138,6 +184,14 @@ static double critical_time_jd(double jd_midnight_ut, const Location *loc,
          * sankranti_to_civil_day().
          * Per-rashi tuning applied separately in bengali_tuned_crit(). */
         return jd_midnight_ut - loc->utc_offset / 24.0 + 24.0 / (24.0 * 60.0);
+
+    case SOLAR_CAL_BENGALI_SURYA:
+        /* Same rule shape as Bengali, but the zone runs to midnight + 40 min.
+         * Fitted against 1,812 drikpanchang month starts; see
+         * Docs/SURYASIDDHANTA_PANJIKA.md section 4.  Unlike the drik variant
+         * this needs no per-rashi critical time tuning -- all of its tuning
+         * lives in bengali_day_edge_offset(). */
+        return jd_midnight_ut - loc->utc_offset / 24.0 + 40.0 / (24.0 * 60.0);
 
     case SOLAR_CAL_ODIA:
         /* Local cutoff at 22:12 (10:12 PM local time).
@@ -294,6 +348,23 @@ static double bengali_tuned_crit(SolarCalendarType type,
 
 static double bengali_day_edge_offset(SolarCalendarType type, int rashi)
 {
+    if (is_surya(type)) {
+        /* Surya Siddhanta variant: six rashis need a day edge before midnight.
+         * Fitted against all 1,812 drikpanchang month starts; each value sits
+         * mid-window (admissible ranges are 8-11 min wide), and the six rashis
+         * not listed work correctly at zero.
+         * See Docs/SURYASIDDHANTA_PANJIKA.md section 4. */
+        switch (rashi) {
+        case 1: return  7.0 / (24.0 * 60.0);   /* Mesha      */
+        case 2: return 11.0 / (24.0 * 60.0);   /* Vrishabha  */
+        case 6: return 12.0 / (24.0 * 60.0);   /* Kanya      */
+        case 7: return 20.0 / (24.0 * 60.0);   /* Tula       */
+        case 8: return 22.0 / (24.0 * 60.0);   /* Vrishchika */
+        case 9: return 19.0 / (24.0 * 60.0);   /* Dhanu      */
+        }
+        return 0.0;
+    }
+
     if (type != SOLAR_CAL_BENGALI) return 0.0;
 
     switch (rashi) {
@@ -327,15 +398,17 @@ static double bengali_day_edge_offset(SolarCalendarType type, int rashi)
  *
  * No-op for non-Bengali calendars. */
 
-static void bengali_rashi_correction(SolarCalendarType type,
+static void bengali_rashi_correction(SolarCalendarType type, const Location *loc,
                                      double jd_crit, int *rashi, double *lon)
 {
+    /* Only the drik variant extends its critical time per rashi; the Surya
+     * variant has a single crit, so there is nothing to re-check. */
     if (type != SOLAR_CAL_BENGALI) return;
 
     int next_r = (*rashi % 12) + 1;
     double tuned = bengali_tuned_crit(type, jd_crit, next_r);
     if (tuned > jd_crit) {
-        double lon2 = solar_longitude_sidereal(tuned);
+        double lon2 = arith_solar_longitude(tuned, loc, type);
         int r2 = (int)floor(lon2 / 30.0) + 1;
         if (r2 > 12) r2 = 12;
         if (r2 == next_r) {
@@ -362,14 +435,26 @@ static int bengali_tithi_push_next(SolarCalendarType type,
                                    double jd_sankranti, double jd_day,
                                    int rashi, const Location *loc)
 {
-    if (type != SOLAR_CAL_BENGALI) return 0;
+    if (!is_bengali(type)) return 0;
     if (rashi == 4) return 0;  /* Karkata: always this day */
     if (rashi == 10) return 1; /* Makara: always next day */
 
     /* Tithi at previous day's sunrise (= start of the Hindu day
-     * containing this post-midnight sankranti). */
+     * containing this post-midnight sankranti).
+     *
+     * Sunrise is always the drik (astronomical) sunrise, for both variants:
+     * drikpanchang computes sunrise astronomically regardless of which panjika
+     * arithmetic is selected.  That was tested, not assumed -- keying the Surya
+     * variant off a Surya Siddhanta mean sunrise is not required. */
     int py, pm, pd;
     jd_to_gregorian(jd_day - 1.0, &py, &pm, &pd);
+
+    if (is_surya(type)) {
+        double jd_prev = gregorian_to_jd(py, pm, pd);
+        double sr = sunrise_jd(jd_prev, loc);
+        return (surya_tithi_end(sr, loc) <= jd_sankranti) ? 1 : 0;
+    }
+
     TithiInfo ti = tithi_at_sunrise(py, pm, pd, loc);
     return (ti.jd_end <= jd_sankranti) ? 1 : 0;
 }
@@ -453,7 +538,8 @@ static int solar_year(double jd_ut, const Location *loc,
         if (approx_greg_month > 12) approx_greg_month -= 12;
 
         double jd_year_start_est = gregorian_to_jd(gy, approx_greg_month, 14);
-        double jd_year_start = sankranti_jd(jd_year_start_est, target_long);
+        double jd_year_start = arith_sankranti(jd_year_start_est, target_long,
+                                               loc, type);
 
         int ysy, ysm, ysd;
         sankranti_to_civil_day(jd_year_start, loc, type, cfg->year_start_rashi,
@@ -499,14 +585,14 @@ SolarDate gregorian_to_solar(int year, int month, int day,
     double jd_crit = critical_time_jd(jd, loc, type);
 
     /* Sidereal solar longitude at critical time */
-    double lon = solar_longitude_sidereal(jd_crit);
+    double lon = arith_solar_longitude(jd_crit, loc, type);
 
     /* Current rashi (1-12) */
     int rashi = (int)floor(lon / 30.0) + 1;
     if (rashi > 12) rashi = 12;
     if (rashi < 1) rashi = 1;
 
-    bengali_rashi_correction(type, jd_crit, &rashi, &lon);
+    bengali_rashi_correction(type, loc, jd_crit, &rashi, &lon);
     sd.rashi = rashi;
 
     /* Find the sankranti that started this month — check cache first.
@@ -530,7 +616,7 @@ SolarDate gregorian_to_solar(int year, int month, int day,
         double degrees_past = lon - target;
         if (degrees_past < 0) degrees_past += 360.0;
         double jd_est = jd_crit - degrees_past;
-        sd.jd_sankranti = sankranti_jd(jd_est, target);
+        sd.jd_sankranti = arith_sankranti(jd_est, target, loc, type);
 
         sankranti_to_civil_day(sd.jd_sankranti, loc, type, rashi, &sy, &sm, &s_day);
         jd_month_start = gregorian_to_jd(sy, sm, s_day);
@@ -553,7 +639,8 @@ SolarDate gregorian_to_solar(int year, int month, int day,
         rashi = (rashi == 1) ? 12 : rashi - 1;
         sd.rashi = rashi;
         double prev_target = (double)(rashi - 1) * 30.0;
-        sd.jd_sankranti = sankranti_jd(sd.jd_sankranti - 28.0, prev_target);
+        sd.jd_sankranti = arith_sankranti(sd.jd_sankranti - 28.0, prev_target,
+                                          loc, type);
         sankranti_to_civil_day(sd.jd_sankranti, loc, type, rashi,
                                &sy, &sm, &s_day);
         jd_month_start = gregorian_to_jd(sy, sm, s_day);
@@ -616,7 +703,7 @@ void solar_to_gregorian(const SolarDate *sd, SolarCalendarType type,
     int est_month = rashi_greg_month;
     if (est_month > 12) est_month -= 12;
     double jd_est = gregorian_to_jd(gy, est_month, 14);
-    double jd_sank = sankranti_jd(jd_est, target);
+    double jd_sank = arith_sankranti(jd_est, target, loc, type);
 
     /* Find the civil day of the sankranti */
     int sy, sm, s_day;
@@ -666,7 +753,7 @@ double solar_month_start(int month, int year, SolarCalendarType type,
 
     /* Find exact sankranti for this rashi */
     double target = (double)(rashi - 1) * 30.0;
-    double jd_sk = sankranti_jd(jd_approx, target);
+    double jd_sk = arith_sankranti(jd_approx, target, loc, type);
 
     /* Determine which civil day owns this sankranti */
     int cy, cm, cd;

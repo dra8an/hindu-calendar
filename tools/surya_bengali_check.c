@@ -123,7 +123,13 @@ int main(void)
         long start;
 
         if (target >= 360.0) target = 0.0;
-        jd_sank = surya_sankranti(jd, target, &loc);
+        /* surya_sankranti brackets +/-20 days around the estimate, so aim the
+         * estimate at the crossing rather than passing the current date. */
+        {
+            double gap = fmod(target - lon, 360.0);
+            if (gap < 0.0) gap += 360.0;
+            jd_sank = surya_sankranti(jd + 365.2587 * gap / 360.0, target, &loc);
+        }
         if (jd_sank > jd_end) break;
 
         rashi = (int)(target / 30.0) + 1;

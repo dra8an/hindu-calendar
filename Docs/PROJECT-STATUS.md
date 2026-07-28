@@ -29,11 +29,11 @@
 
 ## Test Results
 
-**With Moshier backend** (default `make`): 275,689/275,689 assertions pass (100%), in ~15 seconds. 55,137 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.973%); 15 sub-minute boundary edge cases remain. Default location uses correct New Delhi elevation (216m ASL) with pressure-only correction (no horizon dip — see [ELEVATION.md](ELEVATION.md)).
+**With Moshier backend** (default `make`): 279,313/279,313 assertions pass (100%), in ~15 seconds. 55,137 of 55,152 lunisolar days (1900–2050) match drikpanchang.com (99.973%); 15 sub-minute boundary edge cases remain. Default location uses correct New Delhi elevation (216m ASL) with pressure-only correction (no horizon dip — see [ELEVATION.md](ELEVATION.md)).
 
-**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 275,689/275,689 assertions pass (100%). SE differs from drikpanchang.com on 2 additional tithi boundary dates (1965-05-30 and 2001-09-20) where the Moshier backend is correct.
+**With Swiss Ephemeris backend** (`make USE_SWISSEPH=1`): 279,290/279,313 assertions pass. The 23 failures are all in `test_adhika_kshaya` and are **not** an SE defect: `validation/se/adhika_kshaya_tithis.csv` was last regenerated 2026-02-23, before the upper-limb sunrise change (2026-03-13) and the elevation fix (2026-04-06). Both shift tithi-at-sunrise at boundary dates. The Moshier reference was regenerated; the SE one was not. Fix with `make gen-ref USE_SWISSEPH=1`. SE also differs from drikpanchang.com on 2 tithi boundary dates (1965-05-30, 2001-09-20) where Moshier is correct.
 
-275,689 assertions across 13 test suites:
+279,313 assertions across 14 test suites:
 
 | Suite | Assertions | What it tests |
 |-------|------------|---------------|
@@ -50,6 +50,7 @@
 | test_solar_edge | 1,200 | **Edge cases**: 100 closest-to-critical-time sankrantis per calendar (400 total), 21 corrected from drikpanchang.com verification (Tamil/Malayalam), 23 Bengali entries updated for tithi-based rule |
 | test_various_locations | 465 | **External validation**: 5 calendars × 3 locations (Ujjain, NYC, LA) × 31 days (March 2026) verified against drikpanchang.com |
 | test_nyc | 111 | **External validation**: NYC tithi/masa with US Eastern DST offsets (`src/dst.c`) |
+| test_surya_bengali | 3,624 | **External validation**: 1,812 Bengali Suryasiddhanta month starts vs drikpanchang.com scrape (1900-2050) x 2 checks |
 
 ## Validated Against drikpanchang.com
 

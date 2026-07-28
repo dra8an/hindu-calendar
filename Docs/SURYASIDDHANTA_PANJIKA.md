@@ -12,7 +12,7 @@ They disagree on **26.32%** of month starts (477 of 1,812 over 1900–2050).
 
 This document records the scrape of the Suryasiddhanta variant, the
 reverse-engineered arithmetic, and the critical-time rule fitted against it.
-The result is a complete specification reproducing **1,811 / 1,811 (100.000%)**
+The result is a shipped implementation reproducing **1,812 / 1,812 (100.000%)**
 of drikpanchang's Suryasiddhanta Bengali month starts.
 
 ---
@@ -80,30 +80,49 @@ to 1e-8 degrees.
 
 ### Constants (exact)
 
-```
-HINDU_EPOCH        = -1132959              RD of Kali Yuga (Julian -3102 Feb 18)
-CREATION_REVS      = 1955880000
-SIDEREAL_YEAR      = 365 + 279457/1080000                = 365.2587564814815
-ANOMALISTIC_YEAR   = 1577917828000 / (4320000000 - 387)  = 365.25878920258134
-SIDEREAL_MONTH     = 27 + 4644439/14438334               = 27.321674162683866
-ANOMALISTIC_MONTH  = 1577917828 / (57753336 - 488199)    = 27.554597974680476
+The shipped C derives everything from five integers stated in the text
+(chapter 1), rather than transcribing decimals:
 
-solar epicycle 'size' = 14/360    'change' = 1/42
-lunar epicycle 'size' = 32/360    'change' = 1/96
 ```
+solar revolutions per mahayuga    4320000
+lunar revolutions per mahayuga    57753336
+civil days per mahayuga           1577917828
+solar apogee revs per kalpa       387          (kalpa = 1000 mahayugas)
+lunar apogee revs per mahayuga    488199
+
+sidereal year     = civil_days / solar_revs                       = 365.258756481
+anomalistic year  = civil_days*1000 / (solar_revs*1000 - 387)     = 365.258789203
+sidereal month    = civil_days / lunar_revs                       =  27.321674163
+anomalistic month = civil_days / (lunar_revs - lunar_apogee)      =  27.554597975
+
+epicycle sizes (chapter 2), varying between the odd and even quadrant values:
+  Sun   14 deg <-> 13 deg 40'   ->  size 14/360, contraction 1/42
+  Moon  32 deg <-> 31 deg 40'   ->  size 32/360, contraction 1/96
+
+epoch  = Kali Yuga, Julian -3102 Feb 18 = RD -1132959
+         mean sun and mean moon are both 0 deg here, by definition
+anomaly at epoch: solar 3143/4000 turn, lunar 3/4 turn
+```
+
+The solar anomaly offset corresponds to a solar apogee of **77.13 degrees**
+against the ~77 degrees stated in the text. That was not an input, so it is a
+useful check that the revolution counts were transcribed correctly.
 
 ### Algorithm
 
 ```
-sine_table(n)  = round(3438*sin(n * 3.75deg) + err) / 3438
-                 err = 0.215 * sign(exact) * sign(|exact| - 1716)
-                 defined for ANY integer n, not just the 0..24 quadrant --
-                 the anomaly argument sweeps a full circle (n = 0..96)
+sine_table(n)  = the 24 tabulated integers from chapter 2, in units of R = 3438,
+                 at 225 arcmin (3.75 deg) intervals.  Stated in the text as
+                 differences, which sum to exactly 3438:
+                   225 224 222 219 215 210 205 199 191 183 174 164
+                   154 143 131 119 106  93  79  65  51  37  22   7
+                 The table covers the first quadrant; the anomaly sweeps all
+                 four, so the index is reflected and the sign carried.
 
 hindu_sine(t)  = linear interpolation in that table at t/3.75
 hindu_arcsin(a)= table search + interpolation (stays in 0..24)
 
-mean_position(tee, period) = 360 * frac((tee - CREATION) / period)
+mean_position(tee, period) = 360 * frac(days_since_epoch / period + epoch_offset)
 
 true_position(tee, period, size, anom, change):
     lambda      = mean_position(tee, period)
@@ -300,24 +319,46 @@ the per-rashi edges are Bengali-specific or shared is unknown.
 
 ## 6. Implementation status
 
-**Not yet implemented in C.** Estimated ~310 lines for the engine
-(`surya_siddhanta.c/.h`) plus ~90 for integration into `solar.c` behind a
-`SolarArithmetic { DRIK, SURYA_SIDDHANTA }` enum. Integration is cheap because
-the Bengali critical-time machinery already takes `type` as a parameter.
+**Implemented and shipped.** Available as the calendar type
+`SOLAR_CAL_BENGALI_SURYA`, and from the CLI:
+
+```bash
+./hindu-calendar -s bengali-surya -d 18 -m 7 -y 2026
+./hindu-calendar -s bengali-surya -y 2026 -m 7        # full month
+```
+
+| Piece | Where |
+|-------|-------|
+| Engine | `src/surya_siddhanta.c` / `.h` (~265 lines) |
+| Calendar type | `SOLAR_CAL_BENGALI_SURYA` in `types.h` |
+| Rule constants | `critical_time_jd()` and `bengali_day_edge_offset()` in `solar.c` |
+| Arithmetic dispatch | `arith_solar_longitude()`, `arith_sankranti()` in `solar.c` |
+| Regression test | `tests/test_surya_bengali.c` -- 3,624 assertions, 1,812 months |
+
+The two Bengali variants share every rule in `solar.c`; they differ only in
+which astronomy computes the sun, the moon, and the sankranti moment. That
+difference is confined to two dispatch helpers rather than scattered through
+the calendar logic, and the existing caches key on calendar type so they
+separate the variants automatically.
 
 The `hindu-sunrise` port originally budgeted at 40-60 lines is **not needed**
-(section 4).
+(section 4): both variants use the project's drik sunrise.
 
-The reference implementation used for this analysis is Python, committed under
-`validation/suryasiddhanta/`. The exact constants and algorithm above are also
-sufficient to reproduce it from scratch.
+### Integration notes
 
-`validation/reingold/generate_reingold_solar.lisp` drives `calendar.l` to emit
-Surya Siddhanta sankranti moments. It is retained only as an **independent
-cross-check oracle** for spot values — it is far too slow (~25 s/sankranti) for
-bulk generation.
-
----
+- `sankranti_jd()` and `sankranti_before()` keep their existing signatures and
+  stay drik-only, so no public API changed. Internal callers go through
+  `arith_sankranti()`.
+- `surya_sankranti()` brackets the crossing AROUND its estimate rather than
+  searching forward from it, matching `sankranti_jd()`. A forward-only search
+  (the natural reading of the classical rule) silently jumps a full year when
+  the caller's estimate lands just past the sankranti -- this was caught by
+  integration producing a day-of-month of -667.
+- `get_config()` previously hardcoded a loop bound of 4 over `SOLAR_CONFIGS`;
+  a fifth entry would have been silently ignored. Now computed from the array.
+- The CLI display name came from a ternary chain whose fallback was
+  "Malayalam", so a new type would have been mislabelled. Replaced with a
+  `switch` that has no fallback case.
 
 ## 7. Where everything lives
 

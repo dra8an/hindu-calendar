@@ -300,18 +300,17 @@ double surya_tithi_end(double jd_ut, const Location *loc)
 double surya_sankranti(double jd_approx, double target_longitude,
                        const Location *loc)
 {
-    /* Estimate how far to travel at the mean rate, then bracket around it. */
-    double gap = fmod(target_longitude -
-                      surya_solar_longitude(jd_approx, loc), 360.0);
-    double tau, lo, hi;
+    /* Bracket the crossing AROUND the estimate, matching sankranti_jd() in
+     * solar.c.  This is deliberately not a forward-only "next crossing at or
+     * after" search: callers in solar.c pass an estimate that may sit slightly
+     * past the sankranti, and a forward-only search would then skip a whole
+     * year to the next occurrence of the same sign boundary. */
+    double lo = jd_approx - 20.0;
+    double hi = jd_approx + 20.0;
 
-    if (gap < 0.0) gap += 360.0;
-    tau = jd_approx + SS_SIDEREAL_YEAR * gap / 360.0;
-    lo = tau - 5.0;
-    hi = tau + 5.0;
-
-    if (ss_ang_diff(surya_solar_longitude(lo, loc), target_longitude) > 0.0)
-        lo -= 5.0;
+    /* If lo is already past the target, widen the bracket backwards. */
+    if (ss_ang_diff(surya_solar_longitude(lo, loc), target_longitude) >= 0.0)
+        lo -= 30.0;
 
     for (int i = 0; i < 60; i++) {
         double mid = (lo + hi) / 2.0;
@@ -319,7 +318,7 @@ double surya_sankranti(double jd_approx, double target_longitude,
             lo = mid;
         else
             hi = mid;
-        if (hi - lo < 1e-9) break;
+        if (hi - lo < 1e-9) break;   /* ~0.1 ms */
     }
     return (lo + hi) / 2.0;
 }

@@ -20,7 +20,8 @@ make gen-json           # Generate web JSON for current backend
   -y YEAR      Gregorian year (default: current)
   -m MONTH     Gregorian month 1-12 (default: current)
   -d DAY       Specific day (if omitted, shows full month)
-  -s TYPE      Solar calendar: tamil, bengali, odia, malayalam
+  -s TYPE      Solar calendar: tamil, bengali, odia, malayalam,
+               bengali-surya (Bengali under Surya Siddhanta arithmetic)
                (if omitted, shows lunisolar panchang)
   -l LAT,LON   Location (default: New Delhi 28.6139,77.2090)
   -u OFFSET    UTC offset in hours (default: 5.5)
@@ -78,7 +79,7 @@ Hindu Date: Adhika Bhadrapada Shukla 1, Saka 1934 (Vikram 2069)
 make test
 ```
 
-Runs 275,689 assertions across 13 test suites: unit tests for astronomical calculations, tithi, month determination, and solar calendars; 186 lunisolar dates validated against drikpanchang.com (1900-2050, including 132 adhika/kshaya edge cases); 327 solar calendar month-start dates validated against drikpanchang.com/prokerala.com across all four regional variants; 1,200 solar edge case assertions covering the 100 closest-to-critical-time sankrantis per calendar (21 corrected from drikpanchang.com verification); 465 multi-location assertions (Ujjain, NYC, LA) across all 5 calendar types; and regression tests covering all 55,152 lunisolar days, all 4,269 adhika/kshaya tithi edge cases, and 7,244 solar month boundaries (1900-2050).
+Runs 279,313 assertions across 14 test suites: unit tests for astronomical calculations, tithi, month determination, and solar calendars; 186 lunisolar dates validated against drikpanchang.com (1900-2050, including 132 adhika/kshaya edge cases); 327 solar calendar month-start dates validated against drikpanchang.com/prokerala.com across all four regional variants; 1,200 solar edge case assertions covering the 100 closest-to-critical-time sankrantis per calendar (21 corrected from drikpanchang.com verification); 465 multi-location assertions (Ujjain, NYC, LA) across all 5 calendar types; and regression tests covering all 55,152 lunisolar days, all 4,269 adhika/kshaya tithi edge cases, and 7,244 solar month boundaries (1900-2050).
 
 ## Validation Web Page
 

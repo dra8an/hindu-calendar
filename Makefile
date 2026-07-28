@@ -28,6 +28,7 @@ endif
 
 # Our sources (excluding main.c for test builds)
 APP_SRCS = $(SRCDIR)/astro.c $(SRCDIR)/date_utils.c $(SRCDIR)/tithi.c \
+           $(SRCDIR)/surya_siddhanta.c \
            $(SRCDIR)/masa.c $(SRCDIR)/panchang.c $(SRCDIR)/solar.c
 APP_OBJS = $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(APP_SRCS))
 MAIN_OBJ = $(BUILDDIR)/main.o

@@ -208,12 +208,20 @@ typedef enum {
  *   Bengali:   midnight + 24 min buffer + tithi-based rule (Sewell & Dikshit)
  *   Odia:      22:12 local time cutoff
  *   Malayalam:  end of madhyahna - 9.5 min (sunrise + 3/5 * daytime)
+ *
+ * SOLAR_CAL_BENGALI_SURYA is the same regional calendar as SOLAR_CAL_BENGALI
+ * -- same months, same Bangabda era -- computed under the classical Surya
+ * Siddhanta instead of modern astronomy.  Drikpanchang.com publishes both; they
+ * disagree on 26.32% of month starts.  It carries its own critical time
+ * (midnight + 40 min) and per-rashi day edges.  See
+ * Docs/SURYASIDDHANTA_PANJIKA.md.
  */
 typedef enum {
     SOLAR_CAL_TAMIL = 0,
     SOLAR_CAL_BENGALI,
     SOLAR_CAL_ODIA,
     SOLAR_CAL_MALAYALAM,
+    SOLAR_CAL_BENGALI_SURYA,   /* Bengali under Surya Siddhanta arithmetic */
 } SolarCalendarType;
 
 /* ---------------------------------------------------------------------------

@@ -16,7 +16,8 @@ static void print_usage(const char *prog)
         "  -y YEAR      Gregorian year (default: current)\n"
         "  -m MONTH     Gregorian month 1-12 (default: current)\n"
         "  -d DAY       Specific day (if omitted, shows full month)\n"
-        "  -s TYPE      Solar calendar: tamil, bengali, odia, malayalam\n"
+        "  -s TYPE      Solar calendar: tamil, bengali, odia, malayalam,\n"
+        "               bengali-surya (Bengali under Surya Siddhanta)\n"
         "               (if omitted, shows lunisolar panchang)\n"
         "  -l LAT,LON   Location (default: New Delhi 28.6139,77.2090)\n"
         "  -u OFFSET    UTC offset in hours (default: 5.5)\n"
@@ -41,7 +42,23 @@ static int parse_solar_type(const char *str, SolarCalendarType *out)
     if (strcmp(str, "bengali") == 0)   { *out = SOLAR_CAL_BENGALI; return 1; }
     if (strcmp(str, "odia") == 0)      { *out = SOLAR_CAL_ODIA; return 1; }
     if (strcmp(str, "malayalam") == 0) { *out = SOLAR_CAL_MALAYALAM; return 1; }
+    if (strcmp(str, "bengali-surya") == 0) { *out = SOLAR_CAL_BENGALI_SURYA; return 1; }
     return 0;
+}
+
+/* Display name for a solar calendar type.  Kept as a function rather than a
+ * ternary chain so a newly added type cannot silently inherit the fallback
+ * label of whichever calendar happens to be last. */
+static const char *solar_cal_display_name(SolarCalendarType type)
+{
+    switch (type) {
+    case SOLAR_CAL_TAMIL:         return "Tamil";
+    case SOLAR_CAL_BENGALI:       return "Bengali";
+    case SOLAR_CAL_ODIA:          return "Odia";
+    case SOLAR_CAL_MALAYALAM:     return "Malayalam";
+    case SOLAR_CAL_BENGALI_SURYA: return "Bengali (Suryasiddhanta)";
+    }
+    return "Unknown";
 }
 
 static void print_solar_month(int year, int month, const Location *loc,
@@ -54,10 +71,7 @@ static void print_solar_month(int year, int month, const Location *loc,
     const char *era = solar_era_name(type);
     const char *mname = solar_month_name(sd1.month, type);
     printf("%s Solar Calendar — %s %d (%s)\n",
-           type == SOLAR_CAL_TAMIL ? "Tamil" :
-           type == SOLAR_CAL_BENGALI ? "Bengali" :
-           type == SOLAR_CAL_ODIA ? "Odia" : "Malayalam",
-           mname, sd1.year, era);
+           solar_cal_display_name(type), mname, sd1.year, era);
     printf("Gregorian %04d-%02d\n\n", year, month);
 
     printf("%-12s %-5s %-20s %s\n",
@@ -90,10 +104,7 @@ static void print_solar_day(int year, int month, int day, const Location *loc,
     double jd = gregorian_to_jd(year, month, day);
     int dow = day_of_week(jd);
     const char *era = solar_era_name(type);
-    const char *cal_name =
-        type == SOLAR_CAL_TAMIL ? "Tamil" :
-        type == SOLAR_CAL_BENGALI ? "Bengali" :
-        type == SOLAR_CAL_ODIA ? "Odia" : "Malayalam";
+    const char *cal_name = solar_cal_display_name(type);
 
     printf("Date:         %04d-%02d-%02d (%s)\n", year, month, day,
            day_of_week_name(dow));
@@ -127,7 +138,7 @@ int main(int argc, char *argv[])
             i++;
             if (!parse_solar_type(argv[i], &solar_type)) {
                 fprintf(stderr, "Error: unknown solar calendar type '%s'\n", argv[i]);
-                fprintf(stderr, "Valid types: tamil, bengali, odia, malayalam\n");
+                fprintf(stderr, "Valid types: tamil, bengali, odia, malayalam, bengali-surya\n");
                 return 1;
             }
             solar_mode = 1;
