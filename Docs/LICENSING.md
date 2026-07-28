@@ -25,6 +25,7 @@ analysis below.**
 | IAU 1976 precession | Lieske et al. 1977 | Uncopyrightable constants | None |
 | Sinclair refraction | Sinclair 1982 | Uncopyrightable formula | None |
 | IERS delta-T data | IERS Bulletins | Uncopyrightable facts | None |
+| Surya Siddhanta constants + sine table | Surya Siddhanta (c. 4th–12th c.), Burgess 1860 | Public domain; uncopyrightable constants | None |
 
 ---
 
@@ -315,6 +316,54 @@ distribution unlimited."
 **Our attribution:** Source file comments reference delta-T with IERS as the
 data source.
 
+### 8. Surya Siddhanta Constants and Sine Table (surya_siddhanta.c)
+
+**What it is:** The classical epicyclic model used by the Bengali
+Suryasiddhanta panjika — five revolution counts per mahayuga, two epicycle
+sizes per body, the Kali Yuga epoch, and a 24-entry sine table at 225′
+intervals with R = 3438.
+
+**Source:** The *Surya Siddhanta*, a Sanskrit astronomical treatise of roughly
+the 4th–12th century CE. Standard English reference: Rev. Ebenezer Burgess,
+*Translation of the Sûrya-Siddhânta*, Journal of the American Oriental Society,
+vol. 6 (1860). Chapter 1 gives the revolution counts and civil days per
+mahayuga; chapter 2 gives the sine table and the epicycle sizes.
+
+**License status:** None applicable, on two independent grounds. The text is
+roughly a millennium old and Burgess's translation is from 1860 — both long in
+the public domain. Separately, the constants are uncopyrightable facts under
+17 USC 102(b), in exactly the way the VSOP87 coefficients are: they are
+measurements and tabulated values, not expression.
+
+**Independence from third-party implementations:** This is the point worth
+recording. Reingold & Dershowitz's `calendar.l` implements the same model and
+is **Apache 2.0 licensed** — permissive, but a license with obligations, and
+the project has no other licensed code in `src/` or `lib/`. `surya_siddhanta.c`
+was therefore written from the historical constants rather than ported from it:
+
+- The sine table uses the 24 tabulated integers from the text. `calendar.l`
+  does not — it *reconstructs* them with `round(3438·sin θ + 0.215·sign(…))`,
+  an editorial choice of its authors. Both happen to produce identical values
+  for all 24 entries, which was verified, but the derivation is independent.
+- All four mean periods are computed from the five revolution counts rather
+  than transcribed as decimals.
+- The derived solar apogee falls out at 77.13°, matching the ~77° stated in
+  the text. This was not an input, and serves as a check that the constants
+  were transcribed correctly.
+
+`calendar.l` was used only as a **test oracle** for five spot longitudes.
+Comparing an independent implementation's output against licensed code is not
+derivation. The load-bearing validation is 1,812 month starts scraped from
+drikpanchang.com (see `Docs/SURYASIDDHANTA_PANJIKA.md`).
+
+Reingold-derived code does exist in this repo, but only under `validation/`
+(`validation/reingold/*.lisp`, `validation/suryasiddhanta/surya_siddhanta.py`),
+never in the shipped library. Those files state their derivation in their
+headers.
+
+**Our attribution:** `src/surya_siddhanta.h` and `.c` headers cite the treatise,
+the Burgess translation, and this document.
+
 ---
 
 ## Our Attribution Practices
@@ -329,6 +378,7 @@ relevant scientific references.
 | `moshier_ayanamsa.c` | IAU 1976 precession, Lieske et al. 1977 |
 | `moshier_rise.c` | Meeus Ch. 15, Sinclair 1982 |
 | `moshier_jd.c` | Meeus Ch. 7 |
+| `surya_siddhanta.c` | Surya Siddhanta ch. 1–2, Burgess 1860 |
 
 ---
 
@@ -362,6 +412,23 @@ relevant scientific references.
 5. Sinclair, A.T. (1982). NAO Technical Note No. 59. Royal Greenwich
    Observatory.
 6. Meeus, J. (1998). *Astronomical Algorithms*, 2nd ed. Willmann-Bell.
+
+### Historical Sources
+7. Burgess, E. (1860). "Translation of the Sûrya-Siddhânta, a Text-book of
+   Hindu Astronomy." *Journal of the American Oriental Society*, vol. 6,
+   pp. 141-498. Public domain. The standard English edition; chapter 1 gives
+   the revolution counts and civil days per mahayuga, chapter 2 the sine table
+   and epicycle sizes.
+8. Sewell, R. & Dikshit, S.B. (1896). *The Indian Calendar*. Swan
+   Sonnenschein, London. Public domain. Source of the tithi-based rule used
+   for Bengali sankranti day assignment in both panjika schools.
+
+### Third-Party Implementations (validation only, never shipped)
+9. Reingold, E.M. & Dershowitz, N. *Calendrica 4.0* (`calendar.l`),
+   accompanying *Calendrical Calculations*, 4th ed., Cambridge University
+   Press, 2016. **Apache License 2.0.** Used under `validation/` as a
+   cross-check oracle and as the basis of the Python analysis tooling. No code
+   or derivation from it appears in `src/` or `lib/` — see §8.
 
 ### Legal Authorities
 7. 17 USC Section 102(b) — Ideas, procedures, methods not copyrightable

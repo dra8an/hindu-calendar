@@ -63,9 +63,20 @@ per-IP rate limit.
 
 ## 2. The Surya Siddhanta arithmetic
 
-Ported from Reingold & Dershowitz `calendar.l` (`hindu-true-position` and
-friends). No data tables are needed — the entire model is five rational
-constants and a 25-entry sine table generated at init.
+No data tables are needed — the entire model is five integers from the text, two
+epicycle sizes per body, and a 24-entry sine table.
+
+**Two implementations exist, with different provenance. This matters:**
+
+| | Source | License |
+|---|--------|---------|
+| `src/surya_siddhanta.c` (shipped) | Written from the historical constants — Surya Siddhanta ch. 1–2, Burgess 1860 | Public domain / uncopyrightable facts |
+| `validation/suryasiddhanta/surya_siddhanta.py` (tooling) | Ported from Reingold & Dershowitz `calendar.l` | **Apache 2.0** |
+
+The Python came first and is openly derived. The C was then written
+independently from the primary source, so that no licensed third-party code
+enters the shipped library — see [LICENSING.md](LICENSING.md) §8. The two agree
+to 1e-8 degrees.
 
 ### Constants (exact)
 

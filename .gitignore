@@ -21,3 +21,4 @@ ephe/
 
 # Built helper binary (see validation/suryasiddhanta/README.md)
 validation/suryasiddhanta/sunrise_tool
+tools/surya_bengali_check
