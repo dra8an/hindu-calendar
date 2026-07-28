@@ -143,27 +143,26 @@ to flip.
 
 ## 3. Build and verify
 
-Fastest route to a verified port:
+### 3.0 First, run it here
+
+Before porting anything, build and run the checker **in this repository** and
+confirm it passes. That gives a known-good baseline, so any failure after
+porting is unambiguously something the port introduced rather than a problem
+inherited from here.
+
+From this repository's root:
 
 ```bash
-# 1. Copy in
-cp src/surya_siddhanta.{c,h}                              <target>/src/
-cp tools/surya_bengali_check.c                            <target>/tools/
-cp validation/drikpanchang/bengali_suryasiddhanta.csv     <target>/validation/
+make                                          # builds the Moshier objects
 
-# 2. Point surya_bengali_check.c at the target's own JD + sunrise headers,
-#    and fix CSV path at the top of the file.
+cc -O2 -std=c99 -Ilib/moshier -Isrc -o tools/surya_bengali_check \
+   tools/surya_bengali_check.c src/surya_siddhanta.c src/astro.c \
+   src/date_utils.c lib/moshier/moshier_*.c -lm
 
-# 3. Build (this project's line; adapt include paths)
-cc -O2 -std=c99 -Isrc -o surya_bengali_check \
-   tools/surya_bengali_check.c src/surya_siddhanta.c \
-   <target's jd + sunrise objects> -lm
-
-# 4. Run
-./surya_bengali_check
+./tools/surya_bengali_check
 ```
 
-Expected output:
+Expected, exactly:
 
 ```
 drikpanchang month starts loaded: 1812
@@ -171,8 +170,54 @@ drikpanchang month starts loaded: 1812
 matched 1812 / 1812  (100.000%)   missed 0
 ```
 
+The checker resolves the CSV as `validation/drikpanchang/bengali_suryasiddhanta.csv`
+relative to the working directory, so run it from the repository root.
+
+There is also an integrated test, `tests/test_surya_bengali.c`, which performs
+the same comparison through the calendar-layer API (`solar_month_start()` and
+`gregorian_to_solar()`) rather than against the engine directly. The Makefile
+picks it up automatically via its `tests/test_*.c` wildcard — no wiring needed:
+
+```bash
+make test
+```
+
+```
+=== Surya Bengali: 3624/3624 passed, 0 failed (1812 months) ===
+```
+
+Two checks per month: that `solar_month_start()` returns the drikpanchang date,
+and that the date is itself day 1 of that month.
+
+### 3.1 Then port
+
+```bash
+# 1. Copy in
+cp src/surya_siddhanta.{c,h}                              <target>/src/
+cp tools/surya_bengali_check.c                            <target>/tools/
+cp validation/drikpanchang/bengali_suryasiddhanta.csv     <target>/validation/
+
+# 2. Edit surya_bengali_check.c:
+#      - the #include lines for the target's JD + sunrise headers
+#      - the CSV path in the #define at the top
+#      - gregorian_to_jd / jd_to_gregorian / sunrise_jd call names, if they
+#        differ in the target
+
+# 3. Build.  The reference line above is the shape to adapt; substitute the
+#    target's own JD and sunrise translation units for src/astro.c,
+#    src/date_utils.c and lib/moshier/*.c:
+cc -O2 -std=c99 -I<target includes> -o surya_bengali_check \
+   tools/surya_bengali_check.c src/surya_siddhanta.c \
+   <target's JD + sunrise sources or objects> -lm
+
+# 4. Run.  Same expected output as 3.0.
+./surya_bengali_check
+```
+
 Any miss prints the rashi and the sankranti timestamp, which tells you
 immediately whether it is an astronomy problem (§8) or a rule problem (§6).
+Passing here means the engine and the rule are both correct in the target, and
+only then is it worth lifting `predict_start()` into its calendar layer.
 
 **C++ note:** the code is C99, and both `src/surya_siddhanta.c` and
 `tools/surya_bengali_check.c` compile clean under `c++ -std=c++17 -Wall
