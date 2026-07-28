@@ -15,6 +15,12 @@ reverse-engineered arithmetic, and the critical-time rule fitted against it.
 The result is a shipped implementation reproducing **1,812 / 1,812 (100.000%)**
 of drikpanchang's Suryasiddhanta Bengali month starts.
 
+> **Porting this elsewhere?** See
+> [SURYASIDDHANTA_PORTING_SPEC.md](SURYASIDDHANTA_PORTING_SPEC.md) — a
+> self-contained specification with test vectors and a checklist. This
+> document records how the result was derived; that one is what you
+> implement from.
+
 ---
 
 ## 1. Discovering the toggle
