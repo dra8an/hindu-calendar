@@ -1,6 +1,6 @@
 # Project Status
 
-## Current Version: 0.12.0
+## Current Version: 0.13.0
 
 ## Phase Completion
 

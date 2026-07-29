@@ -1,5 +1,85 @@
 # Changelog
 
+## 0.13.0 — 2026-07-29
+
+### Added — Bengali Suryasiddhanta Panjika
+
+Drikpanchang.com publishes the Bengali calendar under two schools, toggled by
+the `drik-arithmetic` cookie. Only the default (Bisuddhasiddhanta) had ever
+been implemented. The Suryasiddhanta variant disagrees on **26.32%** of month
+starts (477 of 1,812 over 1900–2050).
+
+- **`src/surya_siddhanta.c` / `.h`** (420 lines): the classical epicyclic model
+  — mean motions corrected by a single manda equation of centre, evaluated in
+  the text's own 24-entry sine table. Solar and lunar longitude, tithi, tithi
+  end, and sankranti finding. Depends only on `<math.h>` and a `Location`
+  struct; no ephemeris, no data files, no ayanamsa
+- **`SOLAR_CAL_BENGALI_SURYA`**: fifth calendar type, reachable as
+  `./hindu-calendar -s bengali-surya`. Same months and Bangabda era as the drik
+  Bengali calendar, different astronomy
+- **`tests/test_surya_bengali.c`**: 3,624 assertions over 1,812 months against
+  the drikpanchang scrape, through the public API
+- **`validation/drikpanchang/*.csv`**: the parsed scrape for all five solar
+  calendars, now committed. Previously only in gitignored `scraper/data/`,
+  despite costing ~9 VPN cycles each to reproduce
+- **Scraper `--arithmetic` flag** with per-page provenance assertion, so the
+  two schools can never silently mix into one dataset
+- **`Docs/SURYASIDDHANTA_PANJIKA.md`**: derivation, divergence analysis, rule fit
+- **`Docs/SURYASIDDHANTA_PORTING_SPEC.md`**: self-contained spec for reusing
+  this in another C/C++ project — files to copy, test data, test vectors,
+  failure modes
+- **`CLAUDE.md` + `.githooks/commit-msg`**: commit-message policy, enforced
+
+### Validation
+
+- **1,812 / 1,812 (100.000%)** of drikpanchang's Suryasiddhanta month starts,
+  verified as an exact bijection rather than a subset test
+- The engine alone, with a naive "day after the sankranti" rule and **zero
+  fitted parameters**, reaches **98.951%**. That is what validates the
+  astronomy; the remaining 1.05% is the day-assignment rule
+- Out-of-sample (fit 1900–1975, test 1976–2050): **99.667%**. The rule's 7
+  constants are fitted on Bengali data, so the full-range 100% includes fitting
+- Suite: 279,313 assertions across 14 suites, 0 failures (Moshier backend)
+
+### Changed
+
+- Scraper stops cleanly at 199 requests (`MAX_REQUESTS_PER_RUN`); drikpanchang
+  blocks per-IP at exactly 200, confirmed over four consecutive blocks
+- `get_config()` no longer hardcodes a loop bound of 4 over `SOLAR_CONFIGS`
+- CLI calendar name is a `switch` rather than a ternary chain that fell through
+  to "Malayalam"
+
+### Fixed
+
+- **Cookie jar duplication** in the scraper: settings cookies were stored with
+  an empty domain, so the server's echo created a second entry per name. Made
+  `dict(session.cookies)` raise, and left it ambiguous which value was sent —
+  a silent wrong-calendar risk
+- **`surya_sankranti()` search semantics**: bracketing around the estimate
+  rather than searching forward from it. Forward-only silently jumps a year
+  when the caller's estimate sits just past the sankranti
+
+### Documentation corrections
+
+- Test counts were stale across README and PROJECT-STATUS (275,689 actual vs
+  59,497 documented; `test_csv_regression` now covers all 55,152 days)
+- `HINDU_CALENDAR_GUIDE.md` claimed a 100% drikpanchang match; it is 99.973%
+- The drikpanchang rate limit is per-IP, not session-tied — `session rotation
+  does not clear it`, corrected in `DRIKPANCHANG_VALIDATION.md` and
+  `scraper/README.md`
+- `LICENSING.md` gains section 8 (Surya Siddhanta constants), Burgess 1860 and
+  Sewell & Dikshit 1896 under historical sources, and explicit disclosure of
+  Reingold's Apache 2.0 licence and where it is and is not used
+- Recorded that drikpanchang's own cookies confirm two empirically-derived
+  choices: `drik-sunrise-type=edges` (upper limb) and
+  `drik-geo-elevation-status=disabled` (no horizon dip)
+
+### Known issues
+
+- `validation/se/*.csv` predate the upper-limb and elevation changes, causing
+  23 `test_adhika_kshaya` failures under `USE_SWISSEPH=1`. Pre-existing; the
+  Moshier default is unaffected. Fix with `make gen-ref USE_SWISSEPH=1`
+
 ## 0.12.0 — 2026-03-13
 
 ### Added — Java Port Updates
