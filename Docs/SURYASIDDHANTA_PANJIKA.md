@@ -323,7 +323,102 @@ the per-rashi edges are Bengali-specific or shared is unknown.
 
 ---
 
-## 6. Implementation status
+## 6. Which Bengali panjika is this, exactly?
+
+**Our reference is drikpanchang.com's rendering of Surya Siddhanta arithmetic.
+That is not necessarily identical to any printed Bengali panjika.** This matters
+if someone cross-checks our output against a physical calendar and finds a
+disagreement.
+
+Several panjikas are published and in active use in Bengal, and they genuinely
+disagree with one another:
+
+| Panjika | Basis |
+|---------|-------|
+| **Bisuddha Siddhanta Panjika** (Madhab Chandra Chattopadhyay) | Drik / modern astronomy |
+| **Gupta Press Panjika** (গুপ্তপ্রেস) | Traditional, Surya Siddhanta based; very widely used |
+| **P.M. Bagchi's Panjika** | Traditional |
+| **Benimadhab Sil's Panjika** | Traditional |
+
+The traditional ones apply their own *bija* corrections — periodic parameter
+updates to the classical constants — which shift sankranti times by tens of
+minutes. That is more than enough to move a month boundary when a sankranti
+falls near midnight.
+
+So "is our calendar correct?" has no single answer. Against drikpanchang's
+Suryasiddhanta mode we are 1,812/1,812. Against a specific printed panjika we
+may not be, and that would not necessarily be a defect in either.
+
+### A worked example of the ambiguity
+
+An external source covering 2022–2029 agreed with us on 94 of 96 month
+boundaries, differing on exactly two — claiming 32-day months where we and
+drikpanchang both give 31:
+
+| Month | Our range (31 days) | External claim (32 days) |
+|-------|---------------------|--------------------------|
+| Srabon 1433 | 2026-07-18 → 2026-08-17 | 2026-07-18 → 2026-08-18 |
+| Asharh 1435 | 2028-06-16 → 2028-07-16 | 2028-06-16 → 2028-07-17 |
+
+The claim is not implausible. 32-day months are common — **234 of 1,812 (13%)**
+— and occur only in Joishtho, Asharh, Srabon and Bhadro, the months around
+aphelion where the sun is slowest. Asharh (92) and Srabon (76) are the two most
+frequent, so these are precisely the borderline cases.
+
+Both disputed boundaries sit near midnight, the known ambiguous zone:
+
+```
+Bhadro 2026 (ends Srabon 1433): sankranti 2026-08-17 23:06:02 IST   -54.0 min
+Srabon 2028 (ends Asharh 1435): sankranti 2028-07-17 00:07:24 IST    +7.4 min
+```
+
+### Two obvious explanations that do NOT work
+
+Of the 96 boundaries in 2022–2029, seven fall within an hour of midnight — and
+five of those were *agreed*, some closer to midnight than the disputed pair:
+
+```
+2028-07-17 00:07  Srabon     +7.4   DISPUTED
+2028-04-14 00:09  Boishakh   +9.7   agreed     <- closer to midnight, agreed
+2026-09-17 23:34  Ashshin   -26.0   agreed
+2024-04-13 23:19  Boishakh  -40.7   agreed
+2024-07-16 23:17  Srabon    -43.0   agreed
+2023-12-17 00:46  Poush     +46.4   agreed
+2026-08-17 23:06  Bhadro    -54.0   DISPUTED
+```
+
+- **A fixed time offset in their astronomy** cannot explain it: any offset large
+  enough to flip −54.0 would also flip +9.7 and −26.0, which are agreed.
+- **The plain Sewell & Dikshit midnight rule** (sankranti before midnight →
+  month begins next day; after midnight → the day after that) gives the
+  external answer for the 00:07 case but *our* answer for the 23:06 case.
+
+So the difference is not reverse-engineerable from two data points, and no
+theory here should be trusted without more evidence.
+
+### How to actually settle it
+
+Two questions, in order of diagnostic value:
+
+1. **What sankranti *time* does the other source print?** Panjikas print the
+   sankranti moment, not only the date. If their time differs from 23:06:02 /
+   00:07:24, the disagreement is **astronomical** (a different bija correction)
+   and their day assignment may follow correctly from their own time. If their
+   times match ours but the day differs, it is the **critical-time rule**.
+
+2. **Do they agree on the other five near-midnight boundaries listed above?**
+   Agreement on all five with disagreement on only these two is a narrow,
+   specific signature from which the rule could probably be derived.
+   Disagreement on more means their whole astronomy is shifted.
+
+Also worth establishing: which panjika, and which year's edition. For a printed
+calendar the page itself is the ground truth, so a scan settles what that
+authority actually says — which is a different question from what the classical
+arithmetic implies.
+
+---
+
+## 7. Implementation status
 
 **Implemented and shipped.** Available as the calendar type
 `SOLAR_CAL_BENGALI_SURYA`, and from the CLI:
@@ -366,7 +461,7 @@ The `hindu-sunrise` port originally budgeted at 40-60 lines is **not needed**
   "Malayalam", so a new type would have been mislabelled. Replaced with a
   `switch` that has no fallback case.
 
-## 7. Where everything lives
+## 8. Where everything lives
 
 | Path | Contents |
 |------|----------|

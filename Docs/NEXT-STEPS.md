@@ -108,6 +108,16 @@ Two items remain open.
   work. The Moshier default backend is unaffected (279,313/279,313 pass).
   Note this rewrites six committed CSVs, so review the diff.
 
+- [ ] **Resolve the printed-panjika discrepancy.** An external source covering
+  2022–2029 agrees on 94 of 96 month boundaries but claims 32-day months for
+  Srabon 1433 and Asharh 1435 where we and drikpanchang give 31. Both are
+  near-midnight sankrantis (−54.0 and +7.4 minutes). Neither a fixed time
+  offset nor the plain Sewell & Dikshit rule explains the pattern, because five
+  other near-midnight boundaries in the same window are agreed. To progress,
+  obtain the sankranti *times* that source prints — that separates an
+  astronomical difference (bija correction) from a critical-time rule
+  difference. See [SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md) §6.
+
 - [ ] **Scrape and validate the Tamil Suryasiddhanta variant.** Tamil exposes
   the same `drik-arithmetic` toggle (its default is Thirukanitha); Odia and
   Malayalam appear not to. This is the one test that would show whether the

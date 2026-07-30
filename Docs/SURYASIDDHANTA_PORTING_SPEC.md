@@ -12,6 +12,15 @@ to write any of it from scratch.
 **Result to expect:** 1,812 / 1,812 (100.000%) of drikpanchang.com's published
 Bengali Suryasiddhanta month starts, 1900–2050.
 
+> **Know what the reference is.** This reproduces *drikpanchang's* rendering of
+> Surya Siddhanta arithmetic. Several printed Bengali panjikas (Gupta Press,
+> P.M. Bagchi, Benimadhab Sil) apply their own bija corrections and can place a
+> month boundary a day differently when a sankranti falls near midnight. If
+> users cross-check against a physical calendar, expect occasional
+> disagreement — roughly 2 months in 96 in one observed sample — and see
+> [SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md) §6 before treating it
+> as a bug.
+
 ---
 
 ## 1. Files to copy
