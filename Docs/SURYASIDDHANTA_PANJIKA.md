@@ -330,24 +330,61 @@ That is not necessarily identical to any printed Bengali panjika.** This matters
 if someone cross-checks our output against a physical calendar and finds a
 disagreement.
 
-Several panjikas are published and in active use in Bengal, and they genuinely
-disagree with one another:
+Bengal has **two named schools** of panjika-making, and they genuinely disagree
+with one another on festival and month-boundary dates:
 
-| Panjika | Basis |
-|---------|-------|
-| **Bisuddha Siddhanta Panjika** (Madhab Chandra Chattopadhyay) | Drik / modern astronomy |
-| **Gupta Press Panjika** (গুপ্তপ্রেস) | Traditional, Surya Siddhanta based; very widely used |
-| **P.M. Bagchi's Panjika** | Traditional |
-| **Benimadhab Sil's Panjika** | Traditional |
+| School | Panjikas | Basis |
+|--------|----------|-------|
+| **Drik-siddhanta** | **Bisuddha (Visuddha) Siddhanta Panjika** — Madhab Chandra Chattopadhyay, published since 1890 | Modern observational astronomy |
+| **Odrik-siddhanta** (অদৃক, "non-drik") | **Gupta Press**, **P.M. Bagchi**, **Benimadhab Sil** | Surya Siddhanta, without modern observational adjustment |
 
-The traditional ones apply their own *bija* corrections — periodic parameter
-updates to the classical constants — which shift sankranti times by tens of
-minutes. That is more than enough to move a month boundary when a sankranti
-falls near midnight.
+Gupta Press was founded in 1869 by Durga Charan Gupta and follows the
+16th-century **Raghunandana's *Ashtavimshati-tattva***, itself resting on the
+Surya Siddhanta.
+
+**Note what that implies.** Raghunandana's work is a *dharmashastra* digest —
+rules for religious observance — not an astronomical treatise. So the Odrik
+panjikas combine Surya Siddhanta *astronomy* with Raghunandana's *rules*. A
+disagreement with our output can therefore come from either side of that
+split: different constants, or a different day-assignment convention. This
+matters for the worked example below, where no plausible astronomical offset
+explains the pattern.
+
+A footnote worth knowing: **N. C. Lahiri** — whose ayanamsa this project uses —
+continued the Visuddha Siddhanta Panjika after Chattopadhyay, and sat on the
+1955 Calendar Reform Committee. Our drik Bengali calendar is, in effect,
+computing in the tradition he represented.
 
 So "is our calendar correct?" has no single answer. Against drikpanchang's
 Suryasiddhanta mode we are 1,812/1,812. Against a specific printed panjika we
 may not be, and that would not necessarily be a defect in either.
+
+### What the literature does and does not give you
+
+Searched for a published specification of the Odrik/Gupta Press computation.
+**None was found.** Specifically:
+
+- The **Report of the Calendar Reform Committee (1955)**, chaired by Meghnad
+  Saha, is the authoritative government survey and the obvious place to look.
+  It examined **60 almanacs** submitted from across India. But in the
+  searchable text it names only **one** Bengali panjika — the Visuddha
+  Siddhanta Panjika — and gives **no bija corrections or numerical constants**
+  for any of them. It criticises almanac-makers for using outdated Surya
+  Siddhanta year-lengths without tabulating who uses what. An "Annexure V —
+  List of Pancangas received" is referenced but is not present in the scanned
+  text; that annexure is the one remaining lead worth chasing in a physical
+  copy.
+- Secondary sources establish the *school* each panjika belongs to (above) and
+  its textual authority, but not the constants.
+
+This is consistent with how the traditional houses operate: the computational
+details are house practice, carried in karana tables and almanac craft rather
+than published as algorithms.
+
+**Practical consequence.** If matching Gupta Press ever becomes a requirement,
+the realistic route is the one that worked for drikpanchang — reverse-engineer
+it from printed editions. A few years of published month starts would be enough
+to fit and test, and it needs no cooperation from the publisher.
 
 ### A worked example of the ambiguity
 
@@ -395,6 +432,14 @@ five of those were *agreed*, some closer to midnight than the disputed pair:
 
 So the difference is not reverse-engineerable from two data points, and no
 theory here should be trusted without more evidence.
+
+### Sources
+
+- [Report of the Calendar Reform Committee (1955), CSIR](https://archive.org/details/calendar_reform_comittee_report) — full text: [djvu.txt](https://archive.org/stream/calendar_reform_comittee_report/calendar_reform_comittee_report_djvu.txt)
+- [History of the Calendar-Panchanga Committee](https://archive.org/stream/HistoryOfCalendarPanchangaCommittee/History-of-Calendar-Panchanga-Committee_djvu.txt)
+- [Scroll.in — Gupta Press Panjika, 150 years](https://scroll.in/magazine/832408/a-bengali-almanac-thats-survived-150-years-of-history-is-now-slowly-counting-its-last-days) — Odrik system, Raghunandana, founding
+- [Wikipedia — Vishuddha Siddhanta Panjika](https://en.wikipedia.org/wiki/Vishuddha_Siddhanta_Panjika)
+- [CSIR — Saga of Indian Calendar and IST](https://www.csir.res.in/csir-science-stories/saga-indian-calendar-and-ist) — committee composition, N. C. Lahiri
 
 ### How to actually settle it
 
