@@ -359,32 +359,65 @@ So "is our calendar correct?" has no single answer. Against drikpanchang's
 Suryasiddhanta mode we are 1,812/1,812. Against a specific printed panjika we
 may not be, and that would not necessarily be a defect in either.
 
-### What the literature does and does not give you
+### What the literature gives you
 
-Searched for a published specification of the Odrik/Gupta Press computation.
-**None was found.** Specifically:
+**Correction.** An earlier revision of this document stated that the Calendar
+Reform Committee report gives no numerical constants for individual panjikas.
+That was wrong — it was based on a web summary of the report rather than the
+text. The report **does** give them, in **Annexure VI**, and the Odrik-school
+parameters are recorded there. A local copy is kept at
+`Docs/reference/calendar_reform_committee_1955.txt` so this is checkable.
 
-- The **Report of the Calendar Reform Committee (1955)**, chaired by Meghnad
-  Saha, is the authoritative government survey and the obvious place to look.
-  It examined **60 almanacs** submitted from across India. But in the
-  searchable text it names only **one** Bengali panjika — the Visuddha
-  Siddhanta Panjika — and gives **no bija corrections or numerical constants**
-  for any of them. It criticises almanac-makers for using outdated Surya
-  Siddhanta year-lengths without tabulating who uses what. An "Annexure V —
-  List of Pancangas received" is referenced but is not present in the scanned
-  text; that annexure is the one remaining lead worth chasing in a physical
-  copy.
-- Secondary sources establish the *school* each panjika belongs to (above) and
-  its textual authority, but not the constants.
+The **Report of the Calendar Reform Committee (1955)**, chaired by Meghnad
+Saha, surveyed **60 almanacs**. Annexure V lists those received; Annexure VI
+reproduces each maker's replies to a questionnaire covering the adopted
+solar-year length, ayanamsa, precession rate, and calculation method.
 
-This is consistent with how the traditional houses operate: the computational
-details are house practice, carried in karana tables and almanac craft rather
-than published as algorithms.
+**Gupta Press Panjika, as reported by its own compiler:**
 
-**Practical consequence.** If matching Gupta Press ever becomes a requirement,
-the realistic route is the one that worked for drikpanchang — reverse-engineer
-it from printed editions. A few years of published month starts would be enough
-to fit and test, and it needs no cooperation from the publisher.
+| Question | Reply |
+|----------|-------|
+| Published since | 1277 B.S. (Sakabda 1792), i.e. 1870 CE |
+| Chief compiler | Pt. Ramrup Vidyabagis |
+| Sayana or Nirayana | **Nirayana** (sidereal) |
+| Solar or luni-solar | Solar, with luni-solar information alongside |
+| **Length of solar year adopted** | **365.258756481 mean solar days** |
+| Ayanamsa on 21 March 1954 | 21° 49′ 26″.55 |
+| Annual precession adopted | 54″ |
+| Method | **Siddhantic (Surya Siddhanta)** |
+
+**That year length is exactly ours.** Our sidereal year is
+`civil_days / solar_revs = 1577917828 / 4320000 = 365.2587564814815`, which
+agrees with the reported figure to every digit given. So Gupta Press applies
+**no bija correction to the solar mean motion** — the classical constant,
+unmodified.
+
+For contrast, the drik-school panjikas in the same annexure report
+**365.25636**-ish values (the modern sidereal year), and one records itself
+mid-transition from the Surya Siddhanta figure to the modern one.
+
+**What this means for the disputed dates.** Gupta Press and our implementation
+share the same solar mean motion, the same siddhanta, and the same nirayana
+frame. An astronomical explanation for the two disagreements is therefore much
+less likely, and a **day-assignment rule difference** correspondingly more
+likely — which is what the Raghunandana observation above predicts, and what
+the evidence in "Two obvious explanations that do NOT work" already pointed to.
+
+Two caveats worth holding:
+
+- The reported ayanamsa (21° 49′ 26″.55) and precession rate (54″/yr) differ
+  from Lahiri. For a nirayana Surya Siddhanta solar calendar the ayanamsa
+  should not enter the sankranti computation at all — the longitudes are
+  already sidereal — but if Gupta Press derives sankranti as *tropical minus
+  ayanamsa*, it would. Worth checking before concluding the astronomy is
+  identical.
+- These are the 1953–54 figures. Nothing here establishes that the same
+  parameters are still in use today.
+
+The remaining gap is the **day-assignment rule**, which the questionnaire did
+not ask about. If matching Gupta Press becomes a requirement, that is the part
+to reverse-engineer from printed editions — the astronomy appears to be
+already in hand.
 
 ### Sources
 

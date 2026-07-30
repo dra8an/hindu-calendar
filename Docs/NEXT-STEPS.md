@@ -115,7 +115,11 @@ Two items remain open.
   offset nor the plain Sewell & Dikshit rule explains the pattern, because five
   other near-midnight boundaries in the same window are agreed.
 
-  **A rule difference is the more likely culprit than an astronomical one.**
+  **A rule difference is now the strongly favoured explanation.** The 1955
+  Calendar Reform Committee report records Gupta Press's own declared
+  parameters, and its adopted solar year is 365.258756481 days — the
+  unmodified Surya Siddhanta value, identical to ours. Same siddhanta, same
+  mean motion, same nirayana frame, no bija correction.
   If the source is an Odrik-school panjika (Gupta Press, P.M. Bagchi,
   Benimadhab Sil), those pair Surya Siddhanta astronomy with the
   day-assignment rules of Raghunandana's *Ashtavimshati-tattva* — a
