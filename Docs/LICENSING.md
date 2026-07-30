@@ -423,6 +423,13 @@ relevant scientific references.
    Sonnenschein, London. Public domain. Source of the tithi-based rule used
    for Bengali sankranti day assignment in both panjika schools.
 
+10. Report of the Calendar Reform Committee (1955). Council of Scientific and
+    Industrial Research, New Delhi. Chaired by Meghnad Saha. Government
+    publication; the authoritative survey of Indian almanacs. Examined 60
+    panchangas but names only one Bengali panjika (Visuddha Siddhanta) and
+    gives no bija corrections. Full text:
+    https://archive.org/details/calendar_reform_comittee_report
+
 ### Third-Party Implementations (validation only, never shipped)
 9. Reingold, E.M. & Dershowitz, N. *Calendrica 4.0* (`calendar.l`),
    accompanying *Calendrical Calculations*, 4th ed., Cambridge University

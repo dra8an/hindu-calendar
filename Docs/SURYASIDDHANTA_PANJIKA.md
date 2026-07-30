@@ -386,6 +386,14 @@ the realistic route is the one that worked for drikpanchang — reverse-engineer
 it from printed editions. A few years of published month starts would be enough
 to fit and test, and it needs no cooperation from the publisher.
 
+### Sources
+
+- [Report of the Calendar Reform Committee (1955), CSIR](https://archive.org/details/calendar_reform_comittee_report) — full text: [djvu.txt](https://archive.org/stream/calendar_reform_comittee_report/calendar_reform_comittee_report_djvu.txt)
+- [History of the Calendar-Panchanga Committee](https://archive.org/stream/HistoryOfCalendarPanchangaCommittee/History-of-Calendar-Panchanga-Committee_djvu.txt)
+- [Scroll.in — Gupta Press Panjika, 150 years](https://scroll.in/magazine/832408/a-bengali-almanac-thats-survived-150-years-of-history-is-now-slowly-counting-its-last-days) — Odrik system, Raghunandana, founding
+- [Wikipedia — Vishuddha Siddhanta Panjika](https://en.wikipedia.org/wiki/Vishuddha_Siddhanta_Panjika)
+- [CSIR — Saga of Indian Calendar and IST](https://www.csir.res.in/csir-science-stories/saga-indian-calendar-and-ist) — committee composition, N. C. Lahiri
+
 ### A worked example of the ambiguity
 
 An external source covering 2022–2029 agreed with us on 94 of 96 month
@@ -432,14 +440,6 @@ five of those were *agreed*, some closer to midnight than the disputed pair:
 
 So the difference is not reverse-engineerable from two data points, and no
 theory here should be trusted without more evidence.
-
-### Sources
-
-- [Report of the Calendar Reform Committee (1955), CSIR](https://archive.org/details/calendar_reform_comittee_report) — full text: [djvu.txt](https://archive.org/stream/calendar_reform_comittee_report/calendar_reform_comittee_report_djvu.txt)
-- [History of the Calendar-Panchanga Committee](https://archive.org/stream/HistoryOfCalendarPanchangaCommittee/History-of-Calendar-Panchanga-Committee_djvu.txt)
-- [Scroll.in — Gupta Press Panjika, 150 years](https://scroll.in/magazine/832408/a-bengali-almanac-thats-survived-150-years-of-history-is-now-slowly-counting-its-last-days) — Odrik system, Raghunandana, founding
-- [Wikipedia — Vishuddha Siddhanta Panjika](https://en.wikipedia.org/wiki/Vishuddha_Siddhanta_Panjika)
-- [CSIR — Saga of Indian Calendar and IST](https://www.csir.res.in/csir-science-stories/saga-indian-calendar-and-ist) — committee composition, N. C. Lahiri
 
 ### How to actually settle it
 
