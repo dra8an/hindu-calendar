@@ -113,10 +113,21 @@ Two items remain open.
   Srabon 1433 and Asharh 1435 where we and drikpanchang give 31. Both are
   near-midnight sankrantis (−54.0 and +7.4 minutes). Neither a fixed time
   offset nor the plain Sewell & Dikshit rule explains the pattern, because five
-  other near-midnight boundaries in the same window are agreed. To progress,
-  obtain the sankranti *times* that source prints — that separates an
-  astronomical difference (bija correction) from a critical-time rule
-  difference. See [SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md) §6.
+  other near-midnight boundaries in the same window are agreed.
+
+  **A rule difference is the more likely culprit than an astronomical one.**
+  If the source is an Odrik-school panjika (Gupta Press, P.M. Bagchi,
+  Benimadhab Sil), those pair Surya Siddhanta astronomy with the
+  day-assignment rules of Raghunandana's *Ashtavimshati-tattva* — a
+  dharmashastra digest, not an astronomical text. That would produce exactly
+  this signature: agreement on the astronomy, divergence only where a
+  convention decides which civil day owns a sankranti.
+
+  To progress, ask for (a) **which panjika and edition**, and (b) the
+  sankranti *times* it prints. Matching times with differing dates confirms a
+  rule difference and makes the rule derivable. Differing times point at the
+  constants instead. See
+  [SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md) §6.
 
 - [ ] **Scrape and validate the Tamil Suryasiddhanta variant.** Tamil exposes
   the same `drik-arithmetic` toggle (its default is Thirukanitha); Odia and
