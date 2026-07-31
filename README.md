@@ -107,7 +107,9 @@ The project has been ported to Java, Rust and Swift, all targeting the Moshier-o
 
 ## Documentation
 
-See [Docs/MASTER.md](Docs/MASTER.md) for a full index. Key files:
+See [Docs/MASTER.md](Docs/MASTER.md) for a full index. **If you are picking this
+up after a break, start with [Docs/HANDOFF.md](Docs/HANDOFF.md)** — it carries the
+current working state rather than the settled documentation. Key files:
 
 - [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) — algorithms, tech stack, module structure
 - [Docs/PROJECT-STATUS.md](Docs/PROJECT-STATUS.md) — what works, test coverage, known limitations

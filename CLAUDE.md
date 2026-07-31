@@ -33,6 +33,9 @@ Both backends must pass all tests before any change is considered done.
 
 ## Orientation
 
+- **`Docs/HANDOFF.md` first** — current working state: what is in flight, what is
+  unpushed, the state of the build directory, and the open investigations with
+  their next concrete action. Deliberately transient; check its date.
 - `Docs/MASTER.md` indexes all documentation and is the place to start.
 - `Docs/PROJECT-STATUS.md` is the current state; `Docs/NEXT-STEPS.md` the roadmap.
 - Validation data lives in `validation/`; the scraper and its raw data in
