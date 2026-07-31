@@ -16,6 +16,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 
 | File | Purpose |
 |------|---------|
+| [HANDOFF.md](HANDOFF.md) | **Read first when resuming.** Current working state: what is in flight, unpushed work, build-directory state, open investigations with their next concrete action, and the traps that bite. Deliberately transient — the other docs are the source of truth for settled matters. |
 | [MASTER.md](MASTER.md) | This file. Index of all documentation + quick reference. |
 | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Original implementation plan. Defines the 5-phase approach, project structure, data structures, algorithms, and key technical decisions. |
 | [PROJECT-STATUS.md](PROJECT-STATUS.md) | Current state of the project. Phase completion status, test results, validation coverage, and known limitations. |
@@ -56,7 +57,8 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 
 ## Reading Order
 
-1. **MASTER.md** (this file) — quick reference for key facts
+1. **HANDOFF.md** — current working state, if resuming after a break
+7. **MASTER.md** (this file) — quick reference for key facts
 2. **IMPLEMENTATION_PLAN.md** — understand the design and goals
 3. **ARCHITECTURE.md** — understand how it works technically
 4. **PROJECT-STATUS.md** — see what's done and what's not
