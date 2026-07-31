@@ -38,12 +38,15 @@ non-obvious traps.
 
 **Two things a fresh session will not otherwise know:**
 
-- **`build/` is in Swiss Ephemeris state.** An interrupted `make gen-ref
-  USE_SWISSEPH=1` left `build/swe/` present and `build/moshier/` absent, with
-  objects compiled `-DUSE_SWISSEPH`. A plain `make` may reuse them on timestamp
-  and produce a mismatched binary. **Run `make clean` before the next build.**
+- **`build/` is in clean Moshier state** as of 2026-07-31. The earlier Swiss
+  Ephemeris contamination (an interrupted `make gen-ref USE_SWISSEPH=1` that
+  left `-DUSE_SWISSEPH` objects behind) was cleared with `make clean`, and the
+  full suite was re-run from scratch: **279,313 assertions / 14 suites / 0
+  failures**. If you next run anything with `USE_SWISSEPH=1`, `make clean`
+  again before returning to the default backend.
 - **Check `git log origin/main..HEAD`** before assuming everything is pushed;
-  several documentation commits have been landing in batches.
+  several documentation commits have been landing in batches. As of
+  2026-07-31 nothing is unpushed and the tree is clean.
 
 ---
 
@@ -106,14 +109,17 @@ VPN cycles.
 
 ## Small known-wrong things, not yet fixed
 
-- **README example sunrise times predate the upper-limb change.** The
-  single-day example was `05:53:08`; the correct value is `05:51:57`, a
-  71-second difference that matches the documented upper-limb offset exactly.
-  That one is corrected. The four times in the month-panchang example
-  (`07:15:05`, `07:15:19`, `07:11:52`, `07:11:22`) are almost certainly stale
-  by the same ~71 seconds but were **not** verified, because doing so needs a
-  build and `build/` is in the wrong state. Regenerate them with
-  `make clean && make && ./hindu-calendar -m 1 -y 2025` before trusting them.
+- ~~**README example sunrise times predate the upper-limb change.**~~
+  **Fixed 2026-07-31.** The suspicion was correct: all four month-panchang
+  times were stale, by 73–77 seconds (`07:15:05`→`07:13:48`,
+  `07:15:19`→`07:14:03`, `07:11:52`→`07:10:38`, `07:11:22`→`07:10:09`) —
+  consistent with the ~71-second upper-limb offset. Regenerated from a clean
+  build. The single-day example (`05:51:57`) and the Tamil solar example were
+  re-verified and were already correct.
+
+  One cosmetic liberty remains in the README, deliberately: the Tamil example
+  annotates the Chithirai 1 row with `<- Puthandu (Tamil New Year)`, which the
+  program does not print.
 
 - **Counting test assertions: sum only the `^===` summary lines.** Some suites
   print per-section sub-totals in the same `N/M passed` format, so a naive

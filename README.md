@@ -37,11 +37,11 @@ Hindu Calendar — 2025-01 (28.6139°N, 77.2090°E, UTC+5.5)
 
 Date         Day   Sunrise    Tithi                        Hindu Date
 ----------   ---   --------   ---------------------------- ----------------------------
-2025-01-01   Wed   07:15:05   Shukla Dwitiya       (S-2)   Pausha Shukla 2, Saka 1946
-2025-01-02   Thu   07:15:19   Shukla Tritiya       (S-3)   Pausha Shukla 3, Saka 1946
+2025-01-01   Wed   07:13:48   Shukla Dwitiya       (S-2)   Pausha Shukla 2, Saka 1946
+2025-01-02   Thu   07:14:03   Shukla Tritiya       (S-3)   Pausha Shukla 3, Saka 1946
 ...
-2025-01-29   Wed   07:11:52   Krishna Amavasya      (K-15)   Pausha Krishna 15, Saka 1946
-2025-01-30   Thu   07:11:22   Shukla Pratipada     (S-1)   Magha Shukla 1, Saka 1946
+2025-01-29   Wed   07:10:38   Krishna Amavasya      (K-15)   Pausha Krishna 15, Saka 1946
+2025-01-30   Thu   07:10:09   Shukla Pratipada     (S-1)   Magha Shukla 1, Saka 1946
 ```
 
 ### Solar calendar (Tamil)
