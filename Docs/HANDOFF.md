@@ -76,7 +76,10 @@ edition, and (b) the sankranti *times* it prints. Matching times with differing
 dates confirms a rule difference and makes the rule derivable from a handful of
 boundary cases. Differing times point at the constants instead.
 
-Full analysis: `Docs/SURYASIDDHANTA_PANJIKA.md` §6.
+Full analysis: `Docs/SURYASIDDHANTA_PANJIKA.md` §6, which includes a
+step-by-step chronology of the investigation under "How this unfolded" —
+including the two hypotheses that were ruled out and one wrong turn, so none
+of it gets retried from scratch.
 
 ### 2. Stale Swiss Ephemeris reference data — KNOWN, DEFERRED
 

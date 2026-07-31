@@ -474,6 +474,64 @@ five of those were *agreed*, some closer to midnight than the disputed pair:
 So the difference is not reverse-engineerable from two data points, and no
 theory here should be trusted without more evidence.
 
+### How this unfolded
+
+The reasoning above is presented as conclusions. The order things actually
+happened in is worth recording, because two of the steps were wrong turns and
+knowing that is useful.
+
+**1. The report.** An external source with coverage of 2022–2029 agreed on 94
+of 96 Bengali Suryasiddhanta month boundaries, differing only on Srabon 1433
+and Asharh 1435, where it gave 32-day months against our 31.
+
+**2. First look: compute the boundaries.** Using the Python engine (no build
+required), the two sankranti moments came out at 2026-08-17 23:06:02 and
+2028-07-17 00:07:24 IST — both close to midnight, the known ambiguous zone.
+The obvious reading was a systematic time offset in the other source's
+astronomy.
+
+**3. That hypothesis died immediately.** Censusing all 96 boundaries in the
+window found seven within an hour of midnight, and five of those were
+*agreed* — including one at +9.7 minutes, closer to midnight than the disputed
+−54.0. No fixed offset can flip one and not the others. The plain Sewell &
+Dikshit midnight rule failed too, giving the external answer for one disputed
+case and ours for the other.
+
+**4. Sanity-checking the claim itself.** 32-day months turn out to be 13% of
+all months (234 of 1,812) and occur only in Joishtho, Asharh, Srabon and
+Bhadro — the months around aphelion where the sun is slowest. Asharh (92) and
+Srabon (76) are the two most frequent. So the external claim was not merely
+plausible; the disputed months are precisely the ones where 31-vs-32 is most
+often borderline.
+
+**5. Reframing: which panjika?** With no rule or offset explaining the pattern,
+the more useful question became what authority the other source represents.
+Bengal has competing published panjikas, and they disagree with each other —
+so "who is correct" may not have a single answer.
+
+**6. A wrong turn, worth recording.** Searching for a published specification
+of the Odrik computation surfaced the 1955 Calendar Reform Committee report. A
+summary of it indicated the report named only one Bengali panjika and gave no
+numerical constants, and that was written into this document as fact. It was
+wrong.
+
+**7. Reading the actual text corrected it.** Downloading the full report (now
+kept at `Docs/reference/`) and searching it directly found Gupta Press in
+**Annexure VI**, with its compiler's declared parameters — including an adopted
+solar year of 365.258756481 days, identical to ours. The constants were there
+all along; the summary had simply missed them. Lesson: when a claim is
+load-bearing, read the primary text.
+
+**8. Where that leaves the hypothesis.** Gupta Press shares our siddhanta, our
+solar mean motion and our nirayana frame. An astronomical explanation is
+therefore weak, and a day-assignment rule difference is strong — which is
+independently what the Raghunandana observation predicts, since the Odrik
+panjikas pair that astronomy with a dharmashastra digest's rules rather than an
+astronomical text's.
+
+**Current state: blocked, not stalled.** Everything determinable from our side
+has been determined. Progress now requires the two facts listed below.
+
 ### How to actually settle it
 
 Two questions, in order of diagnostic value:
