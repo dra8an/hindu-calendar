@@ -13,11 +13,14 @@ to write any of it from scratch.
 Bengali Suryasiddhanta month starts, 1900–2050.
 
 > **Know what the reference is.** This reproduces *drikpanchang's* rendering of
-> Surya Siddhanta arithmetic. Several printed Bengali panjikas (Gupta Press,
-> P.M. Bagchi, Benimadhab Sil) apply their own bija corrections and can place a
-> month boundary a day differently when a sankranti falls near midnight. If
-> users cross-check against a physical calendar, expect occasional
-> disagreement — roughly 2 months in 96 in one observed sample — and see
+> Surya Siddhanta arithmetic. The printed Bengali panjikas of the Odrik school
+> (Gupta Press, P.M. Bagchi, Benimadhab Sil) share the same siddhanta, and the
+> 1955 Calendar Reform Committee report confirms Gupta Press uses the *same*
+> unmodified solar year we do — 365.258756481 days. But they pair that
+> astronomy with their own day-assignment rules, and can place a month boundary
+> a day differently when a sankranti falls near midnight. If users cross-check
+> against a physical calendar, expect occasional disagreement — roughly 2 months
+> in 96 in one observed sample — and read
 > [SURYASIDDHANTA_PANJIKA.md](SURYASIDDHANTA_PANJIKA.md) §6 before treating it
 > as a bug.
 
@@ -120,6 +123,22 @@ layer needed no conditionals.
 The CSV is ~53 KB. **Copy it into the target project** — it took nine VPN
 cycles to obtain (drikpanchang rate-limits at 200 requests per IP) and it is
 the only thing that proves the port is right.
+
+### 1.4 Background source — copy only if you expect panjika questions
+
+| File | Purpose |
+|------|---------|
+| `Docs/reference/calendar_reform_committee_1955.txt` | OCR'd full text of the Report of the Calendar Reform Committee (1955), CSIR. 1.3 MB, public domain |
+
+Not needed to build or verify anything. Worth having if the target project's
+users compare output against printed Bengali almanacs, because its **Annexure
+VI** is the only published statement of the Odrik-school parameters that could
+be found — each almanac maker's declared solar-year length, ayanamsa,
+precession rate and calculation method. Searching it is how we established that
+Gupta Press uses the unmodified Surya Siddhanta year.
+
+Search for `ANNEXURE  V` (two spaces) to reach the list of panchangas, and
+`ANNEXURE  VI` for the replies. The OCR is imperfect.
 
 Format:
 

@@ -45,6 +45,7 @@ This file is automatically loaded into Claude's system prompt at the start of ev
 | [RUST_PORT.md](RUST_PORT.md) | Rust port documentation. Project structure, module mapping (C → Rust), porting decisions (ownership, mutability, `i8` indexing), test suite (27 tests, 275,396 assertions), full regression verification, cross-validation results, and build/usage instructions. |
 | [SWIFT_PORT.md](SWIFT_PORT.md) | Swift port documentation. Project structure, type mapping (C → Swift), porting decisions, test suite (62 tests), cross-validation results, and build/usage instructions. |
 | calendrical-calculations.pdf | Reference book by Reingold & Dershowitz. Chapter 20 covers Hindu calendar mathematics. |
+| [reference/](reference/) | Third-party source texts kept locally so documented claims can be checked offline. Currently the 1955 Calendar Reform Committee report, whose Annexure VI gives each Indian almanac's declared solar-year length, ayanamsa and calculation method. See [reference/README.md](reference/README.md). |
 
 ## Root Directory
 
