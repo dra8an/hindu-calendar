@@ -101,6 +101,60 @@ VPN cycles.
 
 ---
 
+## Small known-wrong things, not yet fixed
+
+- **README example sunrise times predate the upper-limb change.** The
+  single-day example was `05:53:08`; the correct value is `05:51:57`, a
+  71-second difference that matches the documented upper-limb offset exactly.
+  That one is corrected. The four times in the month-panchang example
+  (`07:15:05`, `07:15:19`, `07:11:52`, `07:11:22`) are almost certainly stale
+  by the same ~71 seconds but were **not** verified, because doing so needs a
+  build and `build/` is in the wrong state. Regenerate them with
+  `make clean && make && ./hindu-calendar -m 1 -y 2025` before trusting them.
+
+- **Counting test assertions: sum only the `^===` summary lines.** Some suites
+  print per-section sub-totals in the same `N/M passed` format, so a naive
+  grep over the whole output double-counts. This produced 285,059 instead of
+  the correct 279,313 once. Correct incantation:
+
+  ```bash
+  make test > /tmp/t.out 2>&1
+  grep -E "^=== .*(passed|failed)" /tmp/t.out | grep -oE "[0-9]+/[0-9]+ passed" \
+    | cut -d/ -f1 | paste -sd+ - | bc
+  ```
+
+- **`git` hits a transient `.git/index.lock` on this machine** every so often,
+  with no git process actually running. It clears by itself — just retry the
+  command. Do not delete the lock reflexively without first checking
+  `pgrep -fl git`.
+
+## Useful recipe: sankranti times with no build
+
+The Python engine in `validation/suryasiddhanta/` needs no compilation and is
+numerically identical to the C. This is how the disputed boundaries were
+investigated, and it works even when `build/` is in a bad state:
+
+```python
+# from validation/suryasiddhanta/
+import datetime
+from surya_siddhanta import all_sankrantis, solar_longitude, sankranti_at_or_after
+
+LON, ZONE = 77.2090, 5.5                     # New Delhi
+to_ist  = lambda m: m - LON/360.0 + ZONE/24.0   # engine moment -> IST
+rd_date = lambda rd: datetime.date(1,1,1) + datetime.timedelta(days=int(rd)-1)
+rd_of   = lambda y,m,d: (datetime.date(y,m,d) - datetime.date(1,1,1)).days + 1
+
+# every sankranti in a range, as (rashi, moment)
+for rashi, m in all_sankrantis(rd_of(2026,1,1), rd_of(2026,12,31)):
+    ist = to_ist(m)
+    secs = round((ist % 1) * 86400)
+    print(rashi, rd_date(ist), f"{secs//3600:02d}:{secs%3600//60:02d}")
+```
+
+Bengali month number equals the rashi entered, so rashi 4 (Karka) starts
+Srabon. Month starts are one day after the sankranti except in the
+midnight-zone cases the rule handles.
+
 ## Things that will bite you
 
 - **Drikpanchang rate-limits per IP at exactly 200 requests.** Session rotation

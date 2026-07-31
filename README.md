@@ -68,7 +68,7 @@ Date         Day   Solar Date
 $ ./hindu-calendar -d 18 -m 8 -y 2012
 
 Date:       2012-08-18 (Saturday)
-Sunrise:    05:53:08 IST
+Sunrise:    05:51:57 IST
 Tithi:      Shukla Pratipada (S-1)
 Hindu Date: Adhika Bhadrapada Shukla 1, Saka 1934 (Vikram 2069)
 ```
@@ -94,15 +94,16 @@ Backend selector (SE/Moshier), calendar selector (Lunisolar + 4 solar), Reingold
 
 ## Language Ports
 
-The project has been ported to Java and Rust, both targeting the Moshier-only backend with identical output:
+The project has been ported to Java, Rust and Swift, all targeting the Moshier-only backend with identical output:
 
-| | C (original) | Java | Rust |
-|---|---|---|---|
-| Directory | `src/` + `lib/moshier/` | `java/` | `rust/` |
-| Build | `make` | `./gradlew build` | `cargo build` |
-| Test | `make test` | `./gradlew test` | `cargo test` |
-| Run | `./hindu-calendar` | `./gradlew run --args="..."` | `cargo run -- ...` |
-| Docs | — | [Docs/JAVA_PORT.md](Docs/JAVA_PORT.md) | [Docs/RUST_PORT.md](Docs/RUST_PORT.md) |
+| | C (original) | Java | Rust | Swift |
+|---|---|---|---|---|
+| Directory | `src/` + `lib/moshier/` | `java/` | `rust/` | `swift/` |
+| Tests | 14 suites | 257 | 27 | 62 |
+| Build | `make` | `./gradlew build` | `cargo build` | `swift build` |
+| Test | `make test` | `./gradlew test` | `cargo test` | `swift test` |
+| Run | `./hindu-calendar` | `./gradlew run --args="..."` | `cargo run -- ...` | `swift run` |
+| Docs | — | [Docs/JAVA_PORT.md](Docs/JAVA_PORT.md) | [Docs/RUST_PORT.md](Docs/RUST_PORT.md) | [Docs/SWIFT_PORT.md](Docs/SWIFT_PORT.md) |
 
 ## Documentation
 
@@ -114,6 +115,7 @@ See [Docs/MASTER.md](Docs/MASTER.md) for a full index. Key files:
 - [Docs/VSOP87_IMPLEMENTATION.md](Docs/VSOP87_IMPLEMENTATION.md) — VSOP87 solar longitude pipeline, ayanamsa, precision analysis
 - [Docs/SOLAR_PLAN.md](Docs/SOLAR_PLAN.md) — solar calendar design document
 - [Docs/LOCATION.md](Docs/LOCATION.md) — multi-location support (Ujjain, NYC, LA validation)
-- [Docs/JAVA_PORT.md](Docs/JAVA_PORT.md) — Java 21 port (239 tests, Gradle build)
-- [Docs/RUST_PORT.md](Docs/RUST_PORT.md) — Rust port (12 tests, Cargo build)
+- [Docs/JAVA_PORT.md](Docs/JAVA_PORT.md) — Java 21 port (257 tests, Gradle build)
+- [Docs/RUST_PORT.md](Docs/RUST_PORT.md) — Rust port (27 tests, Cargo build)
+- [Docs/SWIFT_PORT.md](Docs/SWIFT_PORT.md) — Swift port (62 tests, SPM build)
 - [CHANGELOG.md](CHANGELOG.md) — version history
