@@ -124,6 +124,16 @@ The CSV is ~53 KB. **Copy it into the target project** — it took nine VPN
 cycles to obtain (drikpanchang rate-limits at 200 requests per IP) and it is
 the only thing that proves the port is right.
 
+Format:
+
+```
+month,year,length,greg_year,greg_month,greg_day,month_name
+4,1433,31,2026,7,18,Srabon
+```
+
+`month` is 1–12 Bengali, `year` is Bangabda, `greg_*` is the first civil day of
+that month.
+
 ### 1.4 Background source — copy only if you expect panjika questions
 
 | File | Purpose |
@@ -139,16 +149,6 @@ Gupta Press uses the unmodified Surya Siddhanta year.
 
 Search for `ANNEXURE  V` (two spaces) to reach the list of panchangas, and
 `ANNEXURE  VI` for the replies. The OCR is imperfect.
-
-Format:
-
-```
-month,year,length,greg_year,greg_month,greg_day,month_name
-4,1433,31,2026,7,18,Srabon
-```
-
-`month` is 1–12 Bengali, `year` is Bangabda, `greg_*` is the first civil day of
-that month.
 
 ---
 
