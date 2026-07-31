@@ -26,7 +26,7 @@ bypass it with `--no-verify`.
 ```bash
 make                    # default: self-contained Moshier ephemeris
 make USE_SWISSEPH=1     # optional: Swiss Ephemeris backend
-make test               # 275,689 assertions across 13 suites, ~15s
+make test               # 279,313 assertions across 14 suites, ~15s
 ```
 
 Both backends must pass all tests before any change is considered done.
